@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { FileText, Download, BookOpen, zap, Search, Filter, Lock, Zap } from 'lucide-react'
+import { FileText, Download, BookOpen, Search, Filter, Lock, Zap } from 'lucide-react'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/resources')({
