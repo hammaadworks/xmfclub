@@ -72,12 +72,6 @@ export default function Header() {
             onClick={() => setIsOpen(false)} 
           />
           <SidebarLink 
-            to="/about" 
-            icon={<ShieldCheck size={20} />} 
-            label="Mission" 
-            onClick={() => setIsOpen(false)} 
-          />
-          <SidebarLink 
             to="/training/curriculum" 
             icon={<LayoutGrid size={20} />} 
             label="Curriculum" 
