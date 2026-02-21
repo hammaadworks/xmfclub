@@ -24,7 +24,6 @@ export default function Header() {
 
         <nav className="hidden lg:flex items-center gap-6">
           <Link to="/" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Home</Link>
-          <Link to="/about" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Mission</Link>
           <Link to="/training/curriculum" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Training</Link>
           <Link to="/events" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Events</Link>
           <Link to="/achievements" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Hall of Fame</Link>
