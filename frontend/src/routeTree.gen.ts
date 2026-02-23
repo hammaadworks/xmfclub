@@ -12,18 +12,18 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as StoreRouteImport } from './routes/store'
 import { Route as SocialRouteImport } from './routes/social'
 import { Route as ResourcesRouteImport } from './routes/resources'
-import { Route as McpRouteImport } from './routes/mcp'
 import { Route as JoinRouteImport } from './routes/join'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as ContactRouteImport } from './routes/contact'
+import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AchievementsRouteImport } from './routes/achievements'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as TrainingCurriculumRouteImport } from './routes/training/curriculum'
 import { Route as SUuidRouteImport } from './routes/s/$uuid'
-import { Route as DemoMcpTodosRouteImport } from './routes/demo/mcp-todos'
 import { Route as DemoBookingRouteImport } from './routes/demo/booking'
 import { Route as DemoBetterAuthRouteImport } from './routes/demo/better-auth'
-import { Route as DemoApiMcpTodosRouteImport } from './routes/demo/api.mcp-todos'
+import { Route as AdminSetupRouteImport } from './routes/admin/setup'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const StoreRoute = StoreRouteImport.update({
@@ -41,11 +41,6 @@ const ResourcesRoute = ResourcesRouteImport.update({
   path: '/resources',
   getParentRoute: () => rootRouteImport,
 } as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const JoinRoute = JoinRouteImport.update({
   id: '/join',
   path: '/join',
@@ -61,6 +56,11 @@ const ContactRoute = ContactRouteImport.update({
   path: '/contact',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AchievementsRoute = AchievementsRouteImport.update({
   id: '/achievements',
   path: '/achievements',
@@ -69,6 +69,11 @@ const AchievementsRoute = AchievementsRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const TrainingCurriculumRoute = TrainingCurriculumRouteImport.update({
@@ -81,11 +86,6 @@ const SUuidRoute = SUuidRouteImport.update({
   path: '/s/$uuid',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoMcpTodosRoute = DemoMcpTodosRouteImport.update({
-  id: '/demo/mcp-todos',
-  path: '/demo/mcp-todos',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DemoBookingRoute = DemoBookingRouteImport.update({
   id: '/demo/booking',
   path: '/demo/booking',
@@ -96,9 +96,9 @@ const DemoBetterAuthRoute = DemoBetterAuthRouteImport.update({
   path: '/demo/better-auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoApiMcpTodosRoute = DemoApiMcpTodosRouteImport.update({
-  id: '/demo/api/mcp-todos',
-  path: '/demo/api/mcp-todos',
+const AdminSetupRoute = AdminSetupRouteImport.update({
+  id: '/admin/setup',
+  path: '/admin/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
@@ -110,132 +110,132 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/achievements': typeof AchievementsRoute
+  '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/events': typeof EventsRoute
   '/join': typeof JoinRoute
-  '/mcp': typeof McpRoute
   '/resources': typeof ResourcesRoute
   '/social': typeof SocialRoute
   '/store': typeof StoreRoute
+  '/admin/setup': typeof AdminSetupRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/booking': typeof DemoBookingRoute
-  '/demo/mcp-todos': typeof DemoMcpTodosRoute
   '/s/$uuid': typeof SUuidRoute
   '/training/curriculum': typeof TrainingCurriculumRoute
+  '/admin/': typeof AdminIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/achievements': typeof AchievementsRoute
+  '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/events': typeof EventsRoute
   '/join': typeof JoinRoute
-  '/mcp': typeof McpRoute
   '/resources': typeof ResourcesRoute
   '/social': typeof SocialRoute
   '/store': typeof StoreRoute
+  '/admin/setup': typeof AdminSetupRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/booking': typeof DemoBookingRoute
-  '/demo/mcp-todos': typeof DemoMcpTodosRoute
   '/s/$uuid': typeof SUuidRoute
   '/training/curriculum': typeof TrainingCurriculumRoute
+  '/admin': typeof AdminIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/achievements': typeof AchievementsRoute
+  '/auth': typeof AuthRoute
   '/contact': typeof ContactRoute
   '/events': typeof EventsRoute
   '/join': typeof JoinRoute
-  '/mcp': typeof McpRoute
   '/resources': typeof ResourcesRoute
   '/social': typeof SocialRoute
   '/store': typeof StoreRoute
+  '/admin/setup': typeof AdminSetupRoute
   '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/booking': typeof DemoBookingRoute
-  '/demo/mcp-todos': typeof DemoMcpTodosRoute
   '/s/$uuid': typeof SUuidRoute
   '/training/curriculum': typeof TrainingCurriculumRoute
+  '/admin/': typeof AdminIndexRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
-  '/demo/api/mcp-todos': typeof DemoApiMcpTodosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/achievements'
+    | '/auth'
     | '/contact'
     | '/events'
     | '/join'
-    | '/mcp'
     | '/resources'
     | '/social'
     | '/store'
+    | '/admin/setup'
     | '/demo/better-auth'
     | '/demo/booking'
-    | '/demo/mcp-todos'
     | '/s/$uuid'
     | '/training/curriculum'
+    | '/admin/'
     | '/api/auth/$'
-    | '/demo/api/mcp-todos'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/achievements'
+    | '/auth'
     | '/contact'
     | '/events'
     | '/join'
-    | '/mcp'
     | '/resources'
     | '/social'
     | '/store'
+    | '/admin/setup'
     | '/demo/better-auth'
     | '/demo/booking'
-    | '/demo/mcp-todos'
     | '/s/$uuid'
     | '/training/curriculum'
+    | '/admin'
     | '/api/auth/$'
-    | '/demo/api/mcp-todos'
   id:
     | '__root__'
     | '/'
     | '/achievements'
+    | '/auth'
     | '/contact'
     | '/events'
     | '/join'
-    | '/mcp'
     | '/resources'
     | '/social'
     | '/store'
+    | '/admin/setup'
     | '/demo/better-auth'
     | '/demo/booking'
-    | '/demo/mcp-todos'
     | '/s/$uuid'
     | '/training/curriculum'
+    | '/admin/'
     | '/api/auth/$'
-    | '/demo/api/mcp-todos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AchievementsRoute: typeof AchievementsRoute
+  AuthRoute: typeof AuthRoute
   ContactRoute: typeof ContactRoute
   EventsRoute: typeof EventsRoute
   JoinRoute: typeof JoinRoute
-  McpRoute: typeof McpRoute
   ResourcesRoute: typeof ResourcesRoute
   SocialRoute: typeof SocialRoute
   StoreRoute: typeof StoreRoute
+  AdminSetupRoute: typeof AdminSetupRoute
   DemoBetterAuthRoute: typeof DemoBetterAuthRoute
   DemoBookingRoute: typeof DemoBookingRoute
-  DemoMcpTodosRoute: typeof DemoMcpTodosRoute
   SUuidRoute: typeof SUuidRoute
   TrainingCurriculumRoute: typeof TrainingCurriculumRoute
+  AdminIndexRoute: typeof AdminIndexRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
-  DemoApiMcpTodosRoute: typeof DemoApiMcpTodosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -261,13 +261,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResourcesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/join': {
       id: '/join'
       path: '/join'
@@ -289,6 +282,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContactRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/achievements': {
       id: '/achievements'
       path: '/achievements'
@@ -301,6 +301,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/training/curriculum': {
@@ -317,13 +324,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SUuidRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/mcp-todos': {
-      id: '/demo/mcp-todos'
-      path: '/demo/mcp-todos'
-      fullPath: '/demo/mcp-todos'
-      preLoaderRoute: typeof DemoMcpTodosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/demo/booking': {
       id: '/demo/booking'
       path: '/demo/booking'
@@ -338,11 +338,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoBetterAuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/api/mcp-todos': {
-      id: '/demo/api/mcp-todos'
-      path: '/demo/api/mcp-todos'
-      fullPath: '/demo/api/mcp-todos'
-      preLoaderRoute: typeof DemoApiMcpTodosRouteImport
+    '/admin/setup': {
+      id: '/admin/setup'
+      path: '/admin/setup'
+      fullPath: '/admin/setup'
+      preLoaderRoute: typeof AdminSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/$': {
@@ -358,20 +358,20 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AchievementsRoute: AchievementsRoute,
+  AuthRoute: AuthRoute,
   ContactRoute: ContactRoute,
   EventsRoute: EventsRoute,
   JoinRoute: JoinRoute,
-  McpRoute: McpRoute,
   ResourcesRoute: ResourcesRoute,
   SocialRoute: SocialRoute,
   StoreRoute: StoreRoute,
+  AdminSetupRoute: AdminSetupRoute,
   DemoBetterAuthRoute: DemoBetterAuthRoute,
   DemoBookingRoute: DemoBookingRoute,
-  DemoMcpTodosRoute: DemoMcpTodosRoute,
   SUuidRoute: SUuidRoute,
   TrainingCurriculumRoute: TrainingCurriculumRoute,
+  AdminIndexRoute: AdminIndexRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
-  DemoApiMcpTodosRoute: DemoApiMcpTodosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
