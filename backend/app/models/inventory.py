@@ -39,6 +39,20 @@ class SlotInstance(SlotInstanceBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
 
+class InventoryCapacityBase(SQLModel):
+    module_id: uuid.UUID
+    trainer_id: uuid.UUID
+    day_of_week: int
+    start_time: time
+    end_time: time
+    max_capacity: int
+    current_enrollment: int = 0
+    is_active: bool = True
+
+class InventoryCapacity(InventoryCapacityBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
+
 class InventoryRead(SQLModel):
     """
     Unified view for the calendar frontend.
