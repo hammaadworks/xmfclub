@@ -39,7 +39,7 @@ export default function BetterAuthHeader() {
 
   return (
     <Link
-      to="/demo/better-auth"
+      to="/auth"
       className="px-6 py-2.5 text-xs font-black tracking-[0.2em] bg-primary text-white rounded-xl hover:scale-105 transition-transform uppercase inline-flex items-center shadow-lg shadow-primary/20"
     >
       Join Club

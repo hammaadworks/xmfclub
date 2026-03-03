@@ -1,71 +1,43 @@
-# XMFCLUB – Force Multiplied 🥋🔥
+# xmfclub 🥋⚡️
 
-XMFCLUB is a high-performance training platform and community built for the modern warrior. It combines the heritage of **Extreme Martial Arts (XMF)** with elite fitness methodologies like Calisthenics and MMA to build disciplined, versatile, and high-performance individuals.
-
-## 🚀 The Vision
-XMFCLUB is not just a gym; it's a modular ecosystem. We've moved away from the "flat membership" model to an **Alacarte Training System**, allowing athletes to choose specific modules—from Bo-Staff mastery to explosive Calisthenics—and pay only for what they master.
-
-## ✨ Key Features
-- **Unified Landing Page:** Mission, Founder Bio, and FAQ integrated into a high-energy, conversion-focused home page.
-- **Modular Curriculum:** Explore training modules designed for all levels, from beginners to elite athletes.
-- **Founder-Led:** Mentorship from **Farhan Khan XMF**, 3rd Dan Black Belt and national instructor.
-- **Elite Tech Stack:** Powered by TanStack Start for lightning-fast, type-safe full-stack performance.
-
-## 🛠 Tech Stack
-- **Framework:** [TanStack Start](https://tanstack.com/router/latest/docs/framework/react/start/overview) (Full-stack React with SSR)
-- **Routing:** [TanStack Router](https://tanstack.com/router) (Type-safe file-based routing)
-- **Styling:** [Tailwind CSS v4](https://tailwindcss.com/) (Modern, high-performance styling)
-- **Auth:** [Better Auth](https://www.better-auth.com/) (Secure, developer-friendly authentication)
-- **Icons:** [Lucide React](https://lucide.dev/) (Clean, consistent iconography)
-
-## 📁 Project Structure
-```text
-src/
-├── routes/          # File-based routing (Index, Training, Store, etc.)
-├── components/      # Shared UI components (Header, Cards)
-├── lib/             # Core logic (Auth clients, Utility functions)
-├── styles.css       # Global design system & custom animations
-└── utils/           # Helper handlers (MCP, API utilities)
-```
-
-## 🛠 Getting Started
-
-### 1. Install Dependencies
-```bash
-npm install
-```
-
-### 2. Environment Setup
-Create a `.env.local` file:
-```bash
-# Generate a secret key
-npx -y @better-auth/cli secret
-```
-Then add it to your `.env.local`:
-```env
-BETTER_AUTH_URL=http://localhost:3000
-BETTER_AUTH_SECRET=your_generated_secret
-```
-
-### 3. Run Development Server
-```bash
-npm run dev
-```
-*Note: If port 3000 is busy, Vite will automatically try 3001.*
-
-## 🧪 Testing & Quality
-```bash
-npm run test    # Run Vitest
-npm run lint    # Run ESLint
-npm run check   # Prettier + ESLint fix
-```
-
-## 🏗 Build for Production
-```bash
-npm run build
-npm run preview
-```
+**xmfclub** is a high-energy, futuristic fitness and Taekwondo platform designed for modular training and business scalability.
 
 ---
-**BUILT FOR THE ELITE.**  
-© 2026 XMFCLUB. All rights reserved.
+
+## 📂 Project Structure
+
+- **`/backend`**: FastAPI (Python) server handling business logic, RBAC, inventory, and payments.
+- **`/frontend`**: TanStack Start (React + TypeScript) client-side application with a "Bento Grid" design.
+- **`/docs`**: Centralized documentation for technical review and business strategy.
+
+---
+
+## 📖 Documentation Index (The Source of Truth)
+
+For a deep technical or business review, please refer to the following:
+
+1.  **[System Purpose & Business Logic](docs/SYSTEMS.md)**: The "Why" and "What" of the project—Student Management, Payments, and Revenue scaling.
+2.  **[Technical Architecture](docs/ARCHITECTURE.md)**: High-level design, decoupled request flows, and security models.
+3.  **[Agile Roadmap (EPICS)](docs/EPICS.md)**: Live tracking of development progress and feature stories.
+4.  **[Design System & Brand](docs/DESIGN_SYSTEM.md)**: Visual language, typography, and UI patterns (Grid-to-Reels).
+
+---
+
+## 🚀 Quick Start
+
+The project uses a `Makefile` for unified management.
+
+### Full Development Environment
+```bash
+make setup  # Install all dependencies
+make dev    # Start both Frontend and Backend
+```
+
+### Individual Components
+- **Backend Only**: `make dev-backend`
+- **Frontend Only**: `make dev-frontend`
+- **Build Frontend**: `make build-frontend`
+
+
+---
+*Built with ❤️ for Extreme Martial Arts & Fitness.*

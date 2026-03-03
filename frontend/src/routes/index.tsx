@@ -78,10 +78,10 @@ function LandingPage() {
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full max-w-lg">
             <Link 
-              to="/training/curriculum"
+              to="/join"
               className="w-full sm:flex-1 px-10 py-5 bg-primary text-white font-black tracking-widest text-xs rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-2xl shadow-primary/30 uppercase"
             >
-              Build Your Plan <ArrowRight className="w-4 h-4" />
+              Join the Club <ArrowRight className="w-4 h-4" />
             </Link>
             <button className="w-full sm:w-auto px-10 py-5 bg-white/5 text-white font-black tracking-widest text-xs rounded-2xl border border-white/10 hover:bg-white/10 transition-all uppercase flex items-center justify-center gap-3">
               <Play className="w-4 h-4 fill-current" /> Watch Intro
@@ -344,12 +344,12 @@ function LandingPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-            <a 
-              href="https://wa.me/your-whatsapp-number" 
+            <Link 
+              to="/join"
               className="w-full sm:w-auto px-12 py-6 bg-white text-primary font-black tracking-widest text-sm rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-2xl shadow-black/20 uppercase"
             >
               <MessageSquare className="w-5 h-5 fill-current" /> Join the Club
-            </a>
+            </Link>
             <Link 
               to="/contact"
               className="w-full sm:w-auto px-12 py-6 bg-black/10 text-white font-black tracking-widest text-sm rounded-2xl border border-white/20 hover:bg-black/20 transition-all uppercase flex items-center justify-center gap-3"
