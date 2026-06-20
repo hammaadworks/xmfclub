@@ -8,19 +8,19 @@ export const Route = createFileRoute('/events')({
 const events = [
   {
     title: "National Bo-Staff Workshop",
-    date: "March 15, 2024",
+    date: "March 15, 2026",
     location: "Main HQ / Bangalore",
     type: "Workshop",
     status: "Upcoming",
-    image: "https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=1000&auto=format&fit=crop"
+    image: "https://images.unsplash.com/photo-1512928735464-5cc10b1eb091?q=80&w=1000&auto=format&fit=crop"
   },
   {
-    title: "Calisthenics Meetup 2024",
-    date: "April 05, 2024",
+    title: "Calisthenics Meetup 2026",
+    date: "April 05, 2026",
     location: "Outdoor Arena",
     type: "Community",
     status: "Registration Open",
-    image: "https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1000&auto=format&fit=crop"
+    image: "https://images.unsplash.com/photo-1576678927484-cc907957088c?q=80&w=1000&auto=format&fit=crop"
   }
 ];
 
@@ -36,6 +36,21 @@ function EventsPage() {
             Join our elite workshops, competitions, and seminars. Be part of the legacy.
           </p>
         </header>
+
+        <div className="mb-12 p-6 rounded-2xl bg-primary/10 border border-primary/20 flex flex-col sm:flex-row items-center gap-6 justify-between text-center sm:text-left">
+          <div>
+            <h3 className="text-lg font-black uppercase tracking-widest text-primary mb-1">XMFCLUB Members Only</h3>
+            <p className="text-sm text-muted-foreground font-medium">
+              XMF Events are strictly open to active XMFCLUB members only. Gain access to exclusive belt-level tournaments, specialized workshops, and live leaderboards.
+            </p>
+          </div>
+          <button 
+            onClick={() => window.dispatchEvent(new CustomEvent('showContactModal'))}
+            className="whitespace-nowrap px-6 py-3 bg-primary text-white font-black tracking-widest text-xs rounded-xl uppercase hover:scale-105 transition-transform shadow-lg shadow-primary/20"
+          >
+            Become a Member
+          </button>
+        </div>
 
         <div className="space-y-8">
           {events.map((event, i) => (
@@ -80,6 +95,15 @@ function EventsPage() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Coming Soon Callout */}
+        <div className="mt-20 p-8 rounded-3xl border border-white/10 bg-white/5 text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10 opacity-50" />
+          <h3 className="text-xl font-black uppercase tracking-widest text-white mb-2 relative z-10">More Epic Events Coming Soon</h3>
+          <p className="text-muted-foreground text-sm font-medium max-w-xl mx-auto relative z-10">
+            We are scheduling a massive lineup of seminars, grading days, and inter-club tournaments for the upcoming quarter. Stay tuned for the official calendar drop!
+          </p>
         </div>
       </div>
     </div>

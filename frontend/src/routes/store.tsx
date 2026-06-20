@@ -32,7 +32,7 @@ const products = [
     category: "Equipment",
     type: "Merch",
     description: "Competition grade lightweight staff.",
-    image: "https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=1000&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1512928735464-5cc10b1eb091?q=80&w=1000&auto=format&fit=crop",
     rating: 4.9,
     reviews: 124
   },
@@ -43,7 +43,7 @@ const products = [
     category: "Calisthenics",
     type: "Affiliate",
     description: "Heavy duty birch wood rings.",
-    image: "https://images.unsplash.com/photo-1590239068512-63274021200f?q=80&w=1000&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1677417281771-2a861ce553ff?q=80&w=1000&auto=format&fit=crop",
     rating: 4.8,
     reviews: 89
   },
@@ -65,7 +65,7 @@ const products = [
     category: "Equipment",
     type: "Affiliate",
     description: "Superior grip for bar work.",
-    image: "https://images.unsplash.com/photo-1583473848882-f9a5bc7fd2ee?q=80&w=1000&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1770734265410-0c686b750f0f?q=80&w=1000&auto=format&fit=crop",
     rating: 4.7,
     reviews: 210
   }
@@ -143,7 +143,7 @@ function StorePage() {
           {/* Featured Banner (Zepto Style) */}
           <section className="relative h-64 md:h-80 rounded-[2.5rem] overflow-hidden group cursor-pointer border border-white/5">
             <img 
-              src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1500&auto=format&fit=crop" 
+              src="https://images.unsplash.com/photo-1603210185246-b1662978ea37?q=80&w=1500&auto=format&fit=crop" 
               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 opacity-60"
               alt="Promo"
             />
@@ -221,6 +221,15 @@ function StorePage() {
           </section>
 
         </main>
+      </div>
+
+      {/* Coming Soon Callout */}
+      <div className="mt-20 p-8 rounded-3xl border border-white/10 bg-white/5 text-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10 opacity-50" />
+        <h3 className="text-xl font-black uppercase tracking-widest text-primary mb-2 relative z-10">XMFCLUB Store V2.0 Coming Soon</h3>
+        <p className="text-muted-foreground text-sm font-medium max-w-xl mx-auto relative z-10">
+          We are working behind the scenes with premium manufacturers to bring you high-quality official gear, supplements, and training equipment. The full interactive store experience will be unlocked shortly!
+        </p>
       </div>
     </div>
   )

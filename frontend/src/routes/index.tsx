@@ -51,15 +51,6 @@ function LandingPage() {
       {/* 1. TRUST: Hero Section with Social Proof */}
       <section className="relative pt-40 pb-24 px-6 overflow-hidden border-b border-white/5">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-primary/10 blur-[140px] rounded-full -z-10" />
-        
-        {/* Visual Filler: Background Image Overlay */}
-        <div className="absolute inset-0 opacity-10 -z-20 pointer-events-none">
-          <img 
-            src="https://images.unsplash.com/photo-1552674605-db6ffd4facb5?q=80&w=2000&auto=format&fit=crop" 
-            className="w-full h-full object-cover" 
-            alt="Training Background"
-          />
-        </div>
 
         <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-black tracking-[0.3em] text-primary mb-10 animate-fade-in uppercase">
@@ -78,14 +69,19 @@ function LandingPage() {
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full max-w-lg">
             <Link 
-              to="/join"
-              className="w-full sm:flex-1 px-10 py-5 bg-primary text-white font-black tracking-widest text-xs rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-2xl shadow-primary/30 uppercase"
+              to="/login"
+              className="w-full sm:flex-1 px-10 py-5 bg-primary text-white font-black tracking-widest text-xs rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-2xl shadow-primary/30 uppercase cursor-pointer"
             >
               Join the Club <ArrowRight className="w-4 h-4" />
             </Link>
-            <button className="w-full sm:w-auto px-10 py-5 bg-white/5 text-white font-black tracking-widest text-xs rounded-2xl border border-white/10 hover:bg-white/10 transition-all uppercase flex items-center justify-center gap-3">
+            <a 
+              href="https://youtu.be/pw2vKNpz7TE"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto px-10 py-5 bg-white/5 text-white font-black tracking-widest text-xs rounded-2xl border border-white/10 hover:bg-white/10 transition-all uppercase flex items-center justify-center gap-3"
+            >
               <Play className="w-4 h-4 fill-current" /> Watch Intro
-            </button>
+            </a>
           </div>
 
           {/* Quick Trust Stats */}
@@ -115,7 +111,7 @@ function LandingPage() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="relative aspect-square rounded-[3rem] overflow-hidden border border-primary/20 shadow-2xl group">
              <img 
-              src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1000&auto=format&fit=crop" 
+              src="https://images.unsplash.com/photo-1656653121475-e33829581294?q=80&w=1000&auto=format&fit=crop" 
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-80" 
               alt="Curriculum Preview"
              />
@@ -173,7 +169,7 @@ function LandingPage() {
           {/* Hall of Fame Tile */}
           <Link to="/achievements" className="md:col-span-8 group glass-card relative overflow-hidden border-white/5 hover:border-primary/50 transition-all cursor-pointer">
             <img 
-              src="https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=1200&auto=format&fit=crop" 
+              src="https://images.unsplash.com/photo-1706374503312-7a4a4c030d2d?q=80&w=1200&auto=format&fit=crop" 
               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-40" 
               alt="Achievements"
             />
@@ -198,17 +194,28 @@ function LandingPage() {
 
           {/* Events Tile */}
           <Link to="/events" className="md:col-span-6 group glass-card relative overflow-hidden border-white/5 hover:border-primary/50 transition-all cursor-pointer">
-             <div className="absolute inset-0 p-10 flex flex-col justify-end bg-primary/20 group-hover:bg-primary/30 transition-colors">
-                <h4 className="text-3xl font-black text-white uppercase italic mb-2">Events</h4>
-                <p className="text-xs font-bold text-white/70 uppercase tracking-widest">Workshops & Seminars</p>
+             <img 
+               src="https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=1000&auto=format&fit=crop" 
+               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-40 mix-blend-overlay" 
+               alt="Events"
+             />
+             <div className="absolute inset-0 bg-primary/20 mix-blend-multiply" />
+             <div className="absolute inset-0 p-10 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-primary/80 transition-colors">
+                <h4 className="text-3xl font-black text-white uppercase italic mb-2 relative z-10">Events</h4>
+                <p className="text-xs font-bold text-white/80 uppercase tracking-widest relative z-10">Workshops & Seminars</p>
              </div>
           </Link>
 
           {/* Connect Tile */}
-          <Link to="/social" className="md:col-span-6 group glass-card relative overflow-hidden border-white/5 hover:border-primary/50 transition-all cursor-pointer">
-             <div className="absolute inset-0 p-10 flex flex-col justify-end bg-white/5 group-hover:bg-white/10 transition-colors">
-                <h4 className="text-3xl font-black text-white uppercase italic mb-2">Connect</h4>
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Join 10k+ Athletes online</p>
+          <Link to="/connect" className="md:col-span-6 group glass-card relative overflow-hidden border-white/5 hover:border-primary/50 transition-all cursor-pointer">
+             <img 
+               src="https://images.unsplash.com/photo-1555597408-26bc8e548a46?q=80&w=1000&auto=format&fit=crop" 
+               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-40" 
+               alt="Connect"
+             />
+             <div className="absolute inset-0 p-10 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent group-hover:from-primary/20 transition-colors">
+                <h4 className="text-3xl font-black text-white uppercase italic mb-2 relative z-10">Connect</h4>
+                <p className="text-xs font-bold text-gray-300 uppercase tracking-widest relative z-10">Join 10k+ Athletes online</p>
              </div>
           </Link>
         </div>
@@ -249,8 +256,8 @@ function LandingPage() {
           <div className="relative">
             <div className="aspect-[4/5] rounded-[3rem] overflow-hidden border border-primary/20 shadow-2xl relative z-10">
               <img 
-                src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=1000&auto=format&fit=crop" 
-                className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-700" 
+                src="/farhan.jpeg" 
+                className="w-full h-full object-cover transition-all duration-700 object-top" 
                 alt="Farhan Khan XMF"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
@@ -316,6 +323,14 @@ function LandingPage() {
             answer="Unlike traditional gyms with flat monthly fees, our Alacarte system lets you choose exactly what you want to learn. You only pay for the specific modules (like Bo-Staff, Calisthenics, or MMA strikes) that you want to master." 
           />
           <FAQItem 
+            question="How does the member login work?" 
+            answer="We've completely eliminated passwords. Active members log in seamlessly using their Member ID and a personalized swipe pattern (just like unlocking your phone), ensuring fast and secure access." 
+          />
+          <FAQItem 
+            question="Will there be content specific to my rank?" 
+            answer="Yes! Our system is continuously evolving. Very soon, events and digital vault resources will be tailored specifically to your Belt Level. You will unlock exclusive training breakdowns and elite tournaments as you rank up." 
+          />
+          <FAQItem 
             question="Do I need prior martial arts experience?" 
             answer="Not at all. Most of our members start with zero experience. Our instructors break down every movement into fundamental steps, ensuring you build a solid foundation before advancing." 
           />
@@ -345,13 +360,13 @@ function LandingPage() {
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <Link 
-              to="/join"
-              className="w-full sm:w-auto px-12 py-6 bg-white text-primary font-black tracking-widest text-sm rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-2xl shadow-black/20 uppercase"
+              to="/login"
+              className="w-full sm:w-auto px-12 py-6 bg-white text-primary font-black tracking-widest text-sm rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-2xl shadow-black/20 uppercase cursor-pointer"
             >
               <MessageSquare className="w-5 h-5 fill-current" /> Join the Club
             </Link>
             <Link 
-              to="/contact"
+              to="/connect"
               className="w-full sm:w-auto px-12 py-6 bg-black/10 text-white font-black tracking-widest text-sm rounded-2xl border border-white/20 hover:bg-black/20 transition-all uppercase flex items-center justify-center gap-3"
             >
               <Phone className="w-5 h-5" /> Contact Us
@@ -369,9 +384,9 @@ function LandingPage() {
       {/* Footer */}
       <footer className="py-12 px-6 text-center">
         <div className="flex justify-center gap-8 mb-8">
-          <Link to="/about" className="text-[10px] font-black tracking-widest uppercase text-muted-foreground hover:text-primary transition-colors">Mission</Link>
-          <Link to="/training/curriculum" className="text-[10px] font-black tracking-widest uppercase text-muted-foreground hover:text-primary transition-colors">Training</Link>
-          <Link to="/contact" className="text-[10px] font-black tracking-widest uppercase text-muted-foreground hover:text-primary transition-colors">Contact</Link>
+          <Link to="/training" className="text-[10px] font-black tracking-widest uppercase text-muted-foreground hover:text-primary transition-colors">Training</Link>
+          <Link to="/events" className="text-[10px] font-black tracking-widest uppercase text-muted-foreground hover:text-primary transition-colors">Events</Link>
+          <Link to="/connect" className="text-[10px] font-black tracking-widest uppercase text-muted-foreground hover:text-primary transition-colors">Connect</Link>
         </div>
         <p className="text-muted-foreground text-[10px] font-black tracking-[0.3em] uppercase">
           &copy; {new Date().getFullYear()} XMFCLUB. BUILT FOR THE ELITE.

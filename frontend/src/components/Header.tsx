@@ -1,5 +1,4 @@
 import { Link } from '@tanstack/react-router'
-import BetterAuthHeader from '../integrations/better-auth/header-user.tsx'
 import { useState } from 'react'
 import { Home, Menu, X, Dumbbell, ShieldCheck, LayoutGrid, Calendar, Trophy, ShoppingBag, Zap, MessageSquare, BookOpen } from 'lucide-react'
 
@@ -24,16 +23,16 @@ export default function Header() {
 
         <nav className="hidden lg:flex items-center gap-6">
           <Link to="/" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Home</Link>
-          <Link to="/training/curriculum" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Training</Link>
+          <Link to="/training" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Training</Link>
           <Link to="/events" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Events</Link>
-          <Link to="/achievements" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Hall of Fame</Link>
-          <Link to="/resources" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Vault</Link>
+          <Link to="/resources" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Resources</Link>
           <Link to="/store" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Store</Link>
-          <Link to="/contact" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Contact</Link>
+          <Link to="/hall-of-fame" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Hall of Fame</Link>
+          <Link to="/connect" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Connect</Link>
         </nav>
 
         <div className="flex items-center gap-4">
-          <BetterAuthHeader />
+          <Link to="/login" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase bg-primary text-primary-foreground px-4 py-2 rounded-md">Login</Link>
         </div>
       </header>
 
@@ -72,9 +71,9 @@ export default function Header() {
             onClick={() => setIsOpen(false)} 
           />
           <SidebarLink 
-            to="/training/curriculum" 
+            to="/training" 
             icon={<LayoutGrid size={20} />} 
-            label="Curriculum" 
+            label="Training" 
             onClick={() => setIsOpen(false)} 
           />
           <SidebarLink 
@@ -84,15 +83,9 @@ export default function Header() {
             onClick={() => setIsOpen(false)} 
           />
           <SidebarLink 
-            to="/achievements" 
-            icon={<Trophy size={20} />} 
-            label="Hall of Fame" 
-            onClick={() => setIsOpen(false)} 
-          />
-          <SidebarLink 
             to="/resources" 
             icon={<BookOpen size={20} />} 
-            label="Digital Vault" 
+            label="Resources" 
             onClick={() => setIsOpen(false)} 
           />
           <SidebarLink 
@@ -102,36 +95,21 @@ export default function Header() {
             onClick={() => setIsOpen(false)} 
           />
           <SidebarLink 
-            to="/social" 
-            icon={<Zap size={20} />} 
-            label="Connect" 
+            to="/hall-of-fame" 
+            icon={<Trophy size={20} />} 
+            label="Hall of Fame" 
             onClick={() => setIsOpen(false)} 
           />
           <SidebarLink 
-            to="/contact" 
+            to="/connect" 
             icon={<MessageSquare size={20} />} 
-            label="Contact" 
-            onClick={() => setIsOpen(false)} 
-          />
-          
-          <div className="pt-6 pb-2">
-            <span className="text-[10px] font-black tracking-[0.2em] text-muted-foreground uppercase px-4">Development</span>
-          </div>
-          
-          <SidebarLink 
-            to="/demo/better-auth" 
-            label="Auth Demo" 
-            onClick={() => setIsOpen(false)} 
-          />
-          <SidebarLink 
-            to="/demo/mcp-todos" 
-            label="MCP Demo" 
+            label="Connect" 
             onClick={() => setIsOpen(false)} 
           />
         </nav>
 
         <div className="p-6 border-t border-white/5 bg-white/2 flex flex-col gap-4">
-          <BetterAuthHeader />
+          <Link to="/login" onClick={() => setIsOpen(false)} className="w-full bg-primary text-primary-foreground font-bold tracking-widest uppercase text-center py-3 rounded-lg hover:bg-primary/90 transition-colors">Login / Member Portal</Link>
         </div>
       </aside>
     </>

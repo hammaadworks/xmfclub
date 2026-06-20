@@ -156,7 +156,7 @@ function AdminDashboard() {
       setEditingModule(null)
     } catch (error) {
       console.error("Failed to save module", error)
-      alert("Failed to save module. Check console.")
+      window.dispatchEvent(new CustomEvent('showContactModal'))
     } finally {
       setSavingModule(false)
     }
@@ -165,7 +165,7 @@ function AdminDashboard() {
   const handleSlotSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!slotForm.module_id || !slotForm.trainer_id) {
-      alert("Please select a module and a trainer.")
+      window.dispatchEvent(new CustomEvent('showContactModal'))
       return
     }
     setSavingSlot(true)
@@ -192,7 +192,7 @@ function AdminDashboard() {
       setEditingSlot(null)
     } catch (error) {
       console.error("Failed to save slot", error)
-      alert("Failed to save slot. Check console.")
+      window.dispatchEvent(new CustomEvent('showContactModal'))
     } finally {
       setSavingSlot(false)
     }

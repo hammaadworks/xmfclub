@@ -3,6 +3,7 @@ import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 import { TanStackDevtools } from '@tanstack/react-devtools'
 
 import Header from '../components/Header'
+import { ContactModal } from '../components/ContactModal'
 
 import appCss from '../styles.css?url'
 
@@ -21,6 +22,10 @@ export const Route = createRootRoute({
       },
     ],
     links: [
+      {
+        rel: 'icon',
+        href: '/favicon.svg',
+      },
       {
         rel: 'stylesheet',
         href: appCss,
@@ -45,7 +50,7 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" className="dark">
       <head>
         <HeadContent />
       </head>
@@ -64,6 +69,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           ]}
         />
         <Scripts />
+        <ContactModal />
       </body>
     </html>
   )

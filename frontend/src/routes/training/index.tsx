@@ -17,9 +17,8 @@ import {
   Loader2
 } from 'lucide-react'
 import { fetchApi } from '../../lib/api'
-import { authClient } from '../../lib/auth-client'
 
-export const Route = createFileRoute('/training/curriculum')({
+export const Route = createFileRoute('/training/')({
   component: CurriculumPage,
 })
 
@@ -53,7 +52,6 @@ const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 function CurriculumPage() {
   const navigate = useNavigate();
-  const { data: session } = authClient.useSession();
   const [modules, setModules] = useState<Module[]>([]);
   const [inventory, setInventory] = useState<InventorySlot[]>([]);
   const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].id);
@@ -65,12 +63,22 @@ function CurriculumPage() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [modulesData, inventoryData] = await Promise.all([
-          fetchApi('/modules'),
-          fetchApi('/inventory')
+        // Simulating data since backend is not fully connected yet
+        setModules([
+          { id: 'm1', name: 'Handstand Mastery', category: 'calisthenics', description: 'Perfect your handstand from scratch to one-arm.', price: 1500 },
+          { id: 'm2', name: 'Muscle-Up Protocol', category: 'calisthenics', description: 'Strict rings and bar muscle-up training.', price: 2000 },
+          { id: 'm3', name: 'Muay Thai Fundamentals', category: 'martial-arts', description: 'Striking, clinching, and sparring basics.', price: 2500 },
+          { id: 'm4', name: 'Judo Throws', category: 'martial-arts', description: 'Learn to throw with perfect technique.', price: 2000 },
+          { id: 'm5', name: 'Heavy Bag Workout', category: 'boxing', description: 'Power and endurance conditioning.', price: 1500 }
         ]);
-        setModules(modulesData);
-        setInventory(inventoryData);
+        setInventory([
+          { id: 'i1', module_id: 'm1', trainer_id: 't1', day_of_week: 1, start_time: '18:00', end_time: '19:00', max_capacity: 10, current_enrollment: 5, is_full: false },
+          { id: 'i2', module_id: 'm1', trainer_id: 't1', day_of_week: 3, start_time: '19:00', end_time: '20:00', max_capacity: 10, current_enrollment: 10, is_full: true },
+          { id: 'i3', module_id: 'm2', trainer_id: 't2', day_of_week: 2, start_time: '17:00', end_time: '18:00', max_capacity: 5, current_enrollment: 2, is_full: false },
+          { id: 'i4', module_id: 'm3', trainer_id: 't3', day_of_week: 4, start_time: '18:00', end_time: '19:30', max_capacity: 15, current_enrollment: 12, is_full: false },
+          { id: 'i5', module_id: 'm4', trainer_id: 't4', day_of_week: 5, start_time: '19:00', end_time: '20:30', max_capacity: 12, current_enrollment: 12, is_full: true },
+          { id: 'i6', module_id: 'm5', trainer_id: 't5', day_of_week: 6, start_time: '10:00', end_time: '11:00', max_capacity: 20, current_enrollment: 5, is_full: false },
+        ]);
       } catch (error) {
         console.error('Failed to load curriculum data:', error);
       } finally {
@@ -91,67 +99,10 @@ function CurriculumPage() {
   }, []);
 
   const handleEnroll = async () => {
-    if (!session) {
-      // Redirect to auth and then back here
-      navigate({ 
-        to: '/auth', 
-        search: { 
-          redirect: window.location.pathname,
-          mode: 'signup'
-        } 
-      });
-      return;
-    }
-
     if (selectedModules.length === 0) return;
-
-    setEnrolling(true);
-    try {
-      const items = selectedModules.map(m => ({
-        module_id: m.id,
-        slot_id: selectedSlots[m.id]?.id
-      }));
-
-      // Validate all selected modules have slots
-      if (items.some(i => !i.slot_id)) {
-        alert('Please select a time slot for all selected modules.');
-        setEnrolling(false);
-        return;
-      }
-
-      const order = await fetchApi('/payments/create-multi-order', {
-        method: 'POST',
-        body: JSON.stringify({ items })
-      });
-
-      const options = {
-        key: order.key_id,
-        amount: order.amount,
-        currency: order.currency,
-        name: 'XMFCLUB',
-        description: 'Training Curriculum Enrollment',
-        order_id: order.order_id,
-        handler: function (response: any) {
-          // Success! Redirect to student profile
-          navigate({ to: `/s/${session.user.id}` });
-        },
-        prefill: {
-          name: session.user.name,
-          email: session.user.email,
-        },
-        theme: {
-          color: '#F97316',
-        },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
-    } catch (error) {
-      console.error('Enrollment failed:', error);
-      alert('Enrollment failed. Please try again.');
-    } finally {
-      setEnrolling(false);
-    }
+    
+    // Feature not fully implemented for MVP demo, show Contact Modal
+    window.dispatchEvent(new CustomEvent('showContactModal'));
   };
 
   const toggleModule = (module: Module) => {
@@ -399,6 +350,15 @@ function CurriculumPage() {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Coming Soon Callout */}
+        <div className="mt-20 p-8 rounded-3xl border border-white/10 bg-white/5 text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10 opacity-50" />
+          <h3 className="text-xl font-black uppercase tracking-widest text-primary mb-2 relative z-10">Advanced A La Carte Subscriptions Coming Soon</h3>
+          <p className="text-muted-foreground text-sm font-medium max-w-xl mx-auto relative z-10">
+            We are fine-tuning our billing engine to support custom multi-module memberships. You will soon be able to build your perfect schedule directly from the app!
+          </p>
         </div>
       </div>
     </div>

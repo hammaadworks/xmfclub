@@ -10,30 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StoreRouteImport } from './routes/store'
-import { Route as SocialRouteImport } from './routes/social'
 import { Route as ResourcesRouteImport } from './routes/resources'
-import { Route as JoinRouteImport } from './routes/join'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as HallOfFameRouteImport } from './routes/hall-of-fame'
 import { Route as EventsRouteImport } from './routes/events'
-import { Route as ContactRouteImport } from './routes/contact'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AchievementsRouteImport } from './routes/achievements'
+import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TrainingIndexRouteImport } from './routes/training/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as TrainingCurriculumRouteImport } from './routes/training/curriculum'
 import { Route as SUuidRouteImport } from './routes/s/$uuid'
 import { Route as DemoBookingRouteImport } from './routes/demo/booking'
-import { Route as DemoBetterAuthRouteImport } from './routes/demo/better-auth'
 import { Route as AdminSetupRouteImport } from './routes/admin/setup'
-import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 
 const StoreRoute = StoreRouteImport.update({
   id: '/store',
   path: '/store',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SocialRoute = SocialRouteImport.update({
-  id: '/social',
-  path: '/social',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResourcesRoute = ResourcesRouteImport.update({
@@ -41,9 +32,14 @@ const ResourcesRoute = ResourcesRouteImport.update({
   path: '/resources',
   getParentRoute: () => rootRouteImport,
 } as any)
-const JoinRoute = JoinRouteImport.update({
-  id: '/join',
-  path: '/join',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HallOfFameRoute = HallOfFameRouteImport.update({
+  id: '/hall-of-fame',
+  path: '/hall-of-fame',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EventsRoute = EventsRouteImport.update({
@@ -51,19 +47,9 @@ const EventsRoute = EventsRouteImport.update({
   path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ContactRoute = ContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AchievementsRoute = AchievementsRouteImport.update({
-  id: '/achievements',
-  path: '/achievements',
+const ConnectRoute = ConnectRouteImport.update({
+  id: '/connect',
+  path: '/connect',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -71,14 +57,14 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TrainingIndexRoute = TrainingIndexRouteImport.update({
+  id: '/training/',
+  path: '/training/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/admin/',
   path: '/admin/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TrainingCurriculumRoute = TrainingCurriculumRouteImport.update({
-  id: '/training/curriculum',
-  path: '/training/curriculum',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SUuidRoute = SUuidRouteImport.update({
@@ -91,151 +77,113 @@ const DemoBookingRoute = DemoBookingRouteImport.update({
   path: '/demo/booking',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoBetterAuthRoute = DemoBetterAuthRouteImport.update({
-  id: '/demo/better-auth',
-  path: '/demo/better-auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AdminSetupRoute = AdminSetupRouteImport.update({
   id: '/admin/setup',
   path: '/admin/setup',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
-  id: '/api/auth/$',
-  path: '/api/auth/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/achievements': typeof AchievementsRoute
-  '/auth': typeof AuthRoute
-  '/contact': typeof ContactRoute
+  '/connect': typeof ConnectRoute
   '/events': typeof EventsRoute
-  '/join': typeof JoinRoute
+  '/hall-of-fame': typeof HallOfFameRoute
+  '/login': typeof LoginRoute
   '/resources': typeof ResourcesRoute
-  '/social': typeof SocialRoute
   '/store': typeof StoreRoute
   '/admin/setup': typeof AdminSetupRoute
-  '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/booking': typeof DemoBookingRoute
   '/s/$uuid': typeof SUuidRoute
-  '/training/curriculum': typeof TrainingCurriculumRoute
   '/admin/': typeof AdminIndexRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/training/': typeof TrainingIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/achievements': typeof AchievementsRoute
-  '/auth': typeof AuthRoute
-  '/contact': typeof ContactRoute
+  '/connect': typeof ConnectRoute
   '/events': typeof EventsRoute
-  '/join': typeof JoinRoute
+  '/hall-of-fame': typeof HallOfFameRoute
+  '/login': typeof LoginRoute
   '/resources': typeof ResourcesRoute
-  '/social': typeof SocialRoute
   '/store': typeof StoreRoute
   '/admin/setup': typeof AdminSetupRoute
-  '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/booking': typeof DemoBookingRoute
   '/s/$uuid': typeof SUuidRoute
-  '/training/curriculum': typeof TrainingCurriculumRoute
   '/admin': typeof AdminIndexRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/training': typeof TrainingIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/achievements': typeof AchievementsRoute
-  '/auth': typeof AuthRoute
-  '/contact': typeof ContactRoute
+  '/connect': typeof ConnectRoute
   '/events': typeof EventsRoute
-  '/join': typeof JoinRoute
+  '/hall-of-fame': typeof HallOfFameRoute
+  '/login': typeof LoginRoute
   '/resources': typeof ResourcesRoute
-  '/social': typeof SocialRoute
   '/store': typeof StoreRoute
   '/admin/setup': typeof AdminSetupRoute
-  '/demo/better-auth': typeof DemoBetterAuthRoute
   '/demo/booking': typeof DemoBookingRoute
   '/s/$uuid': typeof SUuidRoute
-  '/training/curriculum': typeof TrainingCurriculumRoute
   '/admin/': typeof AdminIndexRoute
-  '/api/auth/$': typeof ApiAuthSplatRoute
+  '/training/': typeof TrainingIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/achievements'
-    | '/auth'
-    | '/contact'
+    | '/connect'
     | '/events'
-    | '/join'
+    | '/hall-of-fame'
+    | '/login'
     | '/resources'
-    | '/social'
     | '/store'
     | '/admin/setup'
-    | '/demo/better-auth'
     | '/demo/booking'
     | '/s/$uuid'
-    | '/training/curriculum'
     | '/admin/'
-    | '/api/auth/$'
+    | '/training/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/achievements'
-    | '/auth'
-    | '/contact'
+    | '/connect'
     | '/events'
-    | '/join'
+    | '/hall-of-fame'
+    | '/login'
     | '/resources'
-    | '/social'
     | '/store'
     | '/admin/setup'
-    | '/demo/better-auth'
     | '/demo/booking'
     | '/s/$uuid'
-    | '/training/curriculum'
     | '/admin'
-    | '/api/auth/$'
+    | '/training'
   id:
     | '__root__'
     | '/'
-    | '/achievements'
-    | '/auth'
-    | '/contact'
+    | '/connect'
     | '/events'
-    | '/join'
+    | '/hall-of-fame'
+    | '/login'
     | '/resources'
-    | '/social'
     | '/store'
     | '/admin/setup'
-    | '/demo/better-auth'
     | '/demo/booking'
     | '/s/$uuid'
-    | '/training/curriculum'
     | '/admin/'
-    | '/api/auth/$'
+    | '/training/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AchievementsRoute: typeof AchievementsRoute
-  AuthRoute: typeof AuthRoute
-  ContactRoute: typeof ContactRoute
+  ConnectRoute: typeof ConnectRoute
   EventsRoute: typeof EventsRoute
-  JoinRoute: typeof JoinRoute
+  HallOfFameRoute: typeof HallOfFameRoute
+  LoginRoute: typeof LoginRoute
   ResourcesRoute: typeof ResourcesRoute
-  SocialRoute: typeof SocialRoute
   StoreRoute: typeof StoreRoute
   AdminSetupRoute: typeof AdminSetupRoute
-  DemoBetterAuthRoute: typeof DemoBetterAuthRoute
   DemoBookingRoute: typeof DemoBookingRoute
   SUuidRoute: typeof SUuidRoute
-  TrainingCurriculumRoute: typeof TrainingCurriculumRoute
   AdminIndexRoute: typeof AdminIndexRoute
-  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  TrainingIndexRoute: typeof TrainingIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -247,13 +195,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StoreRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/social': {
-      id: '/social'
-      path: '/social'
-      fullPath: '/social'
-      preLoaderRoute: typeof SocialRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/resources': {
       id: '/resources'
       path: '/resources'
@@ -261,11 +202,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResourcesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/join': {
-      id: '/join'
-      path: '/join'
-      fullPath: '/join'
-      preLoaderRoute: typeof JoinRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/hall-of-fame': {
+      id: '/hall-of-fame'
+      path: '/hall-of-fame'
+      fullPath: '/hall-of-fame'
+      preLoaderRoute: typeof HallOfFameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/events': {
@@ -275,25 +223,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/contact': {
-      id: '/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof ContactRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/achievements': {
-      id: '/achievements'
-      path: '/achievements'
-      fullPath: '/achievements'
-      preLoaderRoute: typeof AchievementsRouteImport
+    '/connect': {
+      id: '/connect'
+      path: '/connect'
+      fullPath: '/connect'
+      preLoaderRoute: typeof ConnectRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -303,18 +237,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/training/': {
+      id: '/training/'
+      path: '/training'
+      fullPath: '/training/'
+      preLoaderRoute: typeof TrainingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/': {
       id: '/admin/'
       path: '/admin'
       fullPath: '/admin/'
       preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/training/curriculum': {
-      id: '/training/curriculum'
-      path: '/training/curriculum'
-      fullPath: '/training/curriculum'
-      preLoaderRoute: typeof TrainingCurriculumRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/s/$uuid': {
@@ -331,13 +265,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DemoBookingRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/better-auth': {
-      id: '/demo/better-auth'
-      path: '/demo/better-auth'
-      fullPath: '/demo/better-auth'
-      preLoaderRoute: typeof DemoBetterAuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/admin/setup': {
       id: '/admin/setup'
       path: '/admin/setup'
@@ -345,33 +272,22 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminSetupRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/auth/$': {
-      id: '/api/auth/$'
-      path: '/api/auth/$'
-      fullPath: '/api/auth/$'
-      preLoaderRoute: typeof ApiAuthSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AchievementsRoute: AchievementsRoute,
-  AuthRoute: AuthRoute,
-  ContactRoute: ContactRoute,
+  ConnectRoute: ConnectRoute,
   EventsRoute: EventsRoute,
-  JoinRoute: JoinRoute,
+  HallOfFameRoute: HallOfFameRoute,
+  LoginRoute: LoginRoute,
   ResourcesRoute: ResourcesRoute,
-  SocialRoute: SocialRoute,
   StoreRoute: StoreRoute,
   AdminSetupRoute: AdminSetupRoute,
-  DemoBetterAuthRoute: DemoBetterAuthRoute,
   DemoBookingRoute: DemoBookingRoute,
   SUuidRoute: SUuidRoute,
-  TrainingCurriculumRoute: TrainingCurriculumRoute,
   AdminIndexRoute: AdminIndexRoute,
-  ApiAuthSplatRoute: ApiAuthSplatRoute,
+  TrainingIndexRoute: TrainingIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

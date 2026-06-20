@@ -172,6 +172,15 @@ function ResourcesPage() {
             Request Resource
           </button>
         </section>
+
+        {/* Coming Soon Callout */}
+        <div className="mt-20 p-8 rounded-3xl border border-white/10 bg-white/5 text-center relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10 opacity-50" />
+          <h3 className="text-xl font-black uppercase tracking-widest text-primary mb-2 relative z-10">Full Vault Access Coming Soon</h3>
+          <p className="text-muted-foreground text-sm font-medium max-w-xl mx-auto relative z-10">
+            The Digital Vault is currently being populated with hundreds of hours of premium breakdowns, nutrition plans, and exclusive seminar recordings. Member-only access will be unlocked in the next update!
+          </p>
+        </div>
       </div>
     </div>
   )
