@@ -72,7 +72,7 @@
 }
 
 .brand-gradient {
-  background: linear-gradient(to right, #E60000, #0055FF);
+  background-image: linear-gradient(to right, #E60000, #0055FF);
 }
 
 .bento-grid {

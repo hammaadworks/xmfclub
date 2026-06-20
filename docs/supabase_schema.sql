@@ -29,6 +29,7 @@ CREATE TABLE members (
   achievements TEXT,
   instructor_remarks TEXT,
   fee_status TEXT DEFAULT 'Paid',
+  pending_amount NUMERIC DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

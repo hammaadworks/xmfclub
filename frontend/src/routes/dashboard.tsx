@@ -146,9 +146,16 @@ function DashboardPage() {
                   <div className="space-y-4">
                     <div>
                       <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Fee Status</p>
-                      <p className={`text-sm font-black tracking-widest uppercase ${member.fee_status === 'Paid' ? 'text-green-500' : 'text-red-500'}`}>
-                        {member.fee_status || 'Pending'}
-                      </p>
+                      <div className="flex items-center gap-3">
+                        <p className={`text-sm font-black tracking-widest uppercase ${member.fee_status === 'Paid' ? 'text-green-500' : 'text-red-500'}`}>
+                          {member.fee_status || 'Pending'}
+                        </p>
+                        {member.pending_amount > 0 && (
+                          <span className="text-xs font-bold text-red-400 bg-red-400/10 px-2 py-0.5 rounded">
+                            ₹{member.pending_amount} Due
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div>
                       <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Instructor Remarks</p>
@@ -160,6 +167,14 @@ function DashboardPage() {
                       <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Join Date</p>
                       <p className="text-sm font-mono">{new Date(member.date_of_joining).toLocaleDateString()}</p>
                     </div>
+                    {member.achievements && (
+                      <div>
+                        <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1 text-primary">Achievements</p>
+                        <p className="text-sm font-medium text-foreground italic border-l-2 border-primary pl-4">
+                          {member.achievements}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { supabase } from '#/lib/supabase'
 import { 
-  ShieldAlert, Settings, Users, Calendar, Plus, Edit,
+  ShieldAlert, Settings, Users, Calendar, Plus, Edit, Lock,
   ShieldCheck, Loader2, Search, QrCode, LogOut
 } from 'lucide-react'
 
@@ -28,7 +28,33 @@ function AdminDashboard() {
     phone: '',
     email: '',
     role: 'student',
-    belt: 'White'
+    belt: 'White',
+    address: '',
+    branch: 'XMF Main HQ',
+    date_of_joining: new Date().toISOString().split('T')[0],
+    date_of_leaving: '',
+    achievements: '',
+    pending_amount: 0
+  })
+
+  // Edit Member Modal
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    role: 'student',
+    belt: 'White',
+    member_status: 'Active',
+    fee_status: 'Paid',
+    instructor_remarks: '',
+    address: '',
+    branch: 'XMF Main HQ',
+    date_of_joining: '',
+    date_of_leaving: '',
+    achievements: '',
+    pending_amount: 0
   })
 
   useEffect(() => {
@@ -90,7 +116,13 @@ function AdminDashboard() {
           belt: memberForm.belt,
           pattern_hash: '048526', // Default 'X' pattern
           member_status: 'Active',
-          fee_status: 'Paid'
+          fee_status: 'Paid',
+          address: memberForm.address || null,
+          branch: memberForm.branch || 'XMF Main HQ',
+          date_of_joining: memberForm.date_of_joining || null,
+          date_of_leaving: memberForm.date_of_leaving || null,
+          achievements: memberForm.achievements || null,
+          pending_amount: memberForm.pending_amount || 0
         }])
 
       if (error) {
@@ -98,7 +130,11 @@ function AdminDashboard() {
         alert('Failed to create member: ' + error.message)
       } else {
         setShowCreateModal(false)
-        setMemberForm({ name: '', phone: '', email: '', role: 'student', belt: 'White' })
+        setMemberForm({ 
+          name: '', phone: '', email: '', role: 'student', belt: 'White', 
+          address: '', branch: 'XMF Main HQ', date_of_joining: new Date().toISOString().split('T')[0], 
+          date_of_leaving: '', achievements: '', pending_amount: 0 
+        })
         loadMembers()
       }
     } catch (err) {
@@ -112,6 +148,88 @@ function AdminDashboard() {
     m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     m.member_id.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const handleEditClick = (member: any) => {
+    setEditingMemberId(member.id)
+    setEditForm({
+      name: member.name || '',
+      phone: member.phone || '',
+      email: member.email || '',
+      role: member.role || 'student',
+      belt: member.belt || 'White',
+      member_status: member.member_status || 'Active',
+      fee_status: member.fee_status || 'Paid',
+      instructor_remarks: member.instructor_remarks || '',
+      address: member.address || '',
+      branch: member.branch || 'XMF Main HQ',
+      date_of_joining: member.date_of_joining ? member.date_of_joining.split('T')[0] : '',
+      date_of_leaving: member.date_of_leaving ? member.date_of_leaving.split('T')[0] : '',
+      achievements: member.achievements || '',
+      pending_amount: member.pending_amount || 0
+    })
+    setShowEditModal(true)
+  }
+
+  const handleUpdateMember = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setSavingMember(true)
+    try {
+      const { error } = await supabase
+        .from('members')
+        .update({
+          name: editForm.name,
+          phone: editForm.phone || null,
+          email: editForm.email || null,
+          role: editForm.role,
+          belt: editForm.belt,
+          member_status: editForm.member_status,
+          fee_status: editForm.fee_status,
+          instructor_remarks: editForm.instructor_remarks || null,
+          address: editForm.address || null,
+          branch: editForm.branch || null,
+          date_of_joining: editForm.date_of_joining || null,
+          date_of_leaving: editForm.date_of_leaving || null,
+          achievements: editForm.achievements || null,
+          pending_amount: editForm.pending_amount || 0
+        })
+        .eq('id', editingMemberId)
+
+      if (error) {
+        alert('Failed to update member: ' + error.message)
+      } else {
+        setShowEditModal(false)
+        loadMembers()
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setSavingMember(false)
+    }
+  }
+
+  const handleResetPattern = async () => {
+    if (!editingMemberId) return
+    const confirmed = confirm("Are you sure you want to reset this user's pattern to the default 'X'?")
+    if (!confirmed) return
+    
+    setSavingMember(true)
+    try {
+      const { error } = await supabase
+        .from('members')
+        .update({ pattern_hash: '048526' })
+        .eq('id', editingMemberId)
+
+      if (error) {
+        alert('Failed to reset pattern: ' + error.message)
+      } else {
+        alert('Pattern successfully reset to default "X".')
+      }
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setSavingMember(false)
+    }
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('xmf_member')
@@ -229,7 +347,7 @@ function AdminDashboard() {
                             </td>
                             <td className="px-6 py-4 text-right">
                               <button 
-                                onClick={() => window.dispatchEvent(new CustomEvent('showContactModal'))}
+                                onClick={() => handleEditClick(m)}
                                 className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-muted-foreground hover:text-white inline-block"
                               >
                                 <Edit className="w-4 h-4" />
@@ -367,6 +485,30 @@ function AdminDashboard() {
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Address</label>
+                  <input 
+                    value={memberForm.address}
+                    onChange={(e) => setMemberForm({...memberForm, address: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                    placeholder="Physical Address"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Branch</label>
+                  <select 
+                    value={memberForm.branch}
+                    onChange={(e) => setMemberForm({...memberForm, branch: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
+                  >
+                    <option value="XMF Main HQ">XMF Main HQ</option>
+                    <option value="Northside Dojo">Northside Dojo</option>
+                    <option value="Downtown Club">Downtown Club</option>
+                  </select>
+                </div>
+              </div>
+
               <div className="flex gap-4 pt-6 border-t border-white/5">
                 <button 
                   type="button"
@@ -381,6 +523,223 @@ function AdminDashboard() {
                   className="flex-1 py-4 bg-primary hover:bg-primary/90 text-white font-black tracking-widest text-[10px] rounded-xl transition-all uppercase shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
                 >
                   {savingMember ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Member'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      
+      {/* EDIT MEMBER MODAL */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6 overflow-y-auto">
+          <div className="glass-card w-full max-w-lg p-8 border-primary/20 bg-background/90 shadow-2xl relative my-auto">
+            <h3 className="text-2xl font-black uppercase tracking-tighter mb-6">Edit Member</h3>
+            
+            <form onSubmit={handleUpdateMember} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Full Name</label>
+                <input 
+                  required
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                  placeholder="John Doe"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Phone</label>
+                  <input 
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                    placeholder="Optional"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Email</label>
+                  <input 
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                    placeholder="Optional"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">System Role</label>
+                  <select 
+                    value={editForm.role}
+                    onChange={(e) => setEditForm({...editForm, role: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
+                  >
+                    <option value="student">Student</option>
+                    <option value="admin">Administrator</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Belt</label>
+                  <select 
+                    value={editForm.belt}
+                    onChange={(e) => setEditForm({...editForm, belt: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
+                  >
+                    <option value="White">White</option>
+                    <option value="Yellow">Yellow</option>
+                    <option value="Orange">Orange</option>
+                    <option value="Green">Green</option>
+                    <option value="Blue">Blue</option>
+                    <option value="Purple">Purple</option>
+                    <option value="Brown">Brown</option>
+                    <option value="Black">Black</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Member Status</label>
+                  <select 
+                    value={editForm.member_status}
+                    onChange={(e) => setEditForm({...editForm, member_status: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Fee Status</label>
+                  <select 
+                    value={editForm.fee_status}
+                    onChange={(e) => setEditForm({...editForm, fee_status: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
+                  >
+                    <option value="Paid">Paid</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Overdue">Overdue</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Fee Status</label>
+                  <select 
+                    value={editForm.fee_status}
+                    onChange={(e) => setEditForm({...editForm, fee_status: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
+                  >
+                    <option value="Paid">Paid</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Overdue">Overdue</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Pending Amount (₹)</label>
+                  <input 
+                    type="number"
+                    value={editForm.pending_amount}
+                    onChange={(e) => setEditForm({...editForm, pending_amount: parseInt(e.target.value) || 0})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Address</label>
+                  <input 
+                    value={editForm.address}
+                    onChange={(e) => setEditForm({...editForm, address: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                    placeholder="Physical Address"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Branch</label>
+                  <select 
+                    value={editForm.branch}
+                    onChange={(e) => setEditForm({...editForm, branch: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
+                  >
+                    <option value="XMF Main HQ">XMF Main HQ</option>
+                    <option value="Northside Dojo">Northside Dojo</option>
+                    <option value="Downtown Club">Downtown Club</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Date of Joining</label>
+                  <input 
+                    type="date"
+                    value={editForm.date_of_joining}
+                    onChange={(e) => setEditForm({...editForm, date_of_joining: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Date of Leaving</label>
+                  <input 
+                    type="date"
+                    value={editForm.date_of_leaving}
+                    onChange={(e) => setEditForm({...editForm, date_of_leaving: e.target.value})}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Achievements</label>
+                <textarea 
+                  value={editForm.achievements}
+                  onChange={(e) => setEditForm({...editForm, achievements: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold resize-none h-16"
+                  placeholder="Gold medal in 2024 Nationals..."
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Instructor Remarks</label>
+                <textarea 
+                  value={editForm.instructor_remarks}
+                  onChange={(e) => setEditForm({...editForm, instructor_remarks: e.target.value})}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold resize-none h-16"
+                  placeholder="Private notes..."
+                />
+              </div>
+
+              <div className="pt-4 pb-2">
+                <button
+                  type="button"
+                  onClick={handleResetPattern}
+                  className="w-full py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-black tracking-widest text-[10px] rounded-xl transition-all uppercase border border-red-500/20 flex items-center justify-center gap-2"
+                >
+                  <Lock className="w-3 h-3" /> Reset Pattern to Default 'X'
+                </button>
+              </div>
+
+              <div className="flex gap-4 pt-4 border-t border-white/5">
+                <button 
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 py-4 bg-white/5 hover:bg-white/10 text-white font-black tracking-widest text-[10px] rounded-xl transition-all uppercase"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={savingMember}
+                  className="flex-1 py-4 bg-primary hover:bg-primary/90 text-white font-black tracking-widest text-[10px] rounded-xl transition-all uppercase shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+                >
+                  {savingMember ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Changes'}
                 </button>
               </div>
             </form>

@@ -57,6 +57,22 @@ function MemberScanProfile() {
     }
   }
 
+  const handleResetPattern = async () => {
+    if (!profile) return
+    if (confirm(`Are you sure you want to reset the pattern for ${profile.name} to the default 'X' pattern?`)) {
+      const { error } = await supabase
+        .from('members')
+        .update({ pattern_hash: '048526' })
+        .eq('id', profile.id)
+      
+      if (error) {
+        alert("Failed to reset pattern: " + error.message)
+      } else {
+        alert("Pattern reset successfully to default 'X'.")
+      }
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -136,6 +152,14 @@ function MemberScanProfile() {
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Member ID</p>
                 <p className="text-sm font-mono font-bold text-primary">{profile.member_id}</p>
               </div>
+              {profile.achievements && (
+                <div className="col-span-2 mt-2 pt-4 border-t border-white/5">
+                  <p className="text-[10px] uppercase tracking-widest text-primary font-bold mb-1 flex items-center gap-2">
+                    <Trophy className="w-3 h-3" /> Achievements
+                  </p>
+                  <p className="text-sm font-medium">{profile.achievements}</p>
+                </div>
+              )}
             </div>
           </div>
         </section>
@@ -162,9 +186,16 @@ function MemberScanProfile() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Fee Status</p>
-                  <p className={`text-xl font-black uppercase ${profile.fee_status === 'Paid' ? 'text-green-500' : 'text-red-500'}`}>
-                    {profile.fee_status || 'Unknown'}
-                  </p>
+                  <div className="flex items-baseline gap-2">
+                    <p className={`text-xl font-black uppercase ${profile.fee_status === 'Paid' ? 'text-green-500' : 'text-red-500'}`}>
+                      {profile.fee_status || 'Unknown'}
+                    </p>
+                    {profile.pending_amount > 0 && (
+                      <span className="text-xs font-bold text-red-400">
+                        (₹{profile.pending_amount} Due)
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Contact</p>
@@ -187,6 +218,13 @@ function MemberScanProfile() {
               ) : (
                 <><Calendar className="w-5 h-5" /> Mark Today's Attendance</>
               )}
+            </button>
+
+            <button 
+              onClick={handleResetPattern}
+              className="w-full mt-4 py-4 font-black tracking-widest text-[10px] rounded-2xl uppercase flex items-center justify-center gap-3 transition-all bg-white/5 border border-white/10 text-muted-foreground hover:bg-white/10 hover:text-white"
+            >
+              <Lock className="w-4 h-4" /> Reset Pattern to Default 'X'
             </button>
           </section>
         )}
