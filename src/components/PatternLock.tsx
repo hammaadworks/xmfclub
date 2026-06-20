@@ -35,15 +35,19 @@ export function PatternLock({ onComplete, error }: PatternLockProps) {
       const element = document.elementFromPoint(clientX, clientY);
       if (element && element.hasAttribute('data-index')) {
         const index = parseInt(element.getAttribute('data-index')!, 10);
-        if (!pattern.includes(index)) {
-          setPattern((prev) => [...prev, index]);
-        }
+        setPattern((prev) => {
+          if (!prev.includes(index)) {
+            return [...prev, index];
+          }
+          return prev;
+        });
       }
     };
 
     const handleUp = () => {
       if (isDrawing) {
         setIsDrawing(false);
+        console.log("Recorded pattern:", pattern);
         onComplete(pattern);
         setTimeout(() => setPattern([]), 600); 
       }
