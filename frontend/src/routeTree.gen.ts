@@ -14,12 +14,11 @@ import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HallOfFameRouteImport } from './routes/hall-of-fame'
 import { Route as EventsRouteImport } from './routes/events'
-import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConnectRouteImport } from './routes/connect'
-import { Route as MemberIdRouteImport } from './routes/$memberId'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrainingIndexRouteImport } from './routes/training/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as MemberMemberIdRouteImport } from './routes/member/$memberId'
 
 const StoreRoute = StoreRouteImport.update({
   id: '/store',
@@ -46,19 +45,9 @@ const EventsRoute = EventsRouteImport.update({
   path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ConnectRoute = ConnectRouteImport.update({
   id: '/connect',
   path: '/connect',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MemberIdRoute = MemberIdRouteImport.update({
-  id: '/$memberId',
-  path: '/$memberId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -76,44 +65,46 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MemberMemberIdRoute = MemberMemberIdRouteImport.update({
+  id: '/member/$memberId',
+  path: '/member/$memberId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/$memberId': typeof MemberIdRoute
   '/connect': typeof ConnectRoute
-  '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
   '/hall-of-fame': typeof HallOfFameRoute
   '/login': typeof LoginRoute
   '/resources': typeof ResourcesRoute
   '/store': typeof StoreRoute
+  '/member/$memberId': typeof MemberMemberIdRoute
   '/admin/': typeof AdminIndexRoute
   '/training/': typeof TrainingIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/$memberId': typeof MemberIdRoute
   '/connect': typeof ConnectRoute
-  '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
   '/hall-of-fame': typeof HallOfFameRoute
   '/login': typeof LoginRoute
   '/resources': typeof ResourcesRoute
   '/store': typeof StoreRoute
+  '/member/$memberId': typeof MemberMemberIdRoute
   '/admin': typeof AdminIndexRoute
   '/training': typeof TrainingIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/$memberId': typeof MemberIdRoute
   '/connect': typeof ConnectRoute
-  '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
   '/hall-of-fame': typeof HallOfFameRoute
   '/login': typeof LoginRoute
   '/resources': typeof ResourcesRoute
   '/store': typeof StoreRoute
+  '/member/$memberId': typeof MemberMemberIdRoute
   '/admin/': typeof AdminIndexRoute
   '/training/': typeof TrainingIndexRoute
 }
@@ -121,54 +112,50 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/$memberId'
     | '/connect'
-    | '/dashboard'
     | '/events'
     | '/hall-of-fame'
     | '/login'
     | '/resources'
     | '/store'
+    | '/member/$memberId'
     | '/admin/'
     | '/training/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/$memberId'
     | '/connect'
-    | '/dashboard'
     | '/events'
     | '/hall-of-fame'
     | '/login'
     | '/resources'
     | '/store'
+    | '/member/$memberId'
     | '/admin'
     | '/training'
   id:
     | '__root__'
     | '/'
-    | '/$memberId'
     | '/connect'
-    | '/dashboard'
     | '/events'
     | '/hall-of-fame'
     | '/login'
     | '/resources'
     | '/store'
+    | '/member/$memberId'
     | '/admin/'
     | '/training/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  MemberIdRoute: typeof MemberIdRoute
   ConnectRoute: typeof ConnectRoute
-  DashboardRoute: typeof DashboardRoute
   EventsRoute: typeof EventsRoute
   HallOfFameRoute: typeof HallOfFameRoute
   LoginRoute: typeof LoginRoute
   ResourcesRoute: typeof ResourcesRoute
   StoreRoute: typeof StoreRoute
+  MemberMemberIdRoute: typeof MemberMemberIdRoute
   AdminIndexRoute: typeof AdminIndexRoute
   TrainingIndexRoute: typeof TrainingIndexRoute
 }
@@ -210,25 +197,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/connect': {
       id: '/connect'
       path: '/connect'
       fullPath: '/connect'
       preLoaderRoute: typeof ConnectRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/$memberId': {
-      id: '/$memberId'
-      path: '/$memberId'
-      fullPath: '/$memberId'
-      preLoaderRoute: typeof MemberIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -252,19 +225,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/member/$memberId': {
+      id: '/member/$memberId'
+      path: '/member/$memberId'
+      fullPath: '/member/$memberId'
+      preLoaderRoute: typeof MemberMemberIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  MemberIdRoute: MemberIdRoute,
   ConnectRoute: ConnectRoute,
-  DashboardRoute: DashboardRoute,
   EventsRoute: EventsRoute,
   HallOfFameRoute: HallOfFameRoute,
   LoginRoute: LoginRoute,
   ResourcesRoute: ResourcesRoute,
   StoreRoute: StoreRoute,
+  MemberMemberIdRoute: MemberMemberIdRoute,
   AdminIndexRoute: AdminIndexRoute,
   TrainingIndexRoute: TrainingIndexRoute,
 }

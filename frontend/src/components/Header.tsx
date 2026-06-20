@@ -60,7 +60,7 @@ export default function Header() {
           {member ? (
             <div className="hidden sm:flex items-center gap-3">
               <Link 
-                to={member.role === 'admin' ? '/admin' : '/dashboard'}
+                to={member.role === 'admin' ? '/admin' : `/member/${member.member_id}`}
                 className="px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black tracking-widest text-[10px] rounded-full uppercase transition-all flex items-center gap-2"
               >
                 {member.role === 'admin' ? <ShieldCheck className="w-3 h-3" /> : <User className="w-3 h-3" />}
@@ -141,7 +141,7 @@ export default function Header() {
           
           {member ? (
             <Link 
-              to={member.role === 'admin' ? '/admin' : '/dashboard'}
+              to={member.role === 'admin' ? '/admin' : `/member/${member.member_id}`}
               onClick={() => setIsOpen(false)}
               className="w-full max-w-sm py-4 bg-gradient-to-r from-primary to-accent text-white font-black tracking-widest text-xs rounded-xl uppercase hover:scale-105 transition-transform flex items-center justify-center gap-2"
             >

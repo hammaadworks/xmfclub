@@ -44,9 +44,14 @@ function Login() {
       return;
     }
 
-    // Success! Store member session locally
-    localStorage.setItem('xmf_member', JSON.stringify(data));
-    navigate({ to: '/dashboard' });
+    // Success! Store member session locally without the hash
+    const { pattern_hash, ...safeData } = data;
+    localStorage.setItem('xmf_member', JSON.stringify(safeData));
+    if (safeData.role === 'admin') {
+      navigate({ to: '/admin' });
+    } else {
+      navigate({ to: `/member/${safeData.member_id}` });
+    }
   };
 
   return (
