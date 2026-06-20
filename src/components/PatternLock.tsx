@@ -19,45 +19,54 @@ export function PatternLock({ onComplete, error }: PatternLockProps) {
     setPattern([index]);
   };
 
-  const handlePointerMove = (e: React.PointerEvent | React.TouchEvent | any) => {
-    if (!isDrawing) return;
-    
-    // Get coordinates
-    let clientX, clientY;
-    if ('touches' in e) {
-      clientX = e.touches[0].clientX;
-      clientY = e.touches[0].clientY;
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-
-    const element = document.elementFromPoint(clientX, clientY);
-    if (element && element.hasAttribute('data-index')) {
-      const index = parseInt(element.getAttribute('data-index')!, 10);
-      if (!pattern.includes(index)) {
-        setPattern((prev) => [...prev, index]);
-      }
-    }
-  };
-
-  const handlePointerUp = () => {
-    if (isDrawing) {
-      setIsDrawing(false);
-      if (pattern.length >= 4) {
-        onComplete(pattern);
-      }
-      setTimeout(() => setPattern([]), 600); 
-    }
-  };
-
   useEffect(() => {
-    const handleUp = () => handlePointerUp();
-    window.addEventListener('mouseup', handleUp);
-    window.addEventListener('touchend', handleUp);
+    const handleMove = (e: PointerEvent | TouchEvent) => {
+      if (!isDrawing) return;
+      
+      let clientX, clientY;
+      if (e instanceof TouchEvent) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+      } else {
+        clientX = e.clientX;
+        clientY = e.clientY;
+      }
+
+      const element = document.elementFromPoint(clientX, clientY);
+      if (element && element.hasAttribute('data-index')) {
+        const index = parseInt(element.getAttribute('data-index')!, 10);
+        if (!pattern.includes(index)) {
+          setPattern((prev) => [...prev, index]);
+        }
+      }
+    };
+
+    const handleUp = () => {
+      if (isDrawing) {
+        setIsDrawing(false);
+        if (pattern.length >= 4) {
+          onComplete(pattern);
+        }
+        setTimeout(() => setPattern([]), 600); 
+      }
+    };
+
+    if (isDrawing) {
+      window.addEventListener('pointermove', handleMove);
+      window.addEventListener('pointerup', handleUp);
+      window.addEventListener('pointercancel', handleUp);
+      window.addEventListener('touchmove', handleMove, { passive: false });
+      window.addEventListener('touchend', handleUp);
+      window.addEventListener('touchcancel', handleUp);
+    }
+
     return () => {
-      window.removeEventListener('mouseup', handleUp);
+      window.removeEventListener('pointermove', handleMove);
+      window.removeEventListener('pointerup', handleUp);
+      window.removeEventListener('pointercancel', handleUp);
+      window.removeEventListener('touchmove', handleMove);
       window.removeEventListener('touchend', handleUp);
+      window.removeEventListener('touchcancel', handleUp);
     };
   }, [isDrawing, pattern]);
 
@@ -68,19 +77,16 @@ export function PatternLock({ onComplete, error }: PatternLockProps) {
       onPointerDown={(e) => {
         const element = document.elementFromPoint(e.clientX, e.clientY);
         if (element && element.hasAttribute('data-index')) {
-          e.currentTarget.setPointerCapture(e.pointerId);
           setIsDrawing(true);
           setPattern([parseInt(element.getAttribute('data-index')!, 10)]);
         }
       }}
-      onPointerMove={handlePointerMove}
-      onPointerUp={(e) => {
-        e.currentTarget.releasePointerCapture(e.pointerId);
-        handlePointerUp();
-      }}
-      onPointerCancel={(e) => {
-        e.currentTarget.releasePointerCapture(e.pointerId);
-        handlePointerUp();
+      onTouchStart={(e) => {
+        const element = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+        if (element && element.hasAttribute('data-index')) {
+          setIsDrawing(true);
+          setPattern([parseInt(element.getAttribute('data-index')!, 10)]);
+        }
       }}
     >
       <div className="grid grid-cols-3 grid-rows-3 gap-0 w-full h-full relative z-10">

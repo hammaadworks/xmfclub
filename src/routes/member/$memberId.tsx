@@ -53,7 +53,7 @@ function DashboardPage() {
           .from('members')
           .select('*')
           .eq('member_id', memberId.toUpperCase())
-          .single()
+          .maybeSingle()
 
         if (mError && mError.code !== 'PGRST116') {
           console.error("Error fetching member:", mError)
@@ -69,7 +69,7 @@ function DashboardPage() {
           })
           
           // Fetch app settings for belts
-          const { data: appSettings } = await supabase.from('app_settings').select('*').eq('id', 'global').single()
+          const { data: appSettings } = await supabase.from('app_settings').select('*').eq('id', 'global').maybeSingle()
           if (appSettings?.belts) {
             if (typeof appSettings.belts[0] === 'string') {
               setBeltConfig(appSettings.belts.map((b: string) => ({ name: b, required_days: 30 })))
@@ -123,6 +123,7 @@ function DashboardPage() {
 
   const handleLogout = () => {
     localStorage.removeItem('xmf_member')
+    window.dispatchEvent(new Event('auth_change'))
     navigate({ to: '/login' })
   }
 

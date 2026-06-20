@@ -93,11 +93,11 @@ export default function Header() {
 
       {/* Mobile Menu */}
       <div 
-        className={`fixed inset-0 bg-background transition-all duration-500 lg:hidden ${
+        className={`fixed inset-0 bg-background transition-all duration-500 lg:hidden overflow-y-auto z-40 pt-32 pb-10 ${
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
-        <nav className="flex flex-col items-center justify-center h-full gap-8 px-6">
+        <nav className="flex flex-col items-center justify-start min-h-full gap-8 px-6">
           <SidebarLink 
             to="/" 
             icon={<Trophy size={20} />} 

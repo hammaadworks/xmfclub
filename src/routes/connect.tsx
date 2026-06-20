@@ -46,7 +46,7 @@ function ConnectPage() {
 
   useEffect(() => {
     const fetchSettings = async () => {
-      const { data } = await supabase.from('app_settings').select('branches').eq('id', 'global').single()
+      const { data } = await supabase.from('app_settings').select('branches').eq('id', 'global').maybeSingle()
       if (data && data.branches) {
         setBranches(data.branches)
       }
