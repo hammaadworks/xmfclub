@@ -75,8 +75,8 @@ function ResourcesPage() {
             <Zap className="w-4 h-4 fill-current" />
             Digital Vault
           </div>
-          <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter uppercase">
-            STUDENT <span className="text-primary">RESOURCES</span>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black mb-6 tracking-tighter uppercase break-words">
+            STUDENT <span className="brand-gradient bg-clip-text text-transparent">RESOURCES</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl font-medium leading-relaxed">
             Access elite training materials, technique manuals, and performance guides designed to accelerate your progress.
@@ -168,7 +168,7 @@ function ResourcesPage() {
           <p className="text-muted-foreground mb-8 max-w-xl mx-auto font-medium">
             Can't find what you are looking for? Let our elite trainers know what materials you need to aid your training.
           </p>
-          <button className="px-8 py-4 bg-primary text-white text-[10px] font-black tracking-widest uppercase rounded-xl hover:scale-105 transition-transform shadow-lg shadow-primary/20">
+          <button className="px-8 py-4 bg-gradient-to-r from-primary to-accent text-white text-[10px] font-black tracking-widest uppercase rounded-xl hover:scale-105 transition-transform shadow-lg shadow-primary/20">
             Request Resource
           </button>
         </section>

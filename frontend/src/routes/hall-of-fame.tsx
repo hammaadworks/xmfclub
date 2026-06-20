@@ -32,8 +32,8 @@ function AchievementsPage() {
           <div className="inline-flex p-3 rounded-2xl bg-primary/10 text-primary mb-6">
             <Trophy className="w-8 h-8" />
           </div>
-          <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter uppercase">
-            Hall of <span className="text-primary">Fame</span>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black mb-6 tracking-tighter uppercase break-words">
+            Hall of <span className="brand-gradient bg-clip-text text-transparent">Fame</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
             Celebrating the elite students who embody the XMF spirit of discipline and victory.

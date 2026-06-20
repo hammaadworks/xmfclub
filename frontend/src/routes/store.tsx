@@ -80,8 +80,8 @@ function StorePage() {
       <section className="px-6 py-10 border-b border-white/5 bg-white/[0.02]">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div>
-            <h1 className="text-4xl md:text-6xl font-black tracking-tighter uppercase mb-2">
-              XMF <span className="text-primary">STORE</span>
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tighter uppercase mb-2 break-words">
+              XMF <span className="brand-gradient bg-clip-text text-transparent">STORE</span>
             </h1>
             <p className="text-muted-foreground font-medium uppercase text-xs tracking-[0.2em]">Official Merch & Affiliate Gear</p>
           </div>
@@ -194,7 +194,7 @@ function StorePage() {
                     
                     <div className="mt-auto flex items-center justify-between gap-4">
                       <div className="text-xl font-black text-foreground">{p.price}</div>
-                      <button className="p-3 bg-primary text-white rounded-xl hover:scale-110 transition-transform shadow-lg shadow-primary/20">
+                      <button className="p-3 bg-gradient-to-r from-primary to-accent text-white rounded-xl hover:scale-110 transition-transform shadow-lg shadow-primary/20">
                         <ShoppingBag className="w-5 h-5" />
                       </button>
                     </div>

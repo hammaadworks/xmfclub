@@ -1,0 +1,225 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - link "X XMFCLUB" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e6]: X
+        - generic [ref=e7]: XMFCLUB
+      - navigation [ref=e8]:
+        - link "Home" [ref=e9] [cursor=pointer]:
+          - /url: /
+        - link "Training" [ref=e10] [cursor=pointer]:
+          - /url: /training
+        - link "Events" [ref=e11] [cursor=pointer]:
+          - /url: /events
+        - link "Resources" [ref=e12] [cursor=pointer]:
+          - /url: /resources
+        - link "Store" [ref=e13] [cursor=pointer]:
+          - /url: /store
+        - link "Hall of Fame" [ref=e14] [cursor=pointer]:
+          - /url: /hall-of-fame
+        - link "Connect" [ref=e15] [cursor=pointer]:
+          - /url: /connect
+      - generic [ref=e17]:
+        - link "Login" [ref=e18] [cursor=pointer]:
+          - /url: /login
+        - button "Join the Club" [ref=e19]
+  - generic [ref=e20]:
+    - generic [ref=e23]:
+      - generic [ref=e24]:
+        - img [ref=e25]
+        - generic [ref=e31]: EST. 2012 • 45+ NATIONAL GOLD MEDALS
+      - heading "FORCE MULTIPLIED." [level=1] [ref=e32]:
+        - text: FORCE
+        - text: MULTIPLIED.
+      - paragraph [ref=e33]: From Middle School Champions to Elite Professionals. Master the art of discipline through our modular training system.
+      - generic [ref=e34]:
+        - link "Join the Club" [ref=e35] [cursor=pointer]:
+          - /url: /login
+          - text: Join the Club
+          - img [ref=e36]
+        - link "Watch Intro" [ref=e38] [cursor=pointer]:
+          - /url: https://youtu.be/pw2vKNpz7TE
+          - img [ref=e39]
+          - text: Watch Intro
+      - generic [ref=e41]:
+        - generic [ref=e42]:
+          - generic [ref=e43]: 500+
+          - generic [ref=e44]: Students
+        - generic [ref=e45]:
+          - generic [ref=e46]: 12yr
+          - generic [ref=e47]: Legacy
+        - generic [ref=e48]:
+          - generic [ref=e49]: "45"
+          - generic [ref=e50]: Golds
+        - generic [ref=e51]:
+          - generic [ref=e52]: Elite
+          - generic [ref=e53]: Faculty
+    - generic [ref=e55]:
+      - generic [ref=e56]:
+        - img "Curriculum Preview" [ref=e57]
+        - generic [ref=e59]:
+          - text: Stop Paying For
+          - text: Filler Content.
+      - generic [ref=e60]:
+        - generic [ref=e61]:
+          - img [ref=e62]
+          - text: The Alacarte System
+        - heading "YOU CHOOSE THE CURRICULUM." [level=2] [ref=e64]:
+          - text: YOU CHOOSE THE
+          - text: CURRICULUM.
+        - paragraph [ref=e65]: XMFCLUB is built on modularity. Why pay for a full martial arts course when you only want to master Bo-Staff strikes? Or Calisthenics upper-body strength?
+        - list [ref=e66]:
+          - listitem [ref=e67]:
+            - img [ref=e69]
+            - text: 2-Level Nesting Choice
+          - listitem [ref=e71]:
+            - img [ref=e73]
+            - text: Pay Per Module
+          - listitem [ref=e75]:
+            - img [ref=e77]
+            - text: Lifetime Access
+        - link "Go to Curriculum" [ref=e79] [cursor=pointer]:
+          - /url: /training/curriculum
+          - text: Go to Curriculum
+          - img [ref=e80]
+    - generic [ref=e82]:
+      - generic [ref=e83]:
+        - heading "Explore the Universe" [level=2] [ref=e84]
+        - heading "The XMF Lifestyle" [level=3] [ref=e85]
+      - generic [ref=e86]:
+        - link "Achievements Hall of Fame Celebrate the winners" [ref=e87] [cursor=pointer]:
+          - /url: /achievements
+          - img "Achievements" [ref=e88]
+          - generic [ref=e89]:
+            - heading "Hall of Fame" [level=4] [ref=e90]
+            - paragraph [ref=e91]: Celebrate the winners
+        - link "Store The Store Elite gear & Merch" [ref=e92] [cursor=pointer]:
+          - /url: /store
+          - img "Store" [ref=e93]
+          - generic [ref=e94]:
+            - heading "The Store" [level=4] [ref=e95]
+            - paragraph [ref=e96]: Elite gear & Merch
+        - link "Events Events Workshops & Seminars" [ref=e97] [cursor=pointer]:
+          - /url: /events
+          - img "Events" [ref=e98]
+          - generic [ref=e100]:
+            - heading "Events" [level=4] [ref=e101]
+            - paragraph [ref=e102]: Workshops & Seminars
+        - link "Connect Connect Join 10k+ Athletes online" [ref=e103] [cursor=pointer]:
+          - /url: /connect
+          - img "Connect" [ref=e104]
+          - generic [ref=e105]:
+            - heading "Connect" [level=4] [ref=e106]
+            - paragraph [ref=e107]: Join 10k+ Athletes online
+    - generic [ref=e109]:
+      - generic [ref=e110]:
+        - heading "The Foundation" [level=2] [ref=e111]
+        - heading "Our Mission" [level=3] [ref=e112]
+        - paragraph [ref=e113]: From the heritage of Extreme Martial Arts (XMF) to the frontiers of human movement, we are here to build the next generation of high-performance individuals.
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - img [ref=e117]
+          - heading "Discipline" [level=4] [ref=e119]
+          - paragraph [ref=e120]: The root of all progress. We foster a mindset that thrives on consistency and hard work.
+        - generic [ref=e121]:
+          - img [ref=e123]
+          - heading "Precision" [level=4] [ref=e127]
+          - paragraph [ref=e128]: Whether it is a Bo-Staff strike or a muscle-up, we focus on the minute details that separate the elite.
+        - generic [ref=e129]:
+          - img [ref=e131]
+          - heading "Intensity" [level=4] [ref=e133]
+          - paragraph [ref=e134]: Training with purpose. We push the boundaries of what you think is possible.
+    - generic [ref=e136]:
+      - generic [ref=e138]:
+        - img "Farhan Khan XMF" [ref=e139]
+        - generic [ref=e141]:
+          - generic [ref=e142]:
+            - text: Farhan
+            - text: Khan XMF
+          - generic [ref=e143]: Founder & Head Coach
+      - generic [ref=e146]:
+        - generic [ref=e147]:
+          - heading "Meet Your Mentor" [level=2] [ref=e148]
+          - heading "SHAPING THE MODERN WARRIOR." [level=3] [ref=e149]:
+            - text: SHAPING THE
+            - text: MODERN WARRIOR.
+        - generic [ref=e150]:
+          - paragraph [ref=e151]: Farhan Khan XMF is a seasoned martial arts coach with over 9 years of experience. A national instructor, he has trained students to achieve success at state and national levels.
+          - paragraph [ref=e152]: His approach blends discipline, fitness, and mental strength to build complete athletes. He holds a Black Belt in ITF Taekwondo and a 3rd Dan Black Belt in Karate (WFSKO).
+          - paragraph [ref=e153]: Farhan is an active MMA fighter and a member of the Taekwondo Association of Karnataka. He also claimed the Bengaluru Bodybuilding 2024 Men's Physique Title, proving his dedication to fitness.
+        - generic [ref=e154]:
+          - generic [ref=e155]:
+            - generic [ref=e156]: Experience
+            - generic [ref=e157]: 9+ Years
+          - generic [ref=e158]:
+            - generic [ref=e159]: Rank
+            - generic [ref=e160]: 3rd Dan Black Belt
+          - generic [ref=e161]:
+            - generic [ref=e162]: Title
+            - generic [ref=e163]: Bodybuilding '24
+          - generic [ref=e164]:
+            - generic [ref=e165]: Specialty
+            - generic [ref=e166]: MMA & Weapons
+    - generic [ref=e167]:
+      - generic [ref=e168]:
+        - heading "Transparency" [level=2] [ref=e169]
+        - heading "Frequently Asked Questions" [level=3] [ref=e170]
+      - generic [ref=e171]:
+        - button "Who can join XMFCLUB?" [ref=e173]:
+          - generic [ref=e174]: Who can join XMFCLUB?
+          - img [ref=e175]
+        - button "What is the 'Alacarte' training system?" [ref=e177]:
+          - generic [ref=e178]: What is the 'Alacarte' training system?
+          - img [ref=e179]
+        - button "How does the member login work?" [ref=e181]:
+          - generic [ref=e182]: How does the member login work?
+          - img [ref=e183]
+        - button "Will there be content specific to my rank?" [ref=e185]:
+          - generic [ref=e186]: Will there be content specific to my rank?
+          - img [ref=e187]
+        - button "Do I need prior martial arts experience?" [ref=e189]:
+          - generic [ref=e190]: Do I need prior martial arts experience?
+          - img [ref=e191]
+        - button "What are the training hours?" [ref=e193]:
+          - generic [ref=e194]: What are the training hours?
+          - img [ref=e195]
+        - button "How do I start?" [ref=e197]:
+          - generic [ref=e198]: How do I start?
+          - img [ref=e199]
+    - generic [ref=e200]:
+      - generic:
+        - img
+      - generic [ref=e201]:
+        - heading "CHOOSE YOUR PATH. BUILD YOUR LEGACY." [level=2] [ref=e202]:
+          - text: CHOOSE YOUR PATH.
+          - text: BUILD YOUR LEGACY.
+        - paragraph [ref=e203]: Ready to push your limits? Join 500+ athletes who have chosen the elite methodology of XMFCLUB.
+        - generic [ref=e204]:
+          - link "Join the Club" [ref=e205] [cursor=pointer]:
+            - /url: /login
+            - img [ref=e206]
+            - text: Join the Club
+          - link "Contact Us" [ref=e208] [cursor=pointer]:
+            - /url: /connect
+            - img [ref=e209]
+            - text: Contact Us
+        - generic [ref=e211]:
+          - generic [ref=e212]:
+            - img [ref=e213]
+            - text: Personalized Training
+          - generic [ref=e216]:
+            - img [ref=e217]
+            - text: Elite Mentorship
+          - generic [ref=e220]:
+            - img [ref=e221]
+            - text: Modular Learning
+    - contentinfo [ref=e224]:
+      - generic [ref=e225]:
+        - link "Training" [ref=e226] [cursor=pointer]:
+          - /url: /training
+        - link "Events" [ref=e227] [cursor=pointer]:
+          - /url: /events
+        - link "Connect" [ref=e228] [cursor=pointer]:
+          - /url: /connect
+      - paragraph [ref=e229]: © 2026 XMFCLUB. BUILT FOR THE ELITE.

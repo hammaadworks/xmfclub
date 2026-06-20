@@ -146,8 +146,8 @@ function CurriculumPage() {
           <div className="inline-flex items-center gap-2 text-primary font-black text-[10px] tracking-[0.3em] uppercase mb-4">
             <Zap className="w-3 h-3 fill-current" /> A la Carte Builder
           </div>
-          <h1 className="text-5xl md:text-7xl font-black mb-4 tracking-tighter uppercase italic leading-none">
-            BUILD YOUR <span className="text-primary">LEGACY.</span>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black mb-4 tracking-tighter uppercase italic leading-none break-words">
+            BUILD YOUR <span className="brand-gradient bg-clip-text text-transparent">LEGACY.</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-2xl font-medium">
             Personalize your training program. Choose exactly what you want to master, when you want to train.
@@ -170,7 +170,7 @@ function CurriculumPage() {
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`p-3 rounded-xl transition-colors ${selectedCategory === cat.id ? 'bg-primary text-white' : 'bg-white/5 text-muted-foreground'}`}>
+                    <div className={`p-3 rounded-xl transition-colors ${selectedCategory === cat.id ? 'bg-gradient-to-r from-primary to-accent text-white' : 'bg-white/5 text-muted-foreground'}`}>
                       {cat.icon}
                     </div>
                     <div>
@@ -238,7 +238,7 @@ function CurriculumPage() {
                               onClick={() => selectSlot(m.id, slot)}
                               className={`p-4 rounded-2xl border text-left transition-all relative ${
                                 selectedSlots[m.id]?.id === slot.id
-                                  ? 'bg-primary text-white border-primary'
+                                  ? 'bg-gradient-to-r from-primary to-accent text-white border-primary'
                                   : slot.is_full
                                     ? 'bg-white/5 border-white/5 opacity-50 cursor-not-allowed'
                                     : 'bg-white/2 border-white/5 hover:border-primary/30'
@@ -337,7 +337,7 @@ function CurriculumPage() {
                 <button 
                   onClick={handleEnroll}
                   disabled={enrolling || selectedModules.length === 0 || selectedModules.some(m => !selectedSlots[m.id])}
-                  className="w-full py-6 bg-primary text-white font-black tracking-widest text-xs rounded-2xl disabled:opacity-30 disabled:grayscale hover:scale-[1.02] active:scale-95 transition-all uppercase shadow-2xl shadow-primary/30 flex items-center justify-center gap-3"
+                  className="w-full py-6 bg-gradient-to-r from-primary to-accent text-white font-black tracking-widest text-xs rounded-2xl disabled:opacity-30 disabled:grayscale hover:scale-[1.02] active:scale-95 transition-all uppercase shadow-2xl shadow-primary/30 flex items-center justify-center gap-3"
                 >
                   {enrolling ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                     <>Confirm & Enroll <ArrowRight className="w-4 h-4" /></>

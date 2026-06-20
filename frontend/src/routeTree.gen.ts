@@ -14,13 +14,12 @@ import { Route as ResourcesRouteImport } from './routes/resources'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HallOfFameRouteImport } from './routes/hall-of-fame'
 import { Route as EventsRouteImport } from './routes/events'
+import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ConnectRouteImport } from './routes/connect'
+import { Route as MemberIdRouteImport } from './routes/$memberId'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrainingIndexRouteImport } from './routes/training/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
-import { Route as SUuidRouteImport } from './routes/s/$uuid'
-import { Route as DemoBookingRouteImport } from './routes/demo/booking'
-import { Route as AdminSetupRouteImport } from './routes/admin/setup'
 
 const StoreRoute = StoreRouteImport.update({
   id: '/store',
@@ -47,9 +46,19 @@ const EventsRoute = EventsRouteImport.update({
   path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardRoute = DashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConnectRoute = ConnectRouteImport.update({
   id: '/connect',
   path: '/connect',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MemberIdRoute = MemberIdRouteImport.update({
+  id: '/$memberId',
+  path: '/$memberId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -67,62 +76,44 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SUuidRoute = SUuidRouteImport.update({
-  id: '/s/$uuid',
-  path: '/s/$uuid',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoBookingRoute = DemoBookingRouteImport.update({
-  id: '/demo/booking',
-  path: '/demo/booking',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminSetupRoute = AdminSetupRouteImport.update({
-  id: '/admin/setup',
-  path: '/admin/setup',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$memberId': typeof MemberIdRoute
   '/connect': typeof ConnectRoute
+  '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
   '/hall-of-fame': typeof HallOfFameRoute
   '/login': typeof LoginRoute
   '/resources': typeof ResourcesRoute
   '/store': typeof StoreRoute
-  '/admin/setup': typeof AdminSetupRoute
-  '/demo/booking': typeof DemoBookingRoute
-  '/s/$uuid': typeof SUuidRoute
   '/admin/': typeof AdminIndexRoute
   '/training/': typeof TrainingIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$memberId': typeof MemberIdRoute
   '/connect': typeof ConnectRoute
+  '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
   '/hall-of-fame': typeof HallOfFameRoute
   '/login': typeof LoginRoute
   '/resources': typeof ResourcesRoute
   '/store': typeof StoreRoute
-  '/admin/setup': typeof AdminSetupRoute
-  '/demo/booking': typeof DemoBookingRoute
-  '/s/$uuid': typeof SUuidRoute
   '/admin': typeof AdminIndexRoute
   '/training': typeof TrainingIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$memberId': typeof MemberIdRoute
   '/connect': typeof ConnectRoute
+  '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
   '/hall-of-fame': typeof HallOfFameRoute
   '/login': typeof LoginRoute
   '/resources': typeof ResourcesRoute
   '/store': typeof StoreRoute
-  '/admin/setup': typeof AdminSetupRoute
-  '/demo/booking': typeof DemoBookingRoute
-  '/s/$uuid': typeof SUuidRoute
   '/admin/': typeof AdminIndexRoute
   '/training/': typeof TrainingIndexRoute
 }
@@ -130,58 +121,54 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$memberId'
     | '/connect'
+    | '/dashboard'
     | '/events'
     | '/hall-of-fame'
     | '/login'
     | '/resources'
     | '/store'
-    | '/admin/setup'
-    | '/demo/booking'
-    | '/s/$uuid'
     | '/admin/'
     | '/training/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$memberId'
     | '/connect'
+    | '/dashboard'
     | '/events'
     | '/hall-of-fame'
     | '/login'
     | '/resources'
     | '/store'
-    | '/admin/setup'
-    | '/demo/booking'
-    | '/s/$uuid'
     | '/admin'
     | '/training'
   id:
     | '__root__'
     | '/'
+    | '/$memberId'
     | '/connect'
+    | '/dashboard'
     | '/events'
     | '/hall-of-fame'
     | '/login'
     | '/resources'
     | '/store'
-    | '/admin/setup'
-    | '/demo/booking'
-    | '/s/$uuid'
     | '/admin/'
     | '/training/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MemberIdRoute: typeof MemberIdRoute
   ConnectRoute: typeof ConnectRoute
+  DashboardRoute: typeof DashboardRoute
   EventsRoute: typeof EventsRoute
   HallOfFameRoute: typeof HallOfFameRoute
   LoginRoute: typeof LoginRoute
   ResourcesRoute: typeof ResourcesRoute
   StoreRoute: typeof StoreRoute
-  AdminSetupRoute: typeof AdminSetupRoute
-  DemoBookingRoute: typeof DemoBookingRoute
-  SUuidRoute: typeof SUuidRoute
   AdminIndexRoute: typeof AdminIndexRoute
   TrainingIndexRoute: typeof TrainingIndexRoute
 }
@@ -223,11 +210,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboard': {
+      id: '/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/connect': {
       id: '/connect'
       path: '/connect'
       fullPath: '/connect'
       preLoaderRoute: typeof ConnectRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$memberId': {
+      id: '/$memberId'
+      path: '/$memberId'
+      fullPath: '/$memberId'
+      preLoaderRoute: typeof MemberIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -251,41 +252,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/s/$uuid': {
-      id: '/s/$uuid'
-      path: '/s/$uuid'
-      fullPath: '/s/$uuid'
-      preLoaderRoute: typeof SUuidRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/booking': {
-      id: '/demo/booking'
-      path: '/demo/booking'
-      fullPath: '/demo/booking'
-      preLoaderRoute: typeof DemoBookingRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin/setup': {
-      id: '/admin/setup'
-      path: '/admin/setup'
-      fullPath: '/admin/setup'
-      preLoaderRoute: typeof AdminSetupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MemberIdRoute: MemberIdRoute,
   ConnectRoute: ConnectRoute,
+  DashboardRoute: DashboardRoute,
   EventsRoute: EventsRoute,
   HallOfFameRoute: HallOfFameRoute,
   LoginRoute: LoginRoute,
   ResourcesRoute: ResourcesRoute,
   StoreRoute: StoreRoute,
-  AdminSetupRoute: AdminSetupRoute,
-  DemoBookingRoute: DemoBookingRoute,
-  SUuidRoute: SUuidRoute,
   AdminIndexRoute: AdminIndexRoute,
   TrainingIndexRoute: TrainingIndexRoute,
 }

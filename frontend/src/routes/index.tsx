@@ -50,7 +50,8 @@ function LandingPage() {
     <div className="min-h-screen bg-background text-foreground selection:bg-primary selection:text-white">
       {/* 1. TRUST: Hero Section with Social Proof */}
       <section className="relative pt-40 pb-24 px-6 overflow-hidden border-b border-white/5">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[600px] bg-primary/10 blur-[140px] rounded-full -z-10" />
+        <div className="absolute top-0 left-1/4 -translate-x-1/2 w-[800px] h-[600px] bg-primary/10 blur-[140px] rounded-full -z-10" />
+        <div className="absolute top-0 right-1/4 translate-x-1/2 w-[800px] h-[600px] bg-accent/10 blur-[140px] rounded-full -z-10" />
 
         <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-black tracking-[0.3em] text-primary mb-10 animate-fade-in uppercase">
@@ -58,9 +59,9 @@ function LandingPage() {
             <span>EST. 2012 • 45+ NATIONAL GOLD MEDALS</span>
           </div>
           
-          <h1 className="text-6xl md:text-9xl font-black mb-8 leading-[0.85] tracking-tighter uppercase italic">
+          <h1 className="text-4xl sm:text-6xl md:text-9xl font-black mb-8 leading-[0.85] tracking-tighter uppercase italic break-words">
             FORCE <br />
-            <span className="text-primary">MULTIPLIED.</span>
+            <span className="brand-gradient bg-clip-text text-transparent">MULTIPLIED.</span>
           </h1>
           
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-12 font-medium leading-relaxed">
@@ -70,7 +71,7 @@ function LandingPage() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6 w-full max-w-lg">
             <Link 
               to="/login"
-              className="w-full sm:flex-1 px-10 py-5 bg-primary text-white font-black tracking-widest text-xs rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-2xl shadow-primary/30 uppercase cursor-pointer"
+              className="w-full sm:flex-1 px-10 py-5 bg-gradient-to-r from-primary to-accent text-white font-black tracking-widest text-xs rounded-2xl flex items-center justify-center gap-3 hover:scale-105 transition-all shadow-2xl shadow-primary/30 uppercase cursor-pointer"
             >
               Join the Club <ArrowRight className="w-4 h-4" />
             </Link>
@@ -127,9 +128,9 @@ function LandingPage() {
             <div className="inline-flex items-center gap-2 text-primary font-black text-xs tracking-widest uppercase">
               <Zap className="w-4 h-4 fill-current" /> The Alacarte System
             </div>
-            <h2 className="text-4xl md:text-6xl font-black tracking-tighter uppercase leading-none italic">
+            <h2 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tighter uppercase leading-none italic break-words">
               YOU CHOOSE THE <br />
-              <span className="text-primary">CURRICULUM.</span>
+              <span className="brand-gradient bg-clip-text text-transparent">CURRICULUM.</span>
             </h2>
             <p className="text-lg text-muted-foreground font-medium leading-relaxed max-w-xl">
               XMFCLUB is built on modularity. Why pay for a full martial arts course when you only want to master Bo-Staff strikes? Or Calisthenics upper-body strength? 
@@ -150,7 +151,7 @@ function LandingPage() {
             </ul>
             <Link 
               to="/training/curriculum"
-              className="inline-flex items-center gap-4 px-10 py-5 bg-white text-black font-black tracking-widest text-xs rounded-2xl hover:bg-primary hover:text-white hover:scale-105 transition-all shadow-xl uppercase"
+              className="inline-flex items-center gap-4 px-10 py-5 bg-white text-black font-black tracking-widest text-xs rounded-2xl hover:bg-gradient-to-r hover:from-primary hover:to-accent hover:text-white hover:scale-105 transition-all shadow-xl uppercase"
             >
               Go to Curriculum <ArrowRight className="w-4 h-4" />
             </Link>
@@ -162,7 +163,7 @@ function LandingPage() {
       <section className="py-24 px-6 max-w-7xl mx-auto border-b border-white/5">
         <div className="text-center mb-16">
           <h2 className="text-xs font-black tracking-[0.4em] text-muted-foreground uppercase mb-4">Explore the Universe</h2>
-          <h3 className="text-4xl font-black tracking-tighter uppercase italic">The XMF <span className="text-primary">Lifestyle</span></h3>
+          <h3 className="text-4xl font-black tracking-tighter uppercase italic">The XMF <span className="brand-gradient bg-clip-text text-transparent">Lifestyle</span></h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-auto md:h-[600px]">
@@ -226,7 +227,7 @@ function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="text-xs font-black tracking-[0.4em] text-primary uppercase mb-4">The Foundation</h2>
-            <h3 className="text-5xl md:text-7xl font-black tracking-tighter uppercase italic">Our <span className="text-primary">Mission</span></h3>
+            <h3 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tighter uppercase italic break-words">Our <span className="brand-gradient bg-clip-text text-transparent">Mission</span></h3>
             <p className="mt-6 text-xl text-muted-foreground max-w-2xl mx-auto font-medium leading-relaxed">
               From the heritage of Extreme Martial Arts (XMF) to the frontiers of human movement, we are here to build the next generation of high-performance individuals.
             </p>
@@ -268,13 +269,13 @@ function LandingPage() {
             </div>
             {/* Decorative elements */}
             <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/20 blur-3xl rounded-full" />
-            <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-primary/10 blur-3xl rounded-full" />
+            <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-accent/20 blur-3xl rounded-full" />
           </div>
 
           <div className="space-y-10">
             <div>
               <h2 className="text-xs font-black tracking-[0.4em] text-primary uppercase mb-4">Meet Your Mentor</h2>
-              <h3 className="text-5xl md:text-6xl font-black tracking-tighter uppercase italic leading-none">SHAPING THE <br /> <span className="text-primary text-4xl md:text-5xl">MODERN WARRIOR.</span></h3>
+              <h3 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tighter uppercase italic leading-none break-words">SHAPING THE <br /> <span className="brand-gradient bg-clip-text text-transparent text-3xl sm:text-4xl md:text-5xl">MODERN WARRIOR.</span></h3>
             </div>
             
             <div className="space-y-6 text-muted-foreground font-medium text-lg leading-relaxed">
@@ -310,7 +311,7 @@ function LandingPage() {
       <section className="py-24 px-6 max-w-4xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-xs font-black tracking-[0.4em] text-primary uppercase mb-4">Transparency</h2>
-          <h3 className="text-4xl font-black tracking-tighter uppercase italic">Frequently Asked <span className="text-primary">Questions</span></h3>
+          <h3 className="text-4xl font-black tracking-tighter uppercase italic">Frequently Asked <span className="brand-gradient bg-clip-text text-transparent">Questions</span></h3>
         </div>
         
         <div className="space-y-2">
@@ -346,12 +347,12 @@ function LandingPage() {
       </section>
 
       {/* 7. FINAL CTA: Join the Movement */}
-      <section className="py-24 px-6 relative overflow-hidden bg-primary text-white border-y border-white/10">
+      <section className="py-24 px-6 relative overflow-hidden bg-gradient-to-r from-primary to-accent text-white border-y border-white/10">
         <div className="absolute top-0 right-0 p-24 opacity-10 pointer-events-none -rotate-12">
           <ShieldCheck className="w-96 h-96" />
         </div>
         <div className="max-w-4xl mx-auto text-center relative z-10">
-          <h2 className="text-5xl md:text-7xl font-black mb-10 italic uppercase tracking-tight leading-[0.85]">
+          <h2 className="text-4xl sm:text-5xl md:text-7xl font-black mb-10 italic uppercase tracking-tight leading-[0.85] break-words">
             CHOOSE YOUR PATH. <br /> <span className="text-white/80">BUILD YOUR LEGACY.</span>
           </h2>
           <p className="text-white/80 text-xl font-medium leading-relaxed mb-12 max-w-2xl mx-auto">

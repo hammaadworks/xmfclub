@@ -34,7 +34,7 @@ function Login() {
       .from('members')
       .select('*')
       .eq('member_id', identifier.trim().toUpperCase())
-      .eq('pattern_string', patternStr)
+      .eq('pattern_hash', patternStr)
       .single();
 
     if (signInError || !data) {

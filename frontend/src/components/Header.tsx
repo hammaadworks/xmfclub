@@ -1,28 +1,53 @@
-import { Link } from '@tanstack/react-router'
-import { useState } from 'react'
-import { Home, Menu, X, Dumbbell, ShieldCheck, LayoutGrid, Calendar, Trophy, ShoppingBag, Zap, MessageSquare, BookOpen } from 'lucide-react'
+import { Link, useNavigate } from '@tanstack/react-router'
+import { Menu, X, User, Trophy, Calendar, ShoppingBag, BookOpen, MessageSquare, ShieldCheck } from 'lucide-react'
+import { useState, useEffect } from 'react'
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
+  const [member, setMember] = useState<any>(null)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 50)
+    window.addEventListener('scroll', handleScroll)
+    
+    // Check auth
+    const authData = localStorage.getItem('xmf_member')
+    if (authData) setMember(JSON.parse(authData))
+
+    // Listen for auth changes if we implement a custom event later
+    const handleAuthChange = () => {
+      const updated = localStorage.getItem('xmf_member')
+      setMember(updated ? JSON.parse(updated) : null)
+    }
+    window.addEventListener('storage', handleAuthChange)
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('storage', handleAuthChange)
+    }
+  }, [])
 
   return (
-    <>
-      <header className="fixed top-0 left-0 right-0 h-20 flex items-center justify-between px-6 bg-background/80 backdrop-blur-xl border-b border-white/5 z-40">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setIsOpen(true)}
-            className="p-2 hover:bg-white/5 rounded-lg transition-colors text-primary"
-            aria-label="Open menu"
-          >
-            <Menu size={24} />
-          </button>
-          <Link to="/" className="text-2xl font-black tracking-tighter text-foreground font-heading">
-            XMF<span className="text-primary">CLUB</span>
-          </Link>
-        </div>
+    <header 
+      className={`fixed top-0 w-full z-50 transition-all duration-500 border-b ${
+        isScrolled 
+          ? 'bg-background/80 backdrop-blur-xl border-white/10 py-4 shadow-2xl' 
+          : 'bg-transparent border-transparent py-6'
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+        <Link to="/" className="flex items-center gap-3 group relative z-50">
+          <div className="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-xl flex items-center justify-center transform group-hover:rotate-12 transition-all shadow-lg shadow-primary/20">
+            <span className="font-black text-white tracking-tighter text-lg leading-none">X</span>
+          </div>
+          <span className="font-black tracking-tighter text-xl uppercase hidden sm:block group-hover:text-primary transition-colors">XMFCLUB</span>
+        </Link>
 
-        <nav className="hidden lg:flex items-center gap-6">
-          <Link to="/" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Home</Link>
+        {/* Desktop Nav */}
+        <nav className="hidden lg:flex items-center gap-8">
+          <Link to="/" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase active:text-primary">Home</Link>
           <Link to="/training" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Training</Link>
           <Link to="/events" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Events</Link>
           <Link to="/resources" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase">Resources</Link>
@@ -32,47 +57,52 @@ export default function Header() {
         </nav>
 
         <div className="flex items-center gap-4">
-          <Link to="/login" className="text-xs font-black tracking-widest hover:text-primary transition-colors uppercase bg-primary text-primary-foreground px-4 py-2 rounded-md">Login</Link>
-        </div>
-      </header>
+          {member ? (
+            <div className="hidden sm:flex items-center gap-3">
+              <Link 
+                to={member.role === 'admin' ? '/admin' : '/dashboard'}
+                className="px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black tracking-widest text-[10px] rounded-full uppercase transition-all flex items-center gap-2"
+              >
+                {member.role === 'admin' ? <ShieldCheck className="w-3 h-3" /> : <User className="w-3 h-3" />}
+                {member.name.split(' ')[0]}
+              </Link>
+            </div>
+          ) : (
+            <div className="hidden sm:flex items-center gap-4">
+              <Link 
+                to="/login"
+                className="px-6 py-2.5 bg-primary/10 hover:bg-primary/20 text-primary font-black tracking-widest text-[10px] rounded-full border border-primary/20 uppercase transition-all"
+              >
+                Login
+              </Link>
+            </div>
+          )}
 
-      {/* Sidebar Overlay */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 transition-opacity"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed top-0 left-0 h-full w-80 bg-card text-foreground shadow-2xl z-[60] transform transition-transform duration-500 ease-out border-r border-white/5 flex flex-col ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
-      >
-        <div className="flex items-center justify-between p-6 border-b border-white/5">
-          <h2 className="text-xl font-black tracking-tighter font-heading">
-            XMF<span className="text-primary">CLUB</span>
-          </h2>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="p-2 hover:bg-white/5 rounded-lg transition-colors"
-            aria-label="Close menu"
+          <button 
+            className="lg:hidden p-2 text-white relative z-50 hover:bg-white/10 rounded-xl transition-colors"
+            onClick={() => setIsOpen(!isOpen)}
           >
-            <X size={24} />
+            {isOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
+      </div>
 
-        <nav className="flex-1 p-6 space-y-2 overflow-y-auto">
+      {/* Mobile Menu */}
+      <div 
+        className={`fixed inset-0 bg-background/95 backdrop-blur-2xl transition-all duration-500 lg:hidden ${
+          isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+      >
+        <nav className="flex flex-col items-center justify-center h-full gap-8 px-6">
           <SidebarLink 
             to="/" 
-            icon={<Home size={20} />} 
+            icon={<Trophy size={20} />} 
             label="Home" 
             onClick={() => setIsOpen(false)} 
           />
           <SidebarLink 
             to="/training" 
-            icon={<LayoutGrid size={20} />} 
+            icon={<User size={20} />} 
             label="Training" 
             onClick={() => setIsOpen(false)} 
           />
@@ -106,28 +136,46 @@ export default function Header() {
             label="Connect" 
             onClick={() => setIsOpen(false)} 
           />
-        </nav>
 
-        <div className="p-6 border-t border-white/5 bg-white/2 flex flex-col gap-4">
-          <Link to="/login" onClick={() => setIsOpen(false)} className="w-full bg-primary text-primary-foreground font-bold tracking-widest uppercase text-center py-3 rounded-lg hover:bg-primary/90 transition-colors">Login / Member Portal</Link>
-        </div>
-      </aside>
-    </>
+          <div className="w-full h-px bg-white/10 my-4" />
+          
+          {member ? (
+            <Link 
+              to={member.role === 'admin' ? '/admin' : '/dashboard'}
+              onClick={() => setIsOpen(false)}
+              className="w-full max-w-sm py-4 bg-gradient-to-r from-primary to-accent text-white font-black tracking-widest text-xs rounded-xl uppercase hover:scale-105 transition-transform flex items-center justify-center gap-2"
+            >
+              {member.role === 'admin' ? <ShieldCheck className="w-4 h-4" /> : <User className="w-4 h-4" />}
+              {member.role === 'admin' ? 'Admin Dashboard' : 'My Dashboard'}
+            </Link>
+          ) : (
+            <div className="w-full max-w-sm space-y-4">
+              <Link 
+                to="/login"
+                onClick={() => setIsOpen(false)}
+                className="w-full flex items-center justify-center py-4 bg-primary/10 text-primary border border-primary/20 font-black tracking-widest text-xs rounded-xl uppercase hover:bg-primary/20 transition-all"
+              >
+                Member Login
+              </Link>
+            </div>
+          )}
+        </nav>
+      </div>
+    </header>
   )
 }
 
-function SidebarLink({ to, icon, label, onClick }: { to: string, icon?: React.ReactNode, label: string, onClick: () => void }) {
+function SidebarLink({ to, icon, label, onClick }: { to: string, icon: React.ReactNode, label: string, onClick: () => void }) {
   return (
-    <Link
-      to={to}
+    <Link 
+      to={to} 
       onClick={onClick}
-      className="flex items-center gap-4 p-4 rounded-xl hover:bg-white/5 transition-all group"
-      activeProps={{
-        className: 'flex items-center gap-4 p-4 rounded-xl bg-primary/10 text-primary border border-primary/20',
-      }}
+      className="flex items-center gap-4 text-2xl font-black uppercase tracking-tighter hover:text-primary transition-colors group w-full max-w-sm"
     >
-      {icon && <span className="group-hover:scale-110 transition-transform">{icon}</span>}
-      <span className="font-bold tracking-widest text-sm uppercase">{label}</span>
+      <div className="text-muted-foreground group-hover:text-primary transition-colors">
+        {icon}
+      </div>
+      {label}
     </Link>
   )
 }

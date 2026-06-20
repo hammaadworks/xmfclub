@@ -56,8 +56,8 @@ function ConnectPage() {
 
       <div className="max-w-7xl mx-auto">
         <header className="mb-20 text-center">
-          <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter uppercase">
-            CONNECT WITH <span className="text-primary">XMF</span>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black mb-6 tracking-tighter uppercase break-words">
+            CONNECT WITH <span className="brand-gradient bg-clip-text text-transparent">XMF</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto font-medium">
             Join the community, follow our journey, or send a direct message to Master Farhan.
@@ -172,7 +172,7 @@ function ConnectPage() {
 
               <button 
                 type="submit"
-                className="w-full py-5 bg-primary text-white font-black tracking-[0.2em] text-xs rounded-xl flex items-center justify-center gap-3 uppercase hover:scale-[1.02] transition-transform shadow-lg shadow-primary/20 cursor-pointer"
+                className="w-full py-5 bg-gradient-to-r from-primary to-accent text-white font-black tracking-[0.2em] text-xs rounded-xl flex items-center justify-center gap-3 uppercase hover:scale-[1.02] transition-transform shadow-lg shadow-primary/20 cursor-pointer"
               >
                 <MessageSquare className="w-5 h-5" /> Send on WhatsApp
               </button>

@@ -11,19 +11,19 @@
   --card-foreground: #F8FAFC;
   --popover: #1F2937;
   --popover-foreground: #F8FAFC;
-  --primary: #F97316;
+  --primary: #E60000;
   --primary-foreground: #F8FAFC;
   --secondary: #374151;
   --secondary-foreground: #F8FAFC;
   --muted: #374151;
   --muted-foreground: #9CA3AF;
-  --accent: #F97316;
+  --accent: #0055FF;
   --accent-foreground: #F8FAFC;
   --destructive: #EF4444;
   --destructive-foreground: #F8FAFC;
   --border: #374151;
   --input: #374151;
-  --ring: #F97316;
+  --ring: #E60000;
   --radius: 0.5rem;
   
   --font-heading: 'Syncopate', sans-serif;
@@ -72,7 +72,7 @@
 }
 
 .brand-gradient {
-  background: linear-gradient(to right, #F97316, #FB923C);
+  background: linear-gradient(to right, #E60000, #0055FF);
 }
 
 .bento-grid {

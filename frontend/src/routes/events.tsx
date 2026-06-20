@@ -29,8 +29,8 @@ function EventsPage() {
     <div className="min-h-screen bg-background pt-32 pb-20 px-6">
       <div className="max-w-7xl mx-auto">
         <header className="mb-20">
-          <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter uppercase">
-            XMF <span className="text-primary">EVENTS</span>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black mb-6 tracking-tighter uppercase break-words">
+            XMF <span className="brand-gradient bg-clip-text text-transparent">EVENTS</span>
           </h1>
           <p className="text-xl text-muted-foreground max-w-2xl font-medium">
             Join our elite workshops, competitions, and seminars. Be part of the legacy.
@@ -46,7 +46,7 @@ function EventsPage() {
           </div>
           <button 
             onClick={() => window.dispatchEvent(new CustomEvent('showContactModal'))}
-            className="whitespace-nowrap px-6 py-3 bg-primary text-white font-black tracking-widest text-xs rounded-xl uppercase hover:scale-105 transition-transform shadow-lg shadow-primary/20"
+            className="whitespace-nowrap px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-black tracking-widest text-xs rounded-xl uppercase hover:scale-105 transition-transform shadow-lg shadow-primary/20"
           >
             Become a Member
           </button>
@@ -62,7 +62,7 @@ function EventsPage() {
                   className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 opacity-60"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent md:bg-gradient-to-r" />
-                <div className="absolute top-6 left-6 px-4 py-1.5 bg-primary text-white text-[10px] font-black tracking-widest uppercase rounded-full">
+                <div className="absolute top-6 left-6 px-4 py-1.5 bg-gradient-to-r from-primary to-accent text-white text-[10px] font-black tracking-widest uppercase rounded-full">
                   {event.status}
                 </div>
               </div>
