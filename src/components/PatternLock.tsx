@@ -44,8 +44,9 @@ export function PatternLock({ onComplete, error }: PatternLockProps) {
   const handlePointerUp = () => {
     if (isDrawing) {
       setIsDrawing(false);
-      onComplete(pattern);
-      // Brief timeout to let the user see their completed pattern before clearing
+      if (pattern.length >= 4) {
+        onComplete(pattern);
+      }
       setTimeout(() => setPattern([]), 600); 
     }
   };
@@ -64,8 +65,23 @@ export function PatternLock({ onComplete, error }: PatternLockProps) {
     <div 
       className="relative w-64 h-64 mx-auto select-none touch-none bg-background rounded-xl p-2 border shadow-sm"
       ref={containerRef}
+      onPointerDown={(e) => {
+        const element = document.elementFromPoint(e.clientX, e.clientY);
+        if (element && element.hasAttribute('data-index')) {
+          e.currentTarget.setPointerCapture(e.pointerId);
+          setIsDrawing(true);
+          setPattern([parseInt(element.getAttribute('data-index')!, 10)]);
+        }
+      }}
       onPointerMove={handlePointerMove}
-      onTouchMove={handlePointerMove}
+      onPointerUp={(e) => {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+        handlePointerUp();
+      }}
+      onPointerCancel={(e) => {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+        handlePointerUp();
+      }}
     >
       <div className="grid grid-cols-3 grid-rows-3 gap-0 w-full h-full relative z-10">
         {dots.map((index) => {
@@ -76,12 +92,7 @@ export function PatternLock({ onComplete, error }: PatternLockProps) {
               data-index={index}
               className="relative flex items-center justify-center w-full h-full cursor-pointer"
               onPointerDown={(e) => {
-                // Prevent drag
                 e.preventDefault();
-                handlePointerDown(index);
-              }}
-              onTouchStart={(e) => {
-                handlePointerDown(index);
               }}
             >
               {/* Hitbox area */}

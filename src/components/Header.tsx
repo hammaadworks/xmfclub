@@ -22,10 +22,12 @@ export default function Header() {
       setMember(updated ? JSON.parse(updated) : null)
     }
     window.addEventListener('storage', handleAuthChange)
+    window.addEventListener('auth_change', handleAuthChange)
 
     return () => {
       window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('storage', handleAuthChange)
+      window.removeEventListener('auth_change', handleAuthChange)
     }
   }, [])
 
@@ -139,28 +141,6 @@ export default function Header() {
             onClick={() => setIsOpen(false)} 
           />
 
-          <div className="w-full h-px bg-white/10 my-4" />
-          
-          {member ? (
-            <Link 
-              to={member.role === 'admin' ? '/admin' : `/member/${member.member_id}`}
-              onClick={() => setIsOpen(false)}
-              className="w-full max-w-sm py-4 bg-gradient-to-r from-primary to-accent text-white font-black tracking-widest text-xs rounded-xl uppercase hover:scale-105 transition-transform flex items-center justify-center gap-2"
-            >
-              {member.role === 'admin' ? <ShieldCheck className="w-4 h-4" /> : <User className="w-4 h-4" />}
-              {member.role === 'admin' ? 'Admin Dashboard' : 'My Dashboard'}
-            </Link>
-          ) : (
-            <div className="w-full max-w-sm space-y-4">
-              <Link 
-                to="/login"
-                onClick={() => setIsOpen(false)}
-                className="w-full flex items-center justify-center py-4 bg-primary/10 text-primary border border-primary/20 font-black tracking-widest text-xs rounded-xl uppercase hover:bg-primary/20 transition-all"
-              >
-                Member Login
-              </Link>
-            </div>
-          )}
         </nav>
       </div>
     </header>

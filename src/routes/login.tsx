@@ -29,24 +29,44 @@ function Login() {
 
     const patternStr = drawnPattern.join('');
 
-    // Query the custom members table directly
     const { data, error: signInError } = await supabase
       .from('members')
       .select('*')
       .eq('member_id', identifier.trim().toUpperCase())
       .eq('pattern_hash', patternStr)
-      .single();
+      .maybeSingle();
 
-    if (signInError || !data) {
-      setError('Invalid ID or pattern. Please try again.');
+    if (signInError) {
+      console.error(signInError);
+      setError("Login failed. Please try again.");
+      setPatternError(true);
+      setLoading(false);
+      return;
+    }
+
+    if (!data) {
+      setError("Invalid Member ID or Pattern");
+      setPatternError(true);
       setPattern([]);
       setLoading(false);
       return;
     }
 
-    // Success! Store member session locally without the hash
-    const { pattern_hash, ...safeData } = data;
+    // Success
+    setPatternError(false);
+    setError("");
+    
+    // Convert Supabase object to match what app expects
+    const safeData = {
+      id: data.id,
+      member_id: data.member_id,
+      name: data.name,
+      role: data.role || 'member'
+    };
+
     localStorage.setItem('xmf_member', JSON.stringify(safeData));
+    window.dispatchEvent(new Event('auth_change'));
+
     if (safeData.role === 'admin') {
       navigate({ to: '/admin' });
     } else {

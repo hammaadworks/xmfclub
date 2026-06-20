@@ -21,6 +21,10 @@ function DashboardPage() {
   const [attendanceLogged, setAttendanceLogged] = useState(false)
   const [beltConfig, setBeltConfig] = useState<any[]>([])
 
+  // Events State
+  const [events, setEvents] = useState<any[]>([])
+  const [registeredEventIds, setRegisteredEventIds] = useState<string[]>([])
+
   // Edit State
   const [isEditingInfo, setIsEditingInfo] = useState(false)
   const [editForm, setEditForm] = useState({ phone: '', email: '', address: '', blood_group: '' })
@@ -92,6 +96,20 @@ function DashboardPage() {
               setAttendanceLogged(true)
             }
           }
+
+          // Fetch upcoming events
+          const { data: eventsData } = await supabase
+            .from('events')
+            .select('*')
+            .order('date', { ascending: true })
+          if (eventsData) setEvents(eventsData)
+
+          // Fetch event registrations
+          const { data: regsData } = await supabase
+            .from('event_registrations')
+            .select('event_id')
+            .eq('member_id', memberData.id)
+          if (regsData) setRegisteredEventIds(regsData.map(r => r.event_id))
         }
       } catch (err) {
         console.error("Unhandled error in fetchData:", err)
@@ -162,6 +180,26 @@ function DashboardPage() {
       setIsEditingInfo(false)
     } else {
       setAppAlert({ message: "Failed to save info: " + error.message })
+    }
+  }
+
+  const handleRegisterEvent = async (eventId: string) => {
+    if (!member) return
+    const { error } = await supabase.from('event_registrations').insert([{
+      event_id: eventId,
+      member_id: member.id,
+      status: 'Registered'
+    }])
+    
+    if (!error) {
+      setRegisteredEventIds(prev => [...prev, eventId])
+      setAppAlert({ message: "Successfully registered for the event!" })
+    } else {
+      if (error.code === '23505') {
+         setAppAlert({ message: "You are already registered for this event." })
+      } else {
+         setAppAlert({ message: "Failed to register: " + error.message })
+      }
     }
   }
 
@@ -298,56 +336,68 @@ function DashboardPage() {
                       )}
                     </div>
                     
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4 text-sm font-medium">
-                        <Phone className="w-4 h-4 text-muted-foreground shrink-0" /> 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-black tracking-widest uppercase text-muted-foreground">Phone</label>
                         {isEditingInfo ? (
                           <input 
                             type="text" 
-                            value={editForm.phone} 
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary transition-colors"
+                            value={editForm.phone}
                             onChange={e => setEditForm({...editForm, phone: e.target.value})}
-                            className="bg-black/50 border border-white/10 rounded px-2 py-1 w-full text-white"
-                            placeholder="Phone"
                           />
-                        ) : (member.phone || 'Not provided')}
+                        ) : (
+                          <div className="w-full bg-black/20 border border-white/5 rounded-xl p-3 text-white/70">
+                            {member.phone || 'Not provided'}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-4 text-sm font-medium">
-                        <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
+                      
+                      <div className="space-y-2">
+                        <label className="text-xs font-black tracking-widest uppercase text-muted-foreground">Email</label>
                         {isEditingInfo ? (
                           <input 
                             type="email" 
-                            value={editForm.email} 
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary transition-colors"
+                            value={editForm.email}
                             onChange={e => setEditForm({...editForm, email: e.target.value})}
-                            className="bg-black/50 border border-white/10 rounded px-2 py-1 w-full text-white"
-                            placeholder="Email"
                           />
-                        ) : (member.email || 'Not provided')}
+                        ) : (
+                          <div className="w-full bg-black/20 border border-white/5 rounded-xl p-3 text-white/70">
+                            {member.email || 'Not provided'}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-start gap-4 text-sm font-medium">
-                        <MapPin className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
+                      
+                      <div className="space-y-2">
+                        <label className="text-xs font-black tracking-widest uppercase text-muted-foreground">Blood Group</label>
+                        {isEditingInfo ? (
+                          <input 
+                            type="text" 
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary transition-colors"
+                            value={editForm.blood_group}
+                            onChange={e => setEditForm({...editForm, blood_group: e.target.value})}
+                          />
+                        ) : (
+                          <div className="w-full bg-black/20 border border-white/5 rounded-xl p-3 text-white/70">
+                            {member.blood_group || 'Not provided'}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-2 md:col-span-2">
+                        <label className="text-xs font-black tracking-widest uppercase text-muted-foreground">Address</label>
                         {isEditingInfo ? (
                           <textarea 
-                            value={editForm.address} 
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary transition-colors h-24"
+                            value={editForm.address}
                             onChange={e => setEditForm({...editForm, address: e.target.value})}
-                            className="bg-black/50 border border-white/10 rounded px-2 py-1 w-full text-white min-h-[60px]"
-                            placeholder="Address"
                           />
-                        ) : (member.address || 'Not provided')}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm font-medium">
-                        <Activity className="w-4 h-4 text-muted-foreground shrink-0" />
-                        {isEditingInfo ? (
-                          <div className="flex items-center gap-2 w-full">
-                            <span className="text-muted-foreground">Blood:</span>
-                            <input 
-                              type="text" 
-                              value={editForm.blood_group} 
-                              onChange={e => setEditForm({...editForm, blood_group: e.target.value})}
-                              className="bg-black/50 border border-white/10 rounded px-2 py-1 flex-1 text-white uppercase"
-                              placeholder="e.g. O+"
-                            />
+                        ) : (
+                          <div className="w-full bg-black/20 border border-white/5 rounded-xl p-3 text-white/70 min-h-[3rem]">
+                            {member.address || 'Not provided'}
                           </div>
-                        ) : (`Blood: ${member.blood_group || 'N/A'}`)}
+                        )}
                       </div>
                     </div>
                   </div>
@@ -525,6 +575,89 @@ function DashboardPage() {
                     ))
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* SECTION: EVENTS */}
+          {isOwner && events.some(e => !e.target_belt || e.target_belt === 'All' || e.target_belt === member.belt) && (
+            <div className="space-y-6">
+              <h3 className="text-2xl font-black uppercase tracking-tighter border-b border-white/10 pb-4">Featured Events</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {events.map(event => {
+                  const isRegistered = registeredEventIds.includes(event.id)
+                  const eventDate = new Date(event.date)
+                  const today = new Date()
+                  eventDate.setHours(0, 0, 0, 0)
+                  today.setHours(0, 0, 0, 0)
+                  const isPast = eventDate < today
+                  const isEligible = !event.target_belt || event.target_belt === 'All' || event.target_belt === member.belt
+                  
+                  if (!isEligible || (isPast && !isRegistered)) return null
+
+                  return (
+                    <div key={event.id} className="glass-card p-6 border-white/10 flex flex-col h-full hover:border-primary/30 transition-all">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="bg-primary/20 text-primary p-3 rounded-xl">
+                          <Calendar className="w-6 h-6" />
+                        </div>
+                        {isRegistered && (
+                          <span className="px-3 py-1 bg-green-500/20 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full flex items-center gap-1">
+                            <ShieldCheck className="w-3 h-3" /> Registered
+                          </span>
+                        )}
+                      </div>
+                      
+                      <h4 className="text-lg font-black uppercase tracking-tight mb-2 line-clamp-2">{event.title}</h4>
+                      
+                      <div className="space-y-3 mb-6 mt-auto">
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium">
+                          <Clock className="w-4 h-4 text-primary" />
+                          {new Date(event.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium">
+                          <MapPin className="w-4 h-4 text-primary" />
+                          {event.venue_map_url ? (
+                            <a 
+                              href={event.venue_map_url} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="hover:text-primary transition-colors hover:underline flex items-center gap-1"
+                            >
+                              {event.venue_name || 'Main HQ'}
+                            </a>
+                          ) : (
+                            <span>{event.venue_name || 'Main HQ'}</span>
+                          )}
+                        </div>
+                        {event.fee_breakup?.total > 0 && (
+                          <div className="flex items-center gap-3 text-sm font-bold">
+                            <span className="text-primary tracking-widest uppercase text-[10px]">Fee:</span> ₹{event.fee_breakup.total}
+                          </div>
+                        )}
+                        {event.target_belt !== 'All' && (
+                          <div className="flex items-center gap-3 text-sm font-bold">
+                            <span className="text-primary tracking-widest uppercase text-[10px]">For:</span> {event.target_belt} Belts
+                          </div>
+                        )}
+                      </div>
+                      
+                      {!isPast && (
+                        <button 
+                          onClick={() => handleRegisterEvent(event.id)}
+                          disabled={isRegistered}
+                          className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
+                            isRegistered 
+                              ? 'bg-white/5 text-muted-foreground cursor-not-allowed' 
+                              : 'bg-gradient-to-r from-primary to-accent text-white hover:scale-105 shadow-lg shadow-primary/20'
+                          }`}
+                        >
+                          {isRegistered ? 'Registered' : 'Register Now'}
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             </div>
           )}
