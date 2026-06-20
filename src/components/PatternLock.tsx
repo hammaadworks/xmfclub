@@ -44,9 +44,7 @@ export function PatternLock({ onComplete, error }: PatternLockProps) {
     const handleUp = () => {
       if (isDrawing) {
         setIsDrawing(false);
-        if (pattern.length >= 4) {
-          onComplete(pattern);
-        }
+        onComplete(pattern);
         setTimeout(() => setPattern([]), 600); 
       }
     };
@@ -72,7 +70,7 @@ export function PatternLock({ onComplete, error }: PatternLockProps) {
 
   return (
     <div 
-      className="relative w-64 h-64 mx-auto select-none touch-none bg-background rounded-xl p-2 border shadow-sm"
+      className="relative w-full max-w-[320px] aspect-square mx-auto select-none touch-none bg-background rounded-xl p-4 sm:p-6 border shadow-sm"
       ref={containerRef}
       onPointerDown={(e) => {
         const element = document.elementFromPoint(e.clientX, e.clientY);
@@ -89,7 +87,7 @@ export function PatternLock({ onComplete, error }: PatternLockProps) {
         }
       }}
     >
-      <div className="grid grid-cols-3 grid-rows-3 gap-0 w-full h-full relative z-10">
+      <div className="grid grid-cols-3 grid-rows-3 gap-2 sm:gap-6 w-full h-full relative z-10">
         {dots.map((index) => {
           const isSelected = pattern.includes(index);
           return (
@@ -101,9 +99,9 @@ export function PatternLock({ onComplete, error }: PatternLockProps) {
                 e.preventDefault();
               }}
             >
-              {/* Hitbox area */}
+              {/* Hitbox area - smaller so they have to touch near the middle */}
               <div 
-                className="absolute w-12 h-12 rounded-full z-0" 
+                className="absolute w-8 h-8 rounded-full z-0" 
                 data-index={index}
               />
               {/* Visual dot */}

@@ -2,9 +2,10 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { 
   User, Calendar, Trophy, LogOut,
-  MapPin, Phone, Mail, Activity, ShieldCheck, Trash2, Edit2, Save, X
+  MapPin, Phone, Mail, Activity, ShieldCheck, Trash2, Edit2, Save, X, Lock
 } from 'lucide-react'
 import { supabase } from '#/lib/supabase'
+import { PatternLock } from '#/components/PatternLock'
 
 export const Route = createFileRoute('/member/$memberId')({
   component: DashboardPage,
@@ -25,9 +26,18 @@ function DashboardPage() {
   const [events, setEvents] = useState<any[]>([])
   const [registeredEventIds, setRegisteredEventIds] = useState<string[]>([])
 
-  // Edit State
+  // Edit Profile State
   const [isEditingInfo, setIsEditingInfo] = useState(false)
-  const [editForm, setEditForm] = useState({ phone: '', email: '', address: '', blood_group: '' })
+  const [editForm, setEditForm] = useState({
+    phone: '',
+    email: '',
+    address: '',
+    blood_group: ''
+  })
+  
+  // Pattern Edit State
+  const [showPatternModal, setShowPatternModal] = useState(false)
+  const [patternError, setPatternError] = useState('')
 
   const [isOwner, setIsOwner] = useState(false)
 
@@ -257,12 +267,22 @@ function DashboardPage() {
             </div>
             
             {localStorage.getItem('xmf_member') && (
-              <button 
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] text-red-500 bg-red-500/10 hover:bg-red-500/20 transition-all"
-              >
-                <LogOut className="w-4 h-4" /> Logout
-              </button>
+              <div className="flex flex-col gap-3">
+                {isOwner && (
+                  <button 
+                    onClick={() => setShowPatternModal(true)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] text-white bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
+                  >
+                    <Lock className="w-4 h-4" /> Change Pattern Lock
+                  </button>
+                )}
+                <button 
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] text-red-500 bg-red-500/10 hover:bg-red-500/20 transition-all"
+                >
+                  <LogOut className="w-4 h-4" /> Logout
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -686,30 +706,90 @@ function DashboardPage() {
         </div>
       </div>
 
+      {/* Alert Modal */}
       {appAlert && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6 animate-in fade-in">
-          <div className="glass-card p-8 w-full max-w-sm text-center border-primary/20 space-y-6 relative">
-            <h4 className="text-lg font-black uppercase tracking-widest">Alert</h4>
-            <p className="text-sm font-medium text-muted-foreground">{appAlert.message}</p>
-            <div className="flex gap-4 justify-center pt-2">
-              <button 
-                onClick={() => setAppAlert(null)}
-                className="px-6 py-3 bg-white/10 text-white font-black tracking-widest text-[10px] rounded-xl uppercase hover:bg-white/20 transition-colors flex-1"
-              >
-                {appAlert.isConfirm ? 'Cancel' : 'Dismiss'}
-              </button>
-              {appAlert.isConfirm && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100] backdrop-blur-sm">
+          <div className="bg-background border border-white/10 p-6 rounded-2xl max-w-sm w-full text-center space-y-6">
+            <p className="text-sm">{appAlert.message}</p>
+            <div className="flex justify-center gap-4">
+              {appAlert.isConfirm ? (
+                <>
+                  <button 
+                    onClick={() => setAppAlert(null)}
+                    className="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-black uppercase tracking-widest transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={() => {
+                      appAlert.onConfirm && appAlert.onConfirm();
+                      setAppAlert(null);
+                    }}
+                    className="px-6 py-2 rounded-lg bg-red-500 text-white text-xs font-black uppercase tracking-widest hover:bg-red-600 transition-colors"
+                  >
+                    Confirm
+                  </button>
+                </>
+              ) : (
                 <button 
-                  onClick={() => {
-                    appAlert.onConfirm?.()
-                    setAppAlert(null)
-                  }}
-                  className="px-6 py-3 bg-primary text-white font-black tracking-widest text-[10px] rounded-xl uppercase hover:bg-primary/90 transition-colors flex-1"
+                  onClick={() => setAppAlert(null)}
+                  className="px-6 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:bg-primary/90 transition-colors"
                 >
-                  Confirm
+                  OK
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pattern Modal */}
+      {showPatternModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100] backdrop-blur-sm">
+          <div className="bg-background border border-white/10 p-8 rounded-2xl max-w-md w-full space-y-6 flex flex-col items-center">
+            <h3 className="text-xl font-black uppercase tracking-widest text-center">Set New Pattern</h3>
+            <p className="text-sm text-muted-foreground text-center">
+              Draw a new pattern to secure your account. Must be at least 4 dots.
+            </p>
+            
+            {patternError && (
+              <div className="w-full p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-sm text-center">
+                {patternError}
+              </div>
+            )}
+            
+            <PatternLock 
+              onComplete={async (drawnPattern) => {
+                if (drawnPattern.length < 4) {
+                  setPatternError("Pattern must have at least 4 dots.");
+                  return;
+                }
+                
+                const { error } = await supabase
+                  .from('members')
+                  .update({ pattern_hash: drawnPattern.join('') })
+                  .eq('id', member.id);
+                  
+                if (!error) {
+                  setPatternError('');
+                  setShowPatternModal(false);
+                  setAppAlert({ message: "Pattern updated successfully!" });
+                } else {
+                  setPatternError("Failed to update pattern: " + error.message);
+                }
+              }} 
+              error={!!patternError} 
+            />
+            
+            <button 
+              onClick={() => {
+                setShowPatternModal(false);
+                setPatternError('');
+              }}
+              className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-black uppercase tracking-widest transition-colors mt-4"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}

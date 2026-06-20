@@ -27,6 +27,13 @@ function Login() {
     setLoading(true);
     setError('');
 
+    if (drawnPattern.length < 4) {
+      setError("Pattern must have at least 4 dots.");
+      setPattern([]);
+      setLoading(false);
+      return;
+    }
+
     const patternStr = drawnPattern.join('');
 
     const { data, error: signInError } = await supabase
@@ -39,21 +46,18 @@ function Login() {
     if (signInError) {
       console.error(signInError);
       setError("Login failed. Please try again.");
-      setPatternError(true);
       setLoading(false);
       return;
     }
 
     if (!data) {
       setError("Invalid Member ID or Pattern");
-      setPatternError(true);
       setPattern([]);
       setLoading(false);
       return;
     }
 
     // Success
-    setPatternError(false);
     setError("");
     
     // Convert Supabase object to match what app expects
