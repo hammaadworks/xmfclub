@@ -1,38 +1,38 @@
-# 🥋 xmfclub: The Future of Martial Arts Evolution
+# 🎨 xmfclub Frontend
 
-The martial arts industry is ripe for a digital transformation that matches the discipline's physical intensity. **xmfclub** is not just a management tool; it's a high-performance engine for the next generation of extreme fitness and Taekwondo communities. We are bridging the gap between traditional dojang values and the high-speed, modular demands of modern business, creating an ecosystem where training, scalability, and student engagement converge into a single, seamless experience.
+The visionary user interface for the **xmfclub** ecosystem. Designed with "Aesthetic Precision" and a high-energy "Bento Grid" layout, this application provides students and instructors with a fast, intuitive, and immersive training management experience.
 
 ---
 
-## 🎯 The Mission: Empowering Growth, Mastery, and Scale
+## ✨ Design Principles
 
-Traditional martial arts schools often struggle with fragmented systems that slow down progress. **xmfclub** solves this by providing a unified platform that handles the complexity of student management, financial operations, and curriculum delivery. Our mission is to empower academy owners to focus on what they do best—teaching—while we provide the digital infrastructure to scale their impact and cultivate a thriving community of dedicated practitioners.
+- **Bento Grid Architecture**: Information organized into modular, interactive blocks for maximum clarity.
+- **High-Energy Aesthetics**: A visual language that mirrors the intensity of Taekwondo and fitness.
+- **Responsive Mastery**: Optimized for every device, ensuring the training journey never stops.
 
-## 🏛️ Core Pillars
+## 🛠️ Tech Stack
 
-- **Seamless Student Journeys**: From the first 'join' to achieving mastery, we track and nurture every step of the student's evolution.
-- **Operational Excellence**: Modular payment systems and inventory management designed for the unique needs of a high-volume fitness environment.
-- **Dynamic Training Ecosystem**: A curriculum-first approach that ensures quality and consistency across every training session.
-- **Aesthetic Precision**: A "Bento Grid" inspired interface that delivers information with clarity, speed, and high-energy impact.
-
-## 🌐 The Ecosystem
-
-The **xmfclub** platform is built on a foundation of speed and reliability, featuring an "a la carte" curriculum engine that enables truly personalized fitness journeys. We believe mastery is personal; our system empowers students to tailor their training paths while providing instructors with the modular tools to deliver a bespoke experience. This synergy ensures that every practitioner's evolution is as unique as their signature move, powered by a digital engine that remains snappy, secure, and infinitely scalable.
-
-## 📁 Project Structure
-
-- **[`/backend`](./backend)**: The high-performance core handling business logic, payments, and data orchestration.
-- **[`/frontend`](./frontend)**: The futuristic "Bento Grid" interface where athletes and admins interact.
-- **[`/docs`](./docs)**: Architectural blueprints and the project's "Source of Truth".
+- **Framework**: [TanStack Start](https://tanstack.com/start) – SSR-first React framework for modern web apps.
+- **Styling**: [Tailwind CSS v4](https://tailwindcss.com/) – The next evolution of utility-first CSS.
+- **Icons**: [Lucide](https://lucide.dev/) – Beautifully simple, pixel-perfect icons.
 
 ## 🚀 Quick Start
 
-The project uses a unified `Makefile` for streamlined management.
+1. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+2. **Launch Development Server**:
+   ```bash
+   npm run dev
+   ```
 
-```bash
-make setup  # Prepare the entire environment
-make dev    # Launch the full ecosystem (Backend & Frontend)
-```
+## 📦 Deployment to Vercel
+
+This application is designed to be effortlessly deployed to Vercel:
+1. Connect your GitHub repository to Vercel.
+2. Vercel will automatically detect **Vite** and configure the build settings.
+3. Add your custom domain (`xmfclub.com`) in the Vercel project settings.
 
 ---
-*Built for the next generation of martial artists.*
+*The face of high-performance martial arts.*
