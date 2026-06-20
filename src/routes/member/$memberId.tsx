@@ -2,9 +2,10 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { 
   User, Calendar, Trophy, LogOut,
-  MapPin, Phone, Mail, Activity, ShieldCheck, Trash2, Edit2, Save, X
+  MapPin, Phone, Mail, Activity, ShieldCheck, Trash2, Edit2, Save, X, Lock, Clock
 } from 'lucide-react'
 import { supabase } from '#/lib/supabase'
+import { PatternLock } from '#/components/PatternLock'
 
 export const Route = createFileRoute('/member/$memberId')({
   component: DashboardPage,
@@ -21,9 +22,22 @@ function DashboardPage() {
   const [attendanceLogged, setAttendanceLogged] = useState(false)
   const [beltConfig, setBeltConfig] = useState<any[]>([])
 
-  // Edit State
+  // Events State
+  const [events, setEvents] = useState<any[]>([])
+  const [registeredEventIds, setRegisteredEventIds] = useState<string[]>([])
+
+  // Edit Profile State
   const [isEditingInfo, setIsEditingInfo] = useState(false)
-  const [editForm, setEditForm] = useState({ phone: '', email: '', address: '', blood_group: '' })
+  const [editForm, setEditForm] = useState({
+    phone: '',
+    email: '',
+    address: '',
+    blood_group: ''
+  })
+  
+  // Pattern Edit State
+  const [showPatternModal, setShowPatternModal] = useState(false)
+  const [patternError, setPatternError] = useState('')
 
   const [isOwner, setIsOwner] = useState(false)
 
@@ -49,7 +63,7 @@ function DashboardPage() {
           .from('members')
           .select('*')
           .eq('member_id', memberId.toUpperCase())
-          .single()
+          .maybeSingle()
 
         if (mError && mError.code !== 'PGRST116') {
           console.error("Error fetching member:", mError)
@@ -65,7 +79,7 @@ function DashboardPage() {
           })
           
           // Fetch app settings for belts
-          const { data: appSettings } = await supabase.from('app_settings').select('*').eq('id', 'global').single()
+          const { data: appSettings } = await supabase.from('app_settings').select('*').eq('id', 'global').maybeSingle()
           if (appSettings?.belts) {
             if (typeof appSettings.belts[0] === 'string') {
               setBeltConfig(appSettings.belts.map((b: string) => ({ name: b, required_days: 30 })))
@@ -92,6 +106,20 @@ function DashboardPage() {
               setAttendanceLogged(true)
             }
           }
+
+          // Fetch upcoming events
+          const { data: eventsData } = await supabase
+            .from('events')
+            .select('*')
+            .order('date', { ascending: true })
+          if (eventsData) setEvents(eventsData)
+
+          // Fetch event registrations
+          const { data: regsData } = await supabase
+            .from('event_registrations')
+            .select('event_id')
+            .eq('member_id', memberData.id)
+          if (regsData) setRegisteredEventIds(regsData.map(r => r.event_id))
         }
       } catch (err) {
         console.error("Unhandled error in fetchData:", err)
@@ -105,6 +133,7 @@ function DashboardPage() {
 
   const handleLogout = () => {
     localStorage.removeItem('xmf_member')
+    window.dispatchEvent(new Event('auth_change'))
     navigate({ to: '/login' })
   }
 
@@ -165,6 +194,26 @@ function DashboardPage() {
     }
   }
 
+  const handleRegisterEvent = async (eventId: string) => {
+    if (!member) return
+    const { error } = await supabase.from('event_registrations').insert([{
+      event_id: eventId,
+      member_id: member.id,
+      status: 'Registered'
+    }])
+    
+    if (!error) {
+      setRegisteredEventIds(prev => [...prev, eventId])
+      setAppAlert({ message: "Successfully registered for the event!" })
+    } else {
+      if (error.code === '23505') {
+         setAppAlert({ message: "You are already registered for this event." })
+      } else {
+         setAppAlert({ message: "Failed to register: " + error.message })
+      }
+    }
+  }
+
   if (loading) return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
@@ -218,12 +267,22 @@ function DashboardPage() {
             </div>
             
             {localStorage.getItem('xmf_member') && (
-              <button 
-                onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] text-red-500 bg-red-500/10 hover:bg-red-500/20 transition-all"
-              >
-                <LogOut className="w-4 h-4" /> Logout
-              </button>
+              <div className="flex flex-col gap-3">
+                {isOwner && (
+                  <button 
+                    onClick={() => setShowPatternModal(true)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] text-white bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
+                  >
+                    <Lock className="w-4 h-4" /> Change Pattern Lock
+                  </button>
+                )}
+                <button 
+                  onClick={handleLogout}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] text-red-500 bg-red-500/10 hover:bg-red-500/20 transition-all"
+                >
+                  <LogOut className="w-4 h-4" /> Logout
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -298,56 +357,68 @@ function DashboardPage() {
                       )}
                     </div>
                     
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-4 text-sm font-medium">
-                        <Phone className="w-4 h-4 text-muted-foreground shrink-0" /> 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-black tracking-widest uppercase text-muted-foreground">Phone</label>
                         {isEditingInfo ? (
                           <input 
                             type="text" 
-                            value={editForm.phone} 
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary transition-colors"
+                            value={editForm.phone}
                             onChange={e => setEditForm({...editForm, phone: e.target.value})}
-                            className="bg-black/50 border border-white/10 rounded px-2 py-1 w-full text-white"
-                            placeholder="Phone"
                           />
-                        ) : (member.phone || 'Not provided')}
+                        ) : (
+                          <div className="w-full bg-black/20 border border-white/5 rounded-xl p-3 text-white/70">
+                            {member.phone || 'Not provided'}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-4 text-sm font-medium">
-                        <Mail className="w-4 h-4 text-muted-foreground shrink-0" />
+                      
+                      <div className="space-y-2">
+                        <label className="text-xs font-black tracking-widest uppercase text-muted-foreground">Email</label>
                         {isEditingInfo ? (
                           <input 
                             type="email" 
-                            value={editForm.email} 
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary transition-colors"
+                            value={editForm.email}
                             onChange={e => setEditForm({...editForm, email: e.target.value})}
-                            className="bg-black/50 border border-white/10 rounded px-2 py-1 w-full text-white"
-                            placeholder="Email"
                           />
-                        ) : (member.email || 'Not provided')}
+                        ) : (
+                          <div className="w-full bg-black/20 border border-white/5 rounded-xl p-3 text-white/70">
+                            {member.email || 'Not provided'}
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-start gap-4 text-sm font-medium">
-                        <MapPin className="w-4 h-4 text-muted-foreground shrink-0 mt-1" />
+                      
+                      <div className="space-y-2">
+                        <label className="text-xs font-black tracking-widest uppercase text-muted-foreground">Blood Group</label>
+                        {isEditingInfo ? (
+                          <input 
+                            type="text" 
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary transition-colors"
+                            value={editForm.blood_group}
+                            onChange={e => setEditForm({...editForm, blood_group: e.target.value})}
+                          />
+                        ) : (
+                          <div className="w-full bg-black/20 border border-white/5 rounded-xl p-3 text-white/70">
+                            {member.blood_group || 'Not provided'}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-2 md:col-span-2">
+                        <label className="text-xs font-black tracking-widest uppercase text-muted-foreground">Address</label>
                         {isEditingInfo ? (
                           <textarea 
-                            value={editForm.address} 
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary transition-colors h-24"
+                            value={editForm.address}
                             onChange={e => setEditForm({...editForm, address: e.target.value})}
-                            className="bg-black/50 border border-white/10 rounded px-2 py-1 w-full text-white min-h-[60px]"
-                            placeholder="Address"
                           />
-                        ) : (member.address || 'Not provided')}
-                      </div>
-                      <div className="flex items-center gap-4 text-sm font-medium">
-                        <Activity className="w-4 h-4 text-muted-foreground shrink-0" />
-                        {isEditingInfo ? (
-                          <div className="flex items-center gap-2 w-full">
-                            <span className="text-muted-foreground">Blood:</span>
-                            <input 
-                              type="text" 
-                              value={editForm.blood_group} 
-                              onChange={e => setEditForm({...editForm, blood_group: e.target.value})}
-                              className="bg-black/50 border border-white/10 rounded px-2 py-1 flex-1 text-white uppercase"
-                              placeholder="e.g. O+"
-                            />
+                        ) : (
+                          <div className="w-full bg-black/20 border border-white/5 rounded-xl p-3 text-white/70 min-h-[3rem]">
+                            {member.address || 'Not provided'}
                           </div>
-                        ) : (`Blood: ${member.blood_group || 'N/A'}`)}
+                        )}
                       </div>
                     </div>
                   </div>
@@ -529,6 +600,89 @@ function DashboardPage() {
             </div>
           )}
 
+          {/* SECTION: EVENTS */}
+          {isOwner && events.some(e => !e.target_belt || e.target_belt === 'All' || e.target_belt === member.belt) && (
+            <div className="space-y-6">
+              <h3 className="text-2xl font-black uppercase tracking-tighter border-b border-white/10 pb-4">Featured Events</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {events.map(event => {
+                  const isRegistered = registeredEventIds.includes(event.id)
+                  const eventDate = new Date(event.date)
+                  const today = new Date()
+                  eventDate.setHours(0, 0, 0, 0)
+                  today.setHours(0, 0, 0, 0)
+                  const isPast = eventDate < today
+                  const isEligible = !event.target_belt || event.target_belt === 'All' || event.target_belt === member.belt
+                  
+                  if (!isEligible || (isPast && !isRegistered)) return null
+
+                  return (
+                    <div key={event.id} className="glass-card p-6 border-white/10 flex flex-col h-full hover:border-primary/30 transition-all">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="bg-primary/20 text-primary p-3 rounded-xl">
+                          <Calendar className="w-6 h-6" />
+                        </div>
+                        {isRegistered && (
+                          <span className="px-3 py-1 bg-green-500/20 text-green-500 text-[10px] font-black uppercase tracking-widest rounded-full flex items-center gap-1">
+                            <ShieldCheck className="w-3 h-3" /> Registered
+                          </span>
+                        )}
+                      </div>
+                      
+                      <h4 className="text-lg font-black uppercase tracking-tight mb-2 line-clamp-2">{event.title}</h4>
+                      
+                      <div className="space-y-3 mb-6 mt-auto">
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium">
+                          <Clock className="w-4 h-4 text-primary" />
+                          {new Date(event.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground font-medium">
+                          <MapPin className="w-4 h-4 text-primary" />
+                          {event.venue_map_url ? (
+                            <a 
+                              href={event.venue_map_url} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="hover:text-primary transition-colors hover:underline flex items-center gap-1"
+                            >
+                              {event.venue_name || 'Main HQ'}
+                            </a>
+                          ) : (
+                            <span>{event.venue_name || 'Main HQ'}</span>
+                          )}
+                        </div>
+                        {event.fee_breakup?.total > 0 && (
+                          <div className="flex items-center gap-3 text-sm font-bold">
+                            <span className="text-primary tracking-widest uppercase text-[10px]">Fee:</span> ₹{event.fee_breakup.total}
+                          </div>
+                        )}
+                        {event.target_belt !== 'All' && (
+                          <div className="flex items-center gap-3 text-sm font-bold">
+                            <span className="text-primary tracking-widest uppercase text-[10px]">For:</span> {event.target_belt} Belts
+                          </div>
+                        )}
+                      </div>
+                      
+                      {!isPast && (
+                        <button 
+                          onClick={() => handleRegisterEvent(event.id)}
+                          disabled={isRegistered}
+                          className={`w-full py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${
+                            isRegistered 
+                              ? 'bg-white/5 text-muted-foreground cursor-not-allowed' 
+                              : 'bg-gradient-to-r from-primary to-accent text-white hover:scale-105 shadow-lg shadow-primary/20'
+                          }`}
+                        >
+                          {isRegistered ? 'Registered' : 'Register Now'}
+                        </button>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {/* SECTION: ROADMAP */}
           {isOwner && (
             <div className="space-y-6">
@@ -552,30 +706,90 @@ function DashboardPage() {
         </div>
       </div>
 
+      {/* Alert Modal */}
       {appAlert && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6 animate-in fade-in">
-          <div className="glass-card p-8 w-full max-w-sm text-center border-primary/20 space-y-6 relative">
-            <h4 className="text-lg font-black uppercase tracking-widest">Alert</h4>
-            <p className="text-sm font-medium text-muted-foreground">{appAlert.message}</p>
-            <div className="flex gap-4 justify-center pt-2">
-              <button 
-                onClick={() => setAppAlert(null)}
-                className="px-6 py-3 bg-white/10 text-white font-black tracking-widest text-[10px] rounded-xl uppercase hover:bg-white/20 transition-colors flex-1"
-              >
-                {appAlert.isConfirm ? 'Cancel' : 'Dismiss'}
-              </button>
-              {appAlert.isConfirm && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100] backdrop-blur-sm">
+          <div className="bg-background border border-white/10 p-6 rounded-2xl max-w-sm w-full text-center space-y-6">
+            <p className="text-sm">{appAlert.message}</p>
+            <div className="flex justify-center gap-4">
+              {appAlert.isConfirm ? (
+                <>
+                  <button 
+                    onClick={() => setAppAlert(null)}
+                    className="px-6 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-xs font-black uppercase tracking-widest transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={() => {
+                      appAlert.onConfirm && appAlert.onConfirm();
+                      setAppAlert(null);
+                    }}
+                    className="px-6 py-2 rounded-lg bg-red-500 text-white text-xs font-black uppercase tracking-widest hover:bg-red-600 transition-colors"
+                  >
+                    Confirm
+                  </button>
+                </>
+              ) : (
                 <button 
-                  onClick={() => {
-                    appAlert.onConfirm?.()
-                    setAppAlert(null)
-                  }}
-                  className="px-6 py-3 bg-primary text-white font-black tracking-widest text-[10px] rounded-xl uppercase hover:bg-primary/90 transition-colors flex-1"
+                  onClick={() => setAppAlert(null)}
+                  className="px-6 py-2 rounded-lg bg-primary text-primary-foreground text-xs font-black uppercase tracking-widest hover:bg-primary/90 transition-colors"
                 >
-                  Confirm
+                  OK
                 </button>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pattern Modal */}
+      {showPatternModal && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100] backdrop-blur-sm">
+          <div className="bg-background border border-white/10 p-8 rounded-2xl max-w-md w-full space-y-6 flex flex-col items-center">
+            <h3 className="text-xl font-black uppercase tracking-widest text-center">Set New Pattern</h3>
+            <p className="text-sm text-muted-foreground text-center">
+              Draw a new pattern to secure your account. Must be at least 4 dots.
+            </p>
+            
+            {patternError && (
+              <div className="w-full p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-sm text-center">
+                {patternError}
+              </div>
+            )}
+            
+            <PatternLock 
+              onComplete={async (drawnPattern) => {
+                if (drawnPattern.length < 4) {
+                  setPatternError("Pattern must have at least 4 dots.");
+                  return;
+                }
+                
+                const { error } = await supabase
+                  .from('members')
+                  .update({ pattern_hash: drawnPattern.join('') })
+                  .eq('id', member.id);
+                  
+                if (!error) {
+                  setPatternError('');
+                  setShowPatternModal(false);
+                  setAppAlert({ message: "Pattern updated successfully!" });
+                } else {
+                  setPatternError("Failed to update pattern: " + error.message);
+                }
+              }} 
+              error={!!patternError} 
+            />
+            
+            <button 
+              onClick={() => {
+                setShowPatternModal(false);
+                setPatternError('');
+              }}
+              className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-black uppercase tracking-widest transition-colors mt-4"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       )}

@@ -554,6 +554,7 @@ function AdminDashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem('xmf_member')
+    window.dispatchEvent(new Event('auth_change'))
     navigate({ to: '/login' })
   }
 

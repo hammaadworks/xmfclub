@@ -1,11 +1,26 @@
 import { createRootRoute, Outlet } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
+import React, { Suspense } from 'react'
 
 import Header from '../components/Header'
 import { ContactModal } from '../components/ContactModal'
 
 import { NotFound } from '../components/NotFound'
+
+const TanStackDevtools = import.meta.env.PROD
+  ? () => null // Render nothing in production
+  : React.lazy(() =>
+      import('@tanstack/react-devtools').then((res) => ({
+        default: res.TanStackDevtools,
+      }))
+    )
+
+const TanStackRouterDevtoolsPanel = import.meta.env.PROD
+  ? () => null
+  : React.lazy(() =>
+      import('@tanstack/react-router-devtools').then((res) => ({
+        default: res.TanStackRouterDevtoolsPanel,
+      }))
+    )
 
 export const Route = createRootRoute({
   component: RootComponent,
@@ -17,17 +32,19 @@ function RootComponent() {
     <>
       <Header />
       <Outlet />
-      <TanStackDevtools
-        config={{
-          position: 'bottom-right',
-        }}
-        plugins={[
-          {
-            name: 'Tanstack Router',
-            render: <TanStackRouterDevtoolsPanel />,
-          },
-        ]}
-      />
+      <Suspense fallback={null}>
+        <TanStackDevtools
+          config={{
+            position: 'bottom-right',
+          }}
+          plugins={[
+            {
+              name: 'Tanstack Router',
+              render: <TanStackRouterDevtoolsPanel />,
+            },
+          ]}
+        />
+      </Suspense>
       <ContactModal />
     </>
   )

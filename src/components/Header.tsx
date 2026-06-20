@@ -22,10 +22,12 @@ export default function Header() {
       setMember(updated ? JSON.parse(updated) : null)
     }
     window.addEventListener('storage', handleAuthChange)
+    window.addEventListener('auth_change', handleAuthChange)
 
     return () => {
       window.removeEventListener('scroll', handleScroll)
       window.removeEventListener('storage', handleAuthChange)
+      window.removeEventListener('auth_change', handleAuthChange)
     }
   }, [])
 
@@ -33,17 +35,26 @@ export default function Header() {
     <header 
       className={`fixed top-0 w-full z-50 transition-all duration-500 border-b ${
         isScrolled 
-          ? 'bg-background/80 backdrop-blur-xl border-white/10 py-4 shadow-2xl' 
+          ? 'bg-background border-white/10 py-4 shadow-xl' 
           : 'bg-transparent border-transparent py-6'
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-3 group relative z-50">
-          <div className="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-xl flex items-center justify-center transform group-hover:rotate-12 transition-all shadow-lg shadow-primary/20">
+        <div className="flex items-center gap-3 relative z-50">
+          <button 
+            className="lg:hidden w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-xl flex items-center justify-center transform hover:rotate-12 transition-all shadow-lg shadow-primary/20"
+            onClick={() => setIsOpen(!isOpen)}
+          >
             <span className="font-black text-white tracking-tighter text-lg leading-none">X</span>
-          </div>
-          <span className="font-black tracking-tighter text-xl uppercase hidden sm:block group-hover:text-primary transition-colors">XMFCLUB</span>
-        </Link>
+          </button>
+          
+          <Link to="/" className="hidden lg:flex items-center gap-3 group">
+            <div className="w-10 h-10 bg-gradient-to-r from-primary to-accent rounded-xl flex items-center justify-center transform group-hover:rotate-12 transition-all shadow-lg shadow-primary/20">
+              <span className="font-black text-white tracking-tighter text-lg leading-none">X</span>
+            </div>
+            <span className="font-black tracking-tighter text-xl uppercase group-hover:text-primary transition-colors">XMFCLUB</span>
+          </Link>
+        </div>
 
         {/* Desktop Nav */}
         <nav className="hidden lg:flex items-center gap-8">
@@ -58,7 +69,7 @@ export default function Header() {
 
         <div className="flex items-center gap-4">
           {member ? (
-            <div className="hidden sm:flex items-center gap-3">
+            <div className="flex items-center gap-3">
               <Link 
                 to={member.role === 'admin' ? '/admin' : `/member/${member.member_id}`}
                 className="px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black tracking-widest text-[10px] rounded-full uppercase transition-all flex items-center gap-2"
@@ -68,7 +79,7 @@ export default function Header() {
               </Link>
             </div>
           ) : (
-            <div className="hidden sm:flex items-center gap-4">
+            <div className="flex items-center gap-4">
               <Link 
                 to="/login"
                 className="px-6 py-2.5 bg-primary/10 hover:bg-primary/20 text-primary font-black tracking-widest text-[10px] rounded-full border border-primary/20 uppercase transition-all"
@@ -77,23 +88,16 @@ export default function Header() {
               </Link>
             </div>
           )}
-
-          <button 
-            className="lg:hidden p-2 text-white relative z-50 hover:bg-white/10 rounded-xl transition-colors"
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
         </div>
       </div>
 
       {/* Mobile Menu */}
       <div 
-        className={`fixed inset-0 bg-background/95 backdrop-blur-2xl transition-all duration-500 lg:hidden ${
+        className={`fixed inset-0 bg-background transition-all duration-500 lg:hidden overflow-y-auto z-40 pt-32 pb-10 ${
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
-        <nav className="flex flex-col items-center justify-center h-full gap-8 px-6">
+        <nav className="flex flex-col items-center justify-start min-h-full gap-8 px-6">
           <SidebarLink 
             to="/" 
             icon={<Trophy size={20} />} 
@@ -137,28 +141,6 @@ export default function Header() {
             onClick={() => setIsOpen(false)} 
           />
 
-          <div className="w-full h-px bg-white/10 my-4" />
-          
-          {member ? (
-            <Link 
-              to={member.role === 'admin' ? '/admin' : `/member/${member.member_id}`}
-              onClick={() => setIsOpen(false)}
-              className="w-full max-w-sm py-4 bg-gradient-to-r from-primary to-accent text-white font-black tracking-widest text-xs rounded-xl uppercase hover:scale-105 transition-transform flex items-center justify-center gap-2"
-            >
-              {member.role === 'admin' ? <ShieldCheck className="w-4 h-4" /> : <User className="w-4 h-4" />}
-              {member.role === 'admin' ? 'Admin Dashboard' : 'My Dashboard'}
-            </Link>
-          ) : (
-            <div className="w-full max-w-sm space-y-4">
-              <Link 
-                to="/login"
-                onClick={() => setIsOpen(false)}
-                className="w-full flex items-center justify-center py-4 bg-primary/10 text-primary border border-primary/20 font-black tracking-widest text-xs rounded-xl uppercase hover:bg-primary/20 transition-all"
-              >
-                Member Login
-              </Link>
-            </div>
-          )}
         </nav>
       </div>
     </header>

@@ -11,7 +11,7 @@ const config = defineConfig({
     // devtools(),
     tsconfigPaths({ projects: ['./tsconfig.json'] }),
     tailwindcss(),
-    TanStackRouterVite(),
+    TanStackRouterVite({ target: 'react', autoCodeSplitting: true }),
     viteReact(),
   ],
 })

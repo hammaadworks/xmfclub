@@ -27,26 +27,50 @@ function Login() {
     setLoading(true);
     setError('');
 
-    const patternStr = drawnPattern.join('');
-
-    // Query the custom members table directly
-    const { data, error: signInError } = await supabase
-      .from('members')
-      .select('*')
-      .eq('member_id', identifier.trim().toUpperCase())
-      .eq('pattern_hash', patternStr)
-      .single();
-
-    if (signInError || !data) {
-      setError('Invalid ID or pattern. Please try again.');
+    if (drawnPattern.length < 4) {
+      setError("Pattern must have at least 4 dots.");
       setPattern([]);
       setLoading(false);
       return;
     }
 
-    // Success! Store member session locally without the hash
-    const { pattern_hash, ...safeData } = data;
+    const patternStr = drawnPattern.join('');
+
+    const { data, error: signInError } = await supabase
+      .from('members')
+      .select('*')
+      .eq('member_id', identifier.trim().toUpperCase())
+      .eq('pattern_hash', patternStr)
+      .maybeSingle();
+
+    if (signInError) {
+      console.error(signInError);
+      setError("Login failed. Please try again.");
+      setLoading(false);
+      return;
+    }
+
+    if (!data) {
+      setError("Invalid Member ID or Pattern");
+      setPattern([]);
+      setLoading(false);
+      return;
+    }
+
+    // Success
+    setError("");
+    
+    // Convert Supabase object to match what app expects
+    const safeData = {
+      id: data.id,
+      member_id: data.member_id,
+      name: data.name,
+      role: data.role || 'member'
+    };
+
     localStorage.setItem('xmf_member', JSON.stringify(safeData));
+    window.dispatchEvent(new Event('auth_change'));
+
     if (safeData.role === 'admin') {
       navigate({ to: '/admin' });
     } else {
