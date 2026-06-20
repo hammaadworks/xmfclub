@@ -4,6 +4,7 @@ import {
   ArrowRight,
   ChevronRight,
   CircleCheck,
+  Instagram,
   MessageSquare,
   Minus,
   Phone,
@@ -13,9 +14,9 @@ import {
   ShieldCheck,
   Target,
   Trophy,
+  X,
   Youtube,
-  Instagram,
-  X
+  Zap,
 } from 'lucide-react'
 
 export const Route = createFileRoute('/')({ component: LandingPage })
@@ -55,17 +56,17 @@ function LandingPage() {
       {isVideoOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 p-4">
           <div className="relative w-full max-w-5xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl shadow-primary/20 border border-white/10">
-            <button 
+            <button
               onClick={() => setIsVideoOpen(false)}
               className="absolute -top-12 right-0 sm:top-4 sm:right-4 z-10 w-10 h-10 bg-white/10 hover:bg-primary text-white rounded-full flex items-center justify-center transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
-            <iframe 
-              src="https://www.youtube.com/embed/pw2vKNpz7TE?autoplay=1" 
+            <iframe
+              src="https://www.youtube.com/embed/pw2vKNpz7TE?autoplay=1"
               title="XMFCLUB Intro"
               className="w-full h-full border-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
           </div>
@@ -237,25 +238,29 @@ function LandingPage() {
       {/* 3. Socials: Youtube and Instagram Highlights */}
       <section className="py-24 px-6 border-b border-white/5 relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[400px] bg-gradient-to-r from-primary/5 to-accent/5 blur-[100px] rounded-full -z-10" />
-        
+
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-xs font-black tracking-[0.4em] text-primary uppercase mb-4">
               Join The Community
             </h2>
             <h3 className="text-4xl sm:text-5xl font-black tracking-tighter uppercase italic break-words">
-              WATCH. LEARN. <span className="brand-gradient bg-clip-text text-transparent">CONQUER.</span>
+              WATCH. LEARN.{' '}
+              <span className="brand-gradient bg-clip-text text-transparent">
+                CONQUER.
+              </span>
             </h3>
             <p className="mt-4 text-muted-foreground font-medium max-w-2xl mx-auto">
-              Level up your skills with free tutorials, athlete highlights, and behind-the-scenes content on our official channels.
+              Level up your skills with free tutorials, athlete highlights, and
+              behind-the-scenes content on our official channels.
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* YouTube Card */}
-            <a 
-              href="https://www.youtube.com/@farhanxmf01" 
-              target="_blank" 
+            <a
+              href="https://www.youtube.com/@farhanxmf01"
+              target="_blank"
               rel="noopener noreferrer"
               className="group glass-card p-10 border-white/5 hover:border-[#FF0000]/50 transition-all flex flex-col items-center text-center cursor-pointer relative overflow-hidden"
             >
@@ -263,17 +268,21 @@ function LandingPage() {
               <div className="w-20 h-20 rounded-2xl bg-[#FF0000]/10 flex items-center justify-center text-[#FF0000] mb-8 group-hover:scale-110 transition-transform shadow-lg shadow-[#FF0000]/20">
                 <Youtube className="w-10 h-10" />
               </div>
-              <h4 className="text-3xl font-black uppercase italic mb-2">YouTube</h4>
-              <p className="text-muted-foreground font-medium mb-8">@farhanxmf01</p>
+              <h4 className="text-3xl font-black uppercase italic mb-2">
+                YouTube
+              </h4>
+              <p className="text-muted-foreground font-medium mb-8">
+                @farhanxmf01
+              </p>
               <div className="px-8 py-4 bg-white/5 rounded-xl font-bold text-xs tracking-widest uppercase border border-white/10 group-hover:bg-[#FF0000] group-hover:text-white transition-colors">
                 Subscribe & Watch
               </div>
             </a>
 
             {/* Instagram Card */}
-            <a 
-              href="https://instagram.com/farhanxmf01" 
-              target="_blank" 
+            <a
+              href="https://instagram.com/farhanxmf01"
+              target="_blank"
               rel="noopener noreferrer"
               className="group glass-card p-10 border-white/5 hover:border-[#E1306C]/50 transition-all flex flex-col items-center text-center cursor-pointer relative overflow-hidden"
             >
@@ -281,8 +290,12 @@ function LandingPage() {
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-tr from-[#F56040]/10 to-[#833AB4]/10 flex items-center justify-center text-[#E1306C] mb-8 group-hover:scale-110 transition-transform shadow-lg shadow-[#E1306C]/20">
                 <Instagram className="w-10 h-10" />
               </div>
-              <h4 className="text-3xl font-black uppercase italic mb-2">Instagram</h4>
-              <p className="text-muted-foreground font-medium mb-8">@farhanxmf01</p>
+              <h4 className="text-3xl font-black uppercase italic mb-2">
+                Instagram
+              </h4>
+              <p className="text-muted-foreground font-medium mb-8">
+                @farhanxmf01
+              </p>
               <div className="px-8 py-4 bg-white/5 rounded-xl font-bold text-xs tracking-widest uppercase border border-white/10 group-hover:bg-gradient-to-tr group-hover:from-[#F56040] group-hover:to-[#833AB4] group-hover:text-white transition-all">
                 Follow & Engage
               </div>
@@ -352,8 +365,54 @@ function LandingPage() {
         </div>
       </section>
 
-      {/* 5. EXPLORE: Bento Grid for Brand Expansion */}
-      <section className="py-24 px-6 max-w-7xl mx-auto border-b border-white/5">
+      {/* 5. FAQ Section */}
+      <section className="py-24 px-6 max-w-4xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-xs font-black tracking-[0.4em] text-primary uppercase mb-4">
+            Transparency
+          </h2>
+          <h3 className="text-4xl font-black tracking-tighter uppercase italic">
+            Frequently Asked{' '}
+            <span className="brand-gradient bg-clip-text text-transparent">
+              Questions
+            </span>
+          </h3>
+        </div>
+
+        <div className="space-y-2">
+          <FAQItem
+            question="Who can join XMFCLUB?"
+            answer="XMFCLUB is designed for everyone—from middle school students and beginners to elite athletes and busy professionals. Our modular system allows you to start at your own level and pace."
+          />
+          <FAQItem
+            question="What is the 'Alacarte' training system?"
+            answer="Unlike traditional gyms with flat monthly fees, our Alacarte system lets you choose exactly what you want to learn. You only pay for the specific modules (like Bo-Staff, Calisthenics, or MMA strikes) that you want to master."
+          />
+          <FAQItem
+            question="How does the member login work?"
+            answer="We've completely eliminated passwords. Active members log in seamlessly using their Member ID and a personalized swipe pattern (just like unlocking your phone), ensuring fast and secure access."
+          />
+          <FAQItem
+            question="Will there be content specific to my rank?"
+            answer="Yes! Our system is continuously evolving. Very soon, events and digital vault resources will be tailored specifically to your Belt Level. You will unlock exclusive training breakdowns and elite tournaments as you rank up."
+          />
+          <FAQItem
+            question="Do I need prior martial arts experience?"
+            answer="Not at all. Most of our members start with zero experience. Our instructors break down every movement into fundamental steps, ensuring you build a solid foundation before advancing."
+          />
+          <FAQItem
+            question="What are the training hours?"
+            answer="We offer flexible morning and evening batches to accommodate students and working professionals. Check our curriculum page for specific module timings."
+          />
+          <FAQItem
+            question="How do I start?"
+            answer="The best way to start is by booking a trial session. Click the 'Join the Club' button below to get in touch with us via WhatsApp or Phone."
+          />
+        </div>
+      </section>
+
+      {/* 6. EXPLORE: Bento Grid for Brand Expansion */}
+      <section className="py-24 px-6 max-w-7xl mx-auto border-b bg-primary/5">
         <div className="text-center mb-16">
           <h2 className="text-xs font-black tracking-[0.4em] text-muted-foreground uppercase mb-4">
             Explore the Universe
@@ -447,52 +506,6 @@ function LandingPage() {
               </p>
             </div>
           </Link>
-        </div>
-      </section>
-
-      {/* 6. FAQ Section */}
-      <section className="py-24 px-6 max-w-4xl mx-auto">
-        <div className="text-center mb-16">
-          <h2 className="text-xs font-black tracking-[0.4em] text-primary uppercase mb-4">
-            Transparency
-          </h2>
-          <h3 className="text-4xl font-black tracking-tighter uppercase italic">
-            Frequently Asked{' '}
-            <span className="brand-gradient bg-clip-text text-transparent">
-              Questions
-            </span>
-          </h3>
-        </div>
-
-        <div className="space-y-2">
-          <FAQItem
-            question="Who can join XMFCLUB?"
-            answer="XMFCLUB is designed for everyone—from middle school students and beginners to elite athletes and busy professionals. Our modular system allows you to start at your own level and pace."
-          />
-          <FAQItem
-            question="What is the 'Alacarte' training system?"
-            answer="Unlike traditional gyms with flat monthly fees, our Alacarte system lets you choose exactly what you want to learn. You only pay for the specific modules (like Bo-Staff, Calisthenics, or MMA strikes) that you want to master."
-          />
-          <FAQItem
-            question="How does the member login work?"
-            answer="We've completely eliminated passwords. Active members log in seamlessly using their Member ID and a personalized swipe pattern (just like unlocking your phone), ensuring fast and secure access."
-          />
-          <FAQItem
-            question="Will there be content specific to my rank?"
-            answer="Yes! Our system is continuously evolving. Very soon, events and digital vault resources will be tailored specifically to your Belt Level. You will unlock exclusive training breakdowns and elite tournaments as you rank up."
-          />
-          <FAQItem
-            question="Do I need prior martial arts experience?"
-            answer="Not at all. Most of our members start with zero experience. Our instructors break down every movement into fundamental steps, ensuring you build a solid foundation before advancing."
-          />
-          <FAQItem
-            question="What are the training hours?"
-            answer="We offer flexible morning and evening batches to accommodate students and working professionals. Check our curriculum page for specific module timings."
-          />
-          <FAQItem
-            question="How do I start?"
-            answer="The best way to start is by booking a trial session. Click the 'Join the Club' button below to get in touch with us via WhatsApp or Phone."
-          />
         </div>
       </section>
 
@@ -593,16 +606,12 @@ function LandingPage() {
             <span className="flex items-center gap-2 text-xs font-black tracking-widest uppercase">
               <CircleCheck className="w-4 h-4" /> Modular Learning
             </span>
+            <p className="text-foreground text-[10px] font-black tracking-[0.3em] uppercase">
+              &copy; {new Date().getFullYear()} XMFCLUB. BUILT FOR THE ELITE.
+            </p>
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="py-12 px-6 text-center">
-        <p className="text-muted-foreground text-[10px] font-black tracking-[0.3em] uppercase">
-          &copy; {new Date().getFullYear()} XMFCLUB. BUILT FOR THE ELITE.
-        </p>
-      </footer>
     </div>
   )
 }

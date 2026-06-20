@@ -3,8 +3,15 @@ import { useState, useEffect } from 'react'
 import { supabase } from '#/lib/supabase'
 import { 
   ShieldAlert, Settings, Users, Calendar, Plus, Edit, Lock,
-  ShieldCheck, Loader2, Search, QrCode, LogOut
+  ShieldCheck, Loader2, Search, QrCode, LogOut, Trash2,
+  MapPin, Link as LinkIcon
 } from 'lucide-react'
+
+type BranchConfig = {
+  name: string;
+  address: string;
+  mapsUrl: string;
+}
 
 export const Route = createFileRoute('/admin/')({
   component: AdminDashboard,
@@ -57,6 +64,16 @@ function AdminDashboard() {
     pending_amount: 0
   })
 
+  // Settings State
+  const [branches, setBranches] = useState<BranchConfig[]>([
+    { name: "XMF Main HQ", address: "123 Main St", mapsUrl: "" },
+    { name: "Northside Dojo", address: "456 North Ave", mapsUrl: "" },
+    { name: "Downtown Club", address: "789 Down Blvd", mapsUrl: "" }
+  ])
+  const [belts, setBelts] = useState<string[]>(["White", "Yellow", "Orange", "Green", "Blue", "Purple", "Brown", "Black"])
+  const [newBranch, setNewBranch] = useState<BranchConfig>({ name: '', address: '', mapsUrl: '' })
+  const [newBelt, setNewBelt] = useState('')
+
   useEffect(() => {
     const data = localStorage.getItem('xmf_member')
     if (!data) {
@@ -72,7 +89,58 @@ function AdminDashboard() {
     
     setAdmin(parsed)
     loadMembers()
+    loadSettings()
   }, [navigate])
+
+  const loadSettings = async () => {
+    try {
+      const { data, error } = await supabase.from('app_settings').select('*').eq('id', 'global').single()
+      if (data) {
+        if (data.branches) setBranches(data.branches)
+        if (data.belts) setBelts(data.belts)
+      }
+    } catch (e) {
+      console.warn("Settings table might not exist yet", e)
+    }
+  }
+
+  const saveSettings = async (newBranches: BranchConfig[], newBelts: string[]) => {
+    try {
+      await supabase.from('app_settings').upsert({
+        id: 'global',
+        branches: newBranches,
+        belts: newBelts
+      })
+    } catch (e) {
+      console.error("Failed to save settings", e)
+    }
+  }
+
+  const handleAddBranch = () => {
+    if (!newBranch.name.trim()) return
+    const updated = [...branches, { ...newBranch, name: newBranch.name.trim() }]
+    setBranches(updated)
+    setNewBranch({ name: '', address: '', mapsUrl: '' })
+    saveSettings(updated, belts)
+  }
+  const handleRemoveBranch = (bName: string) => {
+    const updated = branches.filter(x => x.name !== bName)
+    setBranches(updated)
+    saveSettings(updated, belts)
+  }
+
+  const handleAddBelt = () => {
+    if (!newBelt.trim()) return
+    const updated = [...belts, newBelt.trim()]
+    setBelts(updated)
+    setNewBelt('')
+    saveSettings(branches, updated)
+  }
+  const handleRemoveBelt = (b: string) => {
+    const updated = belts.filter(x => x !== b)
+    setBelts(updated)
+    saveSettings(branches, updated)
+  }
 
   const loadMembers = async () => {
     setLoading(true)
@@ -398,12 +466,93 @@ function AdminDashboard() {
 
           {/* SETTINGS TAB */}
           {activeTab === 'settings' && (
-            <div className="glass-card p-12 text-center border-white/5 animate-in fade-in slide-in-from-bottom-4">
-               <Settings className="w-16 h-16 text-muted-foreground/30 mx-auto mb-6" />
-               <h2 className="text-2xl font-black uppercase tracking-tighter mb-2">System Settings</h2>
-               <p className="text-muted-foreground max-w-md mx-auto">Configure global app settings, default patterns, and database backups.</p>
-               <div className="mt-8 inline-block px-4 py-2 bg-white/5 rounded-xl border border-white/10 text-xs font-black tracking-widest uppercase text-white/50">
-                 Restricted to Super Admin
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+               <h3 className="text-2xl font-black uppercase tracking-tighter mb-6 flex items-center gap-2"><Settings className="w-6 h-6 text-primary" /> System Settings</h3>
+               
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 {/* Branches CRUD */}
+                 <div className="glass-card p-6">
+                   <h4 className="text-sm font-black uppercase tracking-widest text-primary mb-4 border-b border-white/10 pb-2">Manage Branches</h4>
+                   <div className="space-y-3 mb-6 max-h-[300px] overflow-y-auto pr-2">
+                     {branches.map(b => (
+                       <div key={b.name} className="flex flex-col gap-2 p-3 bg-white/5 rounded-xl border border-white/5 group relative">
+                         <div className="flex items-center justify-between">
+                           <span className="font-bold text-sm">{b.name}</span>
+                           <button 
+                             onClick={() => handleRemoveBranch(b.name)}
+                             className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-500/20 rounded-lg transition-all absolute top-2 right-2"
+                           >
+                             <Trash2 className="w-4 h-4" />
+                           </button>
+                         </div>
+                         <div className="text-[10px] text-muted-foreground flex items-center gap-1">
+                           <MapPin className="w-3 h-3" /> {b.address || 'No Address'}
+                         </div>
+                         <div className="text-[10px] text-primary flex items-center gap-1 truncate">
+                           <LinkIcon className="w-3 h-3" /> {b.mapsUrl || 'No Maps Link'}
+                         </div>
+                       </div>
+                     ))}
+                   </div>
+                   <div className="space-y-2">
+                     <input 
+                       value={newBranch.name}
+                       onChange={e => setNewBranch({...newBranch, name: e.target.value})}
+                       placeholder="Branch Name"
+                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                     />
+                     <input 
+                       value={newBranch.address}
+                       onChange={e => setNewBranch({...newBranch, address: e.target.value})}
+                       placeholder="Full Address"
+                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                     />
+                     <input 
+                       value={newBranch.mapsUrl}
+                       onChange={e => setNewBranch({...newBranch, mapsUrl: e.target.value})}
+                       placeholder="Google Maps URL"
+                       className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                     />
+                     <button 
+                       onClick={handleAddBranch}
+                       className="w-full py-2 mt-2 bg-primary hover:bg-primary/90 text-white rounded-xl shadow-lg shadow-primary/20 flex items-center justify-center gap-1 transition-all"
+                     >
+                       <Plus className="w-4 h-4" /> Add Branch
+                     </button>
+                   </div>
+                 </div>
+
+                 {/* Belts CRUD */}
+                 <div className="glass-card p-6">
+                   <h4 className="text-sm font-black uppercase tracking-widest text-primary mb-4 border-b border-white/10 pb-2">Manage Belts</h4>
+                   <div className="space-y-3 mb-6 max-h-[300px] overflow-y-auto pr-2">
+                     {belts.map(b => (
+                       <div key={b} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5 group">
+                         <span className="font-bold text-sm">{b}</span>
+                         <button 
+                           onClick={() => handleRemoveBelt(b)}
+                           className="opacity-0 group-hover:opacity-100 p-2 text-red-500 hover:bg-red-500/20 rounded-lg transition-all"
+                         >
+                           <Trash2 className="w-4 h-4" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                   <div className="flex gap-2">
+                     <input 
+                       value={newBelt}
+                       onChange={e => setNewBelt(e.target.value)}
+                       placeholder="New Belt Level..."
+                       className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                     />
+                     <button 
+                       onClick={handleAddBelt}
+                       className="px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-xl shadow-lg shadow-primary/20 flex items-center gap-1 transition-all"
+                     >
+                       <Plus className="w-4 h-4" /> Add
+                     </button>
+                   </div>
+                 </div>
                </div>
             </div>
           )}
@@ -473,14 +622,9 @@ function AdminDashboard() {
                     onChange={(e) => setMemberForm({...memberForm, belt: e.target.value})}
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
                   >
-                    <option value="White">White</option>
-                    <option value="Yellow">Yellow</option>
-                    <option value="Orange">Orange</option>
-                    <option value="Green">Green</option>
-                    <option value="Blue">Blue</option>
-                    <option value="Purple">Purple</option>
-                    <option value="Brown">Brown</option>
-                    <option value="Black">Black</option>
+                    {belts.map(b => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -502,9 +646,9 @@ function AdminDashboard() {
                     onChange={(e) => setMemberForm({...memberForm, branch: e.target.value})}
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
                   >
-                    <option value="XMF Main HQ">XMF Main HQ</option>
-                    <option value="Northside Dojo">Northside Dojo</option>
-                    <option value="Downtown Club">Downtown Club</option>
+                    {branches.map(b => (
+                      <option key={b.name} value={b.name}>{b.name}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -589,14 +733,9 @@ function AdminDashboard() {
                     onChange={(e) => setEditForm({...editForm, belt: e.target.value})}
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
                   >
-                    <option value="White">White</option>
-                    <option value="Yellow">Yellow</option>
-                    <option value="Orange">Orange</option>
-                    <option value="Green">Green</option>
-                    <option value="Blue">Blue</option>
-                    <option value="Purple">Purple</option>
-                    <option value="Brown">Brown</option>
-                    <option value="Black">Black</option>
+                    {belts.map(b => (
+                      <option key={b} value={b}>{b}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -668,9 +807,9 @@ function AdminDashboard() {
                     onChange={(e) => setEditForm({...editForm, branch: e.target.value})}
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
                   >
-                    <option value="XMF Main HQ">XMF Main HQ</option>
-                    <option value="Northside Dojo">Northside Dojo</option>
-                    <option value="Downtown Club">Downtown Club</option>
+                    {branches.map(b => (
+                      <option key={b.name} value={b.name}>{b.name}</option>
+                    ))}
                   </select>
                 </div>
               </div>

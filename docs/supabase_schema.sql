@@ -93,3 +93,13 @@ VALUES
     -- '048526'
     ('XC260001', 'admin', 'Master Farhan', '8884503703', '048526')
 ON CONFLICT (member_id) DO NOTHING;
+
+-- App Settings (Branches and Belts)
+CREATE TABLE app_settings (
+  id TEXT PRIMARY KEY DEFAULT 'global',
+  branches JSONB DEFAULT '[{"name": "Tavarekere Park", "address": "", "mapsUrl": ""}, {"name": "Northside Dojo", "address": "", "mapsUrl": ""}, {"name": "Downtown Club", "address": "", "mapsUrl": ""}]',
+  belts JSONB DEFAULT '["White", "Yellow", "Orange", "Green", "Blue", "Purple", "Brown", "Black"]'
+);
+
+ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public full access for demo" ON public.app_settings FOR ALL USING (true);

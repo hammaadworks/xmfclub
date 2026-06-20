@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { useState } from 'react'
-import { MessageSquare, Phone, Mail, MapPin, Zap, Youtube, Instagram, Twitter, Send, Globe, ArrowUpRight } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { MessageSquare, Phone, Mail, MapPin, Zap, Youtube, Instagram, Twitter, Send, Globe, ArrowUpRight, Loader2 } from 'lucide-react'
+import { supabase } from '#/lib/supabase'
 
 export const Route = createFileRoute('/connect')({
   component: ConnectPage,
@@ -40,6 +41,19 @@ const socials = [
 function ConnectPage() {
   const [name, setName] = useState('')
   const [message, setMessage] = useState('')
+  const [branches, setBranches] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data } = await supabase.from('app_settings').select('branches').eq('id', 'global').single()
+      if (data && data.branches) {
+        setBranches(data.branches)
+      }
+      setLoading(false)
+    }
+    fetchSettings()
+  }, [])
 
   const handleWhatsAppSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -93,15 +107,43 @@ function ConnectPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-6">
-                  <div className="p-4 rounded-2xl bg-white/5 text-primary border border-white/10">
-                    <MapPin className="w-6 h-6" />
+                {loading ? (
+                  <div className="flex items-center gap-4 text-muted-foreground animate-pulse p-4">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Loading locations...
                   </div>
-                  <div>
-                    <h4 className="font-bold text-sm uppercase tracking-widest mb-1">Location</h4>
-                    <p className="text-muted-foreground font-medium">Bangalore, India</p>
+                ) : branches.length > 0 ? (
+                  branches.map((branch, i) => (
+                    <div key={i} className="flex items-start gap-6">
+                      <div className="p-4 rounded-2xl bg-white/5 text-primary border border-white/10">
+                        <MapPin className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-sm uppercase tracking-widest mb-1">{branch.name}</h4>
+                        <p className="text-muted-foreground font-medium mb-2">{branch.address || 'Address not provided'}</p>
+                        {branch.mapsUrl && (
+                          <a 
+                            href={branch.mapsUrl} 
+                            target="_blank" 
+                            rel="noreferrer"
+                            className="text-[10px] uppercase tracking-widest text-primary font-black hover:underline flex items-center gap-1"
+                          >
+                            View on Google Maps <ArrowUpRight className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="flex items-start gap-6">
+                    <div className="p-4 rounded-2xl bg-white/5 text-primary border border-white/10">
+                      <MapPin className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-sm uppercase tracking-widest mb-1">HQ Location</h4>
+                      <p className="text-muted-foreground font-medium">Bangalore, India</p>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               <h3 className="text-xs font-black tracking-[0.3em] text-primary uppercase mb-8 flex items-center gap-2">
