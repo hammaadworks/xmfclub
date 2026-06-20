@@ -75,8 +75,8 @@ function LandingPage() {
 
       {/* 1. TRUST: Hero Section with Social Proof */}
       <section className="relative pt-40 pb-24 px-6 overflow-hidden border-b border-white/5">
-        <div className="absolute top-0 left-1/4 -translate-x-1/2 w-[800px] h-[600px] bg-primary/10 blur-[140px] rounded-full -z-10" />
-        <div className="absolute top-0 right-1/4 translate-x-1/2 w-[800px] h-[600px] bg-accent/10 blur-[140px] rounded-full -z-10" />
+        <div className="absolute top-0 left-1/4 -translate-x-1/2 w-[800px] h-[600px] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/10 to-transparent rounded-full -z-10" />
+        <div className="absolute top-0 right-1/4 translate-x-1/2 w-[800px] h-[600px] bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-accent/10 to-transparent rounded-full -z-10" />
 
         <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
           <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[10px] font-black tracking-[0.3em] text-primary mb-10 animate-fade-in uppercase">
@@ -85,7 +85,7 @@ function LandingPage() {
           </div>
 
           <h1 className="text-4xl sm:text-6xl md:text-9xl font-black mb-8 leading-[0.85] tracking-tighter uppercase italic break-words">
-            FORCE <br />
+            XTREME FORCE <br />
             <span className="brand-gradient bg-clip-text text-transparent">
               MULTIPLIED.
             </span>
@@ -148,23 +148,25 @@ function LandingPage() {
             <div className="aspect-[4/5] rounded-[3rem] overflow-hidden border border-primary/20 shadow-2xl relative z-10">
               <img
                 src="/farhan.jpeg"
+                loading="lazy"
+                decoding="async"
                 className="w-full h-full object-cover transition-all duration-700 object-top"
                 alt="Farhan Khan XMF"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
-              <div className="absolute bottom-10 left-10">
-                <div className="text-white text-4xl font-black uppercase italic leading-none">
+              <div className="absolute bottom-10 left-6 sm:left-10 right-6">
+                <div className="text-white text-3xl sm:text-4xl font-black uppercase italic leading-none break-words">
                   Farhan <br />
-                  <span className="text-primary text-5xl">Khan XMF</span>
+                  <span className="text-primary text-4xl sm:text-5xl">Khan XMF</span>
                 </div>
-                <div className="text-primary font-bold text-xs tracking-widest uppercase mt-4">
+                <div className="text-primary font-bold text-[10px] sm:text-xs tracking-widest uppercase mt-4">
                   Founder & Head Coach
                 </div>
               </div>
             </div>
             {/* Decorative elements */}
-            <div className="absolute -top-10 -left-10 w-40 h-40 bg-primary/20 blur-3xl rounded-full" />
-            <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-accent/20 blur-3xl rounded-full" />
+            <div className="absolute -top-10 -left-10 w-40 h-40 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/20 to-transparent rounded-full -z-10" />
+            <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-accent/20 to-transparent rounded-full -z-10" />
           </div>
 
           <div className="space-y-10">
@@ -211,7 +213,7 @@ function LandingPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-2 gap-4 sm:gap-6">
               {[
                 { label: 'Experience', val: '9+ Years' },
                 { label: 'Rank', val: '3rd Dan Black Belt' },
@@ -220,12 +222,12 @@ function LandingPage() {
               ].map((stat, i) => (
                 <div
                   key={i}
-                  className="p-6 rounded-2xl bg-white/5 border border-white/10"
+                  className="p-4 sm:p-6 rounded-2xl bg-white/5 border border-white/10"
                 >
                   <div className="text-[10px] font-black tracking-widest text-primary uppercase mb-1">
                     {stat.label}
                   </div>
-                  <div className="text-xl font-black italic uppercase text-white">
+                  <div className="text-lg sm:text-xl font-black italic uppercase text-white break-words">
                     {stat.val}
                   </div>
                 </div>
@@ -237,7 +239,7 @@ function LandingPage() {
 
       {/* 3. Socials: Youtube and Instagram Highlights */}
       <section className="py-24 px-6 border-b border-white/5 relative overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[400px] bg-gradient-to-r from-primary/5 to-accent/5 blur-[100px] rounded-full -z-10" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-[400px] bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-accent/5 to-transparent rounded-full -z-10" />
 
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
@@ -309,6 +311,8 @@ function LandingPage() {
           <div className="relative aspect-square rounded-[3rem] overflow-hidden border border-primary/20 shadow-2xl group">
             <img
               src="https://images.unsplash.com/photo-1656653121475-e33829581294?q=80&w=1000&auto=format&fit=crop"
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 opacity-80"
               alt="Curriculum Preview"
             />
@@ -429,10 +433,12 @@ function LandingPage() {
           {/* Hall of Fame Tile */}
           <Link
             to="/hall-of-fame"
-            className="md:col-span-8 group glass-card relative overflow-hidden border-white/5 hover:border-primary/50 transition-all cursor-pointer"
+            className="h-64 md:h-auto md:col-span-8 group glass-card relative overflow-hidden border-white/5 hover:border-primary/50 transition-all cursor-pointer"
           >
             <img
               src="https://images.unsplash.com/photo-1706374503312-7a4a4c030d2d?q=80&w=1200&auto=format&fit=crop"
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-40"
               alt="Achievements"
             />
@@ -449,10 +455,12 @@ function LandingPage() {
           {/* Store Tile */}
           <Link
             to="/store"
-            className="md:col-span-4 group glass-card relative overflow-hidden border-white/5 hover:border-primary/50 transition-all cursor-pointer"
+            className="h-64 md:h-auto md:col-span-4 group glass-card relative overflow-hidden border-white/5 hover:border-primary/50 transition-all cursor-pointer"
           >
             <img
               src="https://images.unsplash.com/photo-1556821840-3a63f95609a7?q=80&w=800&auto=format&fit=crop"
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 opacity-40"
               alt="Store"
             />
@@ -469,10 +477,12 @@ function LandingPage() {
           {/* Events Tile */}
           <Link
             to="/events"
-            className="md:col-span-6 group glass-card relative overflow-hidden border-white/5 hover:border-primary/50 transition-all cursor-pointer"
+            className="h-64 md:h-auto md:col-span-6 group glass-card relative overflow-hidden border-white/5 hover:border-primary/50 transition-all cursor-pointer"
           >
             <img
               src="https://images.unsplash.com/photo-1555597673-b21d5c935865?q=80&w=1000&auto=format&fit=crop"
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-40 mix-blend-overlay"
               alt="Events"
             />
@@ -490,10 +500,12 @@ function LandingPage() {
           {/* Connect Tile */}
           <Link
             to="/connect"
-            className="md:col-span-6 group glass-card relative overflow-hidden border-white/5 hover:border-primary/50 transition-all cursor-pointer"
+            className="h-64 md:h-auto md:col-span-6 group glass-card relative overflow-hidden border-white/5 hover:border-primary/50 transition-all cursor-pointer"
           >
             <img
               src="https://images.unsplash.com/photo-1555597408-26bc8e548a46?q=80&w=1000&auto=format&fit=crop"
+              loading="lazy"
+              decoding="async"
               className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 opacity-40"
               alt="Connect"
             />
