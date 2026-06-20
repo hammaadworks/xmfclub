@@ -62,12 +62,12 @@ function LandingPage() {
             >
               <X className="w-5 h-5" />
             </button>
-            <iframe
-              src="https://www.youtube.com/embed/pw2vKNpz7TE?autoplay=1"
-              title="XMFCLUB Intro"
+            <video
+              src="/intro.mov"
               className="w-full h-full border-0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
+              autoPlay
+              controls
+              playsInline
             />
           </div>
         </div>
