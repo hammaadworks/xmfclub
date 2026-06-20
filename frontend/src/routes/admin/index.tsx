@@ -819,7 +819,7 @@ function AdminDashboard() {
                              </button>
                            </div>
                          </div>
-                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                            <div>
                              <p className="text-[10px] font-black tracking-widest uppercase text-muted-foreground mb-1">Date</p>
                              <p className="text-sm font-bold">{new Date(evt.date).toLocaleDateString()}</p>
@@ -1006,7 +1006,7 @@ function AdminDashboard() {
                 />
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Phone <span className="text-red-500">*</span></label>
                   <input 
@@ -1039,7 +1039,7 @@ function AdminDashboard() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">System Role</label>
                   <CustomSelect 
@@ -1058,7 +1058,7 @@ function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Address</label>
                   <input 
@@ -1080,7 +1080,7 @@ function AdminDashboard() {
 
               <div className="pt-4 mt-4 border-t border-white/5">
                 <h4 className="text-xs font-black tracking-widest uppercase mb-4 text-primary">Financials</h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Actual Fee (₹)</label>
                     <input 
@@ -1100,7 +1100,7 @@ function AdminDashboard() {
                     />
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                   <div className="space-y-2">
                     <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Due Date</label>
                     <input 
@@ -1170,7 +1170,7 @@ function AdminDashboard() {
                         placeholder="John Doe"
                       />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Phone <span className="text-red-500">*</span></label>
                         <input 
@@ -1226,7 +1226,7 @@ function AdminDashboard() {
                 </div>
                 {expandedSection === 'club' && (
                   <div className="p-4 pt-0 space-y-4 animate-in slide-in-from-top-2">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">System Role</label>
                         <CustomSelect 
@@ -1244,7 +1244,7 @@ function AdminDashboard() {
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Member Status</label>
                         <CustomSelect 
@@ -1262,7 +1262,7 @@ function AdminDashboard() {
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Date of Joining</label>
                         <input 
@@ -1306,7 +1306,7 @@ function AdminDashboard() {
                 </div>
                 {expandedSection === 'financials' && (
                   <div className="p-4 pt-0 space-y-4 animate-in slide-in-from-top-2">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Actual Fee (₹)</label>
                         <input 
@@ -1327,7 +1327,7 @@ function AdminDashboard() {
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Due Date</label>
                         <input 
@@ -1450,7 +1450,7 @@ function AdminDashboard() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Date <span className="text-red-500">*</span></label>
                   <input 
@@ -1473,7 +1473,7 @@ function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Target Belt</label>
                   <CustomSelect 
@@ -1541,7 +1541,7 @@ function AdminDashboard() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Date <span className="text-red-500">*</span></label>
                   <input 
@@ -1564,7 +1564,7 @@ function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Target Belt</label>
                   <CustomSelect 
