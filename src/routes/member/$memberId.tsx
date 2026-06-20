@@ -2,7 +2,7 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { 
   User, Calendar, Trophy, LogOut,
-  MapPin, Phone, Mail, Activity, ShieldCheck, Trash2, Edit2, Save, X, Lock
+  MapPin, Phone, Mail, Activity, ShieldCheck, Trash2, Edit2, Save, X, Lock, Clock
 } from 'lucide-react'
 import { supabase } from '#/lib/supabase'
 import { PatternLock } from '#/components/PatternLock'

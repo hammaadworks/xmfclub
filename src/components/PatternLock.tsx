@@ -93,15 +93,14 @@ export function PatternLock({ onComplete, error }: PatternLockProps) {
           return (
             <div
               key={index}
-              data-index={index}
               className="relative flex items-center justify-center w-full h-full cursor-pointer"
               onPointerDown={(e) => {
                 e.preventDefault();
               }}
             >
-              {/* Hitbox area - smaller so they have to touch near the middle */}
+              {/* Hitbox area - standard touch target size */}
               <div 
-                className="absolute w-8 h-8 rounded-full z-0" 
+                className="absolute w-12 h-12 rounded-full z-0" 
                 data-index={index}
               />
               {/* Visual dot */}
