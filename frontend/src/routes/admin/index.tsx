@@ -7,6 +7,7 @@ import {
   MapPin, Link as LinkIcon, AlertTriangle, ChevronDown, ChevronUp, ExternalLink
 } from 'lucide-react'
 import { CustomSelect } from '#/components/CustomSelect'
+import { Scanner } from '@yudiel/react-qr-scanner'
 
 type BranchConfig = {
   name: string;
@@ -30,6 +31,9 @@ function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [appAlert, setAppAlert] = useState<{message: string, isConfirm?: boolean, onConfirm?: () => void} | null>(null)
   
+  // Scanner State
+  const [isScanning, setIsScanning] = useState(false)
+  
   // Members State
   const [members, setMembers] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
@@ -51,6 +55,7 @@ function AdminDashboard() {
     date_of_leaving: '',
     achievements: '',
     instructor_remarks_color: 'green',
+    instructor_remarks: '',
     actual_fee: 0,
     fee_detail: '',
     due_date: '',
@@ -401,7 +406,8 @@ function AdminDashboard() {
         setMemberForm({ 
           name: '', phone: '', email: '', role: 'student', belt: 'White', 
           address: '', branch: 'XMF Main HQ', date_of_joining: new Date().toISOString().split('T')[0], 
-          date_of_leaving: '', achievements: '', instructor_remarks_color: 'green', pending_amount: 0 
+          date_of_leaving: '', achievements: '', instructor_remarks_color: 'green', instructor_remarks: '',
+          actual_fee: 0, fee_detail: '', due_date: '', pending_amount: 0, photo_url: ''
         })
         loadMembers()
       }
@@ -718,15 +724,50 @@ function AdminDashboard() {
           {/* SCANNER TAB */}
           {activeTab === 'scanner' && (
             <div className="glass-card p-12 text-center border-white/5 animate-in fade-in slide-in-from-bottom-4">
-               <QrCode className="w-16 h-16 text-muted-foreground/30 mx-auto mb-6" />
-               <h2 className="text-2xl font-black uppercase tracking-tighter mb-2">In-App Scanner</h2>
-               <p className="text-muted-foreground max-w-md mx-auto">Use this module to scan physical student NFC/QR cards to instantly log attendance and pull up Full Profiles.</p>
-               <button 
-                 onClick={() => window.dispatchEvent(new CustomEvent('showContactModal'))}
-                 className="mt-8 px-6 py-3 bg-white/10 text-white font-black tracking-widest text-xs rounded-xl uppercase hover:bg-white/20 transition-colors border border-white/20"
-               >
-                 Activate Scanner
-               </button>
+               {isScanning ? (
+                 <div className="max-w-sm mx-auto">
+                   <div className="aspect-square overflow-hidden rounded-2xl border-4 border-primary/30 mb-6 bg-black relative">
+                     <Scanner 
+                       onScan={(result) => {
+                         if (result && result.length > 0) {
+                           const text = result[0].rawValue;
+                           const match = text.match(/XC\d{6}/i);
+                           if (match) {
+                             setIsScanning(false)
+                             navigate({ to: `/member/${match[0].toUpperCase()}` })
+                           } else {
+                             setIsScanning(false)
+                             setAppAlert({ message: "Invalid QR Code: No XMF Member ID found in the code. Scanned: " + text })
+                           }
+                         }
+                       }} 
+                       onError={(error) => {
+                         console.error("Scanner Error:", error);
+                         setAppAlert({ message: `Camera error: ${error.message || 'Check permissions'}` });
+                         setIsScanning(false);
+                       }}
+                     />
+                   </div>
+                   <button 
+                     onClick={() => setIsScanning(false)}
+                     className="px-6 py-3 bg-red-500/10 text-red-500 font-black tracking-widest text-xs rounded-xl uppercase hover:bg-red-500/20 transition-colors"
+                   >
+                     Cancel Scan
+                   </button>
+                 </div>
+               ) : (
+                 <>
+                   <QrCode className="w-16 h-16 text-muted-foreground/30 mx-auto mb-6" />
+                   <h2 className="text-2xl font-black uppercase tracking-tighter mb-2">In-App Scanner</h2>
+                   <p className="text-muted-foreground max-w-md mx-auto">Use this module to scan physical student NFC/QR cards to instantly log attendance and pull up Full Profiles.</p>
+                   <button 
+                     onClick={() => setIsScanning(true)}
+                     className="mt-8 px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-black tracking-widest text-xs rounded-xl uppercase hover:scale-105 transition-transform shadow-lg shadow-primary/20"
+                   >
+                     Activate Scanner
+                   </button>
+                 </>
+               )}
             </div>
           )}
 

@@ -1,0 +1,48 @@
+src/components/Header.tsx(9,9): error TS6133: 'navigate' is declared but its value is never read.
+src/components/Header.tsx(63,17): error TS2322: Type '"/admin" | `/member/${any}`' is not assignable to type '"/" | "." | ".." | "/store" | "/resources" | "/login" | "/hall-of-fame" | "/events" | "/connect" | "/member/$memberId" | "/admin" | "/training"'.
+  Type '`/member/${any}`' is not assignable to type '"/" | "." | ".." | "/store" | "/resources" | "/login" | "/hall-of-fame" | "/events" | "/connect" | "/member/$memberId" | "/admin" | "/training"'.
+src/components/Header.tsx(144,15): error TS2322: Type '"/admin" | `/member/${any}`' is not assignable to type '"/" | "." | ".." | "/store" | "/resources" | "/login" | "/hall-of-fame" | "/events" | "/connect" | "/member/$memberId" | "/admin" | "/training"'.
+  Type '`/member/${any}`' is not assignable to type '"/" | "." | ".." | "/store" | "/resources" | "/login" | "/hall-of-fame" | "/events" | "/connect" | "/member/$memberId" | "/admin" | "/training"'.
+src/components/PatternLock.tsx(2,20): error TS2307: Cannot find module '#/lib/utils' or its corresponding type declarations.
+src/components/PatternLock.tsx(83,30): error TS6133: 'e' is declared but its value is never read.
+src/routes/admin/index.tsx(3,26): error TS2307: Cannot find module '#/lib/supabase' or its corresponding type declarations.
+src/routes/admin/index.tsx(5,3): error TS6133: 'ShieldAlert' is declared but its value is never read.
+src/routes/admin/index.tsx(9,30): error TS2307: Cannot find module '#/components/CustomSelect' or its corresponding type declarations.
+src/routes/admin/index.tsx(158,21): error TS6133: 'error' is declared but its value is never read.
+src/routes/admin/index.tsx(392,42): error TS2551: Property 'instructor_remarks' does not exist on type '{ name: string; phone: string; email: string; role: string; belt: string; address: string; branch: string; date_of_joining: string; date_of_leaving: string; achievements: string; instructor_remarks_color: string; ... 4 more ...; photo_url: string; }'. Did you mean 'instructor_remarks_color'?
+src/routes/admin/index.tsx(405,23): error TS2345: Argument of type '{ name: string; phone: string; email: string; role: string; belt: string; address: string; branch: string; date_of_joining: string; date_of_leaving: string; achievements: string; instructor_remarks_color: string; pending_amount: number; }' is not assignable to parameter of type 'SetStateAction<{ name: string; phone: string; email: string; role: string; belt: string; address: string; branch: string; date_of_joining: string; date_of_leaving: string; achievements: string; instructor_remarks_color: string; ... 4 more ...; photo_url: string; }>'.
+  Type '{ name: string; phone: string; email: string; role: string; belt: string; address: string; branch: string; date_of_joining: string; date_of_leaving: string; achievements: string; instructor_remarks_color: string; pending_amount: number; }' is missing the following properties from type '{ name: string; phone: string; email: string; role: string; belt: string; address: string; branch: string; date_of_joining: string; date_of_leaving: string; achievements: string; instructor_remarks_color: string; ... 4 more ...; photo_url: string; }': actual_fee, fee_detail, due_date, photo_url
+src/routes/admin/index.tsx(631,32): error TS7006: Parameter 'val' implicitly has an 'any' type.
+src/routes/admin/index.tsx(636,32): error TS7006: Parameter 'val' implicitly has an 'any' type.
+src/routes/admin/index.tsx(1045,32): error TS7006: Parameter 'val' implicitly has an 'any' type.
+src/routes/admin/index.tsx(1053,32): error TS7006: Parameter 'val' implicitly has an 'any' type.
+src/routes/admin/index.tsx(1073,32): error TS7006: Parameter 'val' implicitly has an 'any' type.
+src/routes/admin/index.tsx(1232,38): error TS7006: Parameter 'val' implicitly has an 'any' type.
+src/routes/admin/index.tsx(1240,38): error TS7006: Parameter 'val' implicitly has an 'any' type.
+src/routes/admin/index.tsx(1250,38): error TS7006: Parameter 'val' implicitly has an 'any' type.
+src/routes/admin/index.tsx(1258,38): error TS7006: Parameter 'val' implicitly has an 'any' type.
+src/routes/admin/index.tsx(1342,38): error TS7006: Parameter 'val' implicitly has an 'any' type.
+src/routes/admin/index.tsx(1479,32): error TS7006: Parameter 'val' implicitly has an 'any' type.
+src/routes/admin/index.tsx(1570,32): error TS7006: Parameter 'val' implicitly has an 'any' type.
+src/routes/connect.tsx(4,26): error TS2307: Cannot find module '#/lib/supabase' or its corresponding type declarations.
+src/routes/events.tsx(2,28): error TS6133: 'Clock' is declared but its value is never read.
+src/routes/hall-of-fame.tsx(2,18): error TS6133: 'Star' is declared but its value is never read.
+src/routes/hall-of-fame.tsx(2,24): error TS6133: 'Award' is declared but its value is never read.
+src/routes/hall-of-fame.tsx(2,38): error TS6133: 'Users' is declared but its value is never read.
+src/routes/login.tsx(3,29): error TS2307: Cannot find module '#/components/PatternLock' or its corresponding type declarations.
+src/routes/login.tsx(4,26): error TS2307: Cannot find module '#/lib/supabase' or its corresponding type declarations.
+src/routes/login.tsx(12,10): error TS6133: 'pattern' is declared but its value is never read.
+src/routes/login.tsx(15,10): error TS6133: 'loading' is declared but its value is never read.
+src/routes/member/$memberId.tsx(4,45): error TS6133: 'Award' is declared but its value is never read.
+src/routes/member/$memberId.tsx(5,24): error TS6133: 'FileText' is declared but its value is never read.
+src/routes/member/$memberId.tsx(7,26): error TS2307: Cannot find module '#/lib/supabase' or its corresponding type declarations.
+src/routes/member/$memberId.tsx(358,74): error TS2322: Type 'unknown' is not assignable to type 'ReactNode'.
+src/routes/resources.tsx(2,48): error TS6133: 'Filter' is declared but its value is never read.
+src/routes/store.tsx(10,3): error TS6133: 'Filter' is declared but its value is never read.
+src/routes/training/index.tsx(7,3): error TS6133: 'ChevronRight' is declared but its value is never read.
+src/routes/training/index.tsx(9,3): error TS6133: 'Plus' is declared but its value is never read.
+src/routes/training/index.tsx(11,3): error TS6133: 'Info' is declared but its value is never read.
+src/routes/training/index.tsx(19,1): error TS6133: 'fetchApi' is declared but its value is never read.
+src/routes/training/index.tsx(54,9): error TS6133: 'navigate' is declared but its value is never read.
+src/routes/training/index.tsx(61,21): error TS6133: 'setEnrolling' is declared but its value is never read.
+vite.config.ts(2,1): error TS6133: 'devtools' is declared but its value is never read.
