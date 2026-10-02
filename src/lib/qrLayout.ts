@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import JSZip from 'jszip';
 import QRCode from 'qrcode';
 import { buildCredentialUrl, CANONICAL_CREDENTIAL_BASE_URL } from './credentialToken';
+import { decodeCrockford } from './crockford';
 
 export interface LayoutOptions {
   columns: number;
@@ -52,8 +53,16 @@ export async function generateQrBatchPdf(
   const batchNumStr = batchNumber.toString().padStart(5, '0');
   const itemsPerPage = layout.columns * layout.rows;
 
+  // Guarantee strict ascending Crockford Base32 order (00 -> 0Z, 10 -> 1Z)
+  const sortedTokens = [...tokens].sort((a, b) => {
+    const valA = decodeCrockford(a);
+    const valB = decodeCrockford(b);
+    if (valA !== -1 && valB !== -1) return valA - valB;
+    return a.localeCompare(b);
+  });
+
   let index = 0;
-  for (const token of tokens) {
+  for (const token of sortedTokens) {
     if (index > 0 && index % itemsPerPage === 0) {
       doc.addPage();
     }
@@ -65,9 +74,9 @@ export async function generateQrBatchPdf(
     // Draw single styled micro-header line on the first item of each page per requirement:
     // "style the header a bit also add https://www.xmfclub.com plus add contact 8884503703 - Master Farhan. you can make the delimiters better, let it be small size but styled good also remember the the batch start adn end must be correct (example 00000 - 0000Z)"
     if (pageIndex === 0) {
-      const pageStartToken = tokens[index] || '';
-      const pageEndIndex = Math.min(index + itemsPerPage - 1, tokens.length - 1);
-      const pageEndToken = tokens[pageEndIndex] || '';
+      const pageStartToken = sortedTokens[index] || '';
+      const pageEndIndex = Math.min(index + itemsPerPage - 1, sortedTokens.length - 1);
+      const pageEndToken = sortedTokens[pageEndIndex] || '';
 
       const sep = '  •  ';
       const headerFontSize = 6.4;
@@ -138,13 +147,24 @@ export async function generateQrBatchPdf(
       },
     });
 
-    // 3. Center QR code inside the circular border with generous breathing room
-    // For circle radius 16mm and qrSize 19.5mm, corner clearance is >2.2mm, side clearance is >6.2mm
+    // 3. Center QR code inside the circular border
     const qrX = centerX - layout.qrSize / 2;
     const qrY = centerY - layout.qrSize / 2;
     doc.addImage(qrDataUrl, 'PNG', qrX, qrY, layout.qrSize, layout.qrSize);
 
-    // Note: Numbers and subtitles dropped per requirement ("just the qrc is fine")
+    // 4. Print scrap-aisle human reference alongside badge (outside circular border)
+    // Sits in the vertical trim aisle and gets trimmed off when badges are punched/cut
+    const seqNum = (pageIndex + 1).toString().padStart(2, '0');
+    const aisleX = centerX + layout.circleRadius + 2.8;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(5);
+    doc.setTextColor(160, 160, 160);
+    doc.text(`#${seqNum}`, aisleX, centerY - 1.2);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(5.5);
+    doc.setTextColor(110, 110, 110);
+    doc.text(token, aisleX, centerY + 2.0);
 
     index++;
   }
@@ -174,8 +194,16 @@ export async function generateQrBatchZip(
 
   if (!root) throw new Error('Failed to create zip folder');
 
+  // Guarantee strict ascending Crockford Base32 order (00 -> 0Z, 10 -> 1Z)
+  const sortedTokens = [...tokens].sort((a, b) => {
+    const valA = decodeCrockford(a);
+    const valB = decodeCrockford(b);
+    if (valA !== -1 && valB !== -1) return valA - valB;
+    return a.localeCompare(b);
+  });
+
   // 1. Generate and embed the printable PDF sticker sheet directly inside the ZIP!
-  const pdfBlob = await generateQrBatchPdf(tokens, batchNumber, baseUrl, layout);
+  const pdfBlob = await generateQrBatchPdf(sortedTokens, batchNumber, baseUrl, layout);
   const pdfArrayBuffer = await pdfBlob.arrayBuffer();
   root.file(`qrc-batch-${batchNumStr}.pdf`, pdfArrayBuffer);
 
@@ -193,8 +221,8 @@ export async function generateQrBatchZip(
   const items: ItemData[] = [];
   const csvRows: string[] = ['Index,Sequence,Token,URL'];
 
-  for (let i = 0; i < tokens.length; i++) {
-    const token = tokens[i];
+  for (let i = 0; i < sortedTokens.length; i++) {
+    const token = sortedTokens[i];
     const seqNum = (batchNumber * 32 + i + 1).toString().padStart(4, '0');
     const seq = `#${seqNum}`;
     const url = buildCredentialUrl('qrc', token, baseUrl);
@@ -245,10 +273,10 @@ export async function generateQrBatchZip(
       {
         batchNumber,
         batchNumberPadded: batchNumStr,
-        quantity: tokens.length,
+        quantity: sortedTokens.length,
         pdfFileName: `qrc-batch-${batchNumStr}.pdf`,
-        startToken: tokens[0] || '',
-        endToken: tokens[tokens.length - 1] || '',
+        startToken: sortedTokens[0] || '',
+        endToken: sortedTokens[sortedTokens.length - 1] || '',
         generatedAt: new Date().toISOString(),
         baseUrl,
         tokens: items.map((item, idx) => ({
@@ -495,7 +523,7 @@ export async function generateQrBatchZip(
     <header>
       <div class="title-group">
         <h1>XMF Martial Arts Club <span class="badge-pill">Batch #${batchNumStr}</span></h1>
-        <p>32 Official Member Credentials • Tokens: ${tokens[0]} – ${tokens[tokens.length - 1]} • https://www.xmfclub.com • Contact: 8884503703 - Master Farhan</p>
+        <p>32 Official Member Credentials • Tokens: ${sortedTokens[0]} – ${sortedTokens[sortedTokens.length - 1]} • https://www.xmfclub.com • Contact: 8884503703 - Master Farhan</p>
       </div>
       <div class="actions no-print">
         <a href="qrc-batch-${batchNumStr}.pdf" download="qrc-batch-${batchNumStr}.pdf" class="btn">

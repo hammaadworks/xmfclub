@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Check } from 'lucide-react'
 
 type Option = {
   label: string;
@@ -22,17 +22,21 @@ export function CustomSelect({ value, onChange, options, placeholder = "Select..
   const selectedOption = options.find(o => o.value === value)
 
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    const handleClickOutside = (event: Event) => {
       if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false)
       }
     }
+    document.addEventListener('pointerdown', handleClickOutside)
     document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('pointerdown', handleClickOutside)
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
   }, [])
 
   return (
-    <div className="relative w-full" ref={containerRef}>
+    <div className={`relative w-full ${isOpen ? 'z-50' : 'z-auto'}`} ref={containerRef}>
       <button 
         type="button"
         id={id}
@@ -51,30 +55,31 @@ export function CustomSelect({ value, onChange, options, placeholder = "Select..
         <div 
           role="listbox"
           aria-label={ariaLabel || placeholder}
-          className="absolute top-full mt-2 w-full bg-[#111111] border border-white/10 rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95"
+          className="absolute top-full mt-2 w-full bg-[#141414] border border-white/15 rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 divide-y divide-white/5"
         >
-          {options.map((opt) => (
-            <div 
-              key={opt.value}
-              role="option"
-              aria-selected={value === opt.value}
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onChange(opt.value);
-                  setIsOpen(false);
-                }
-              }}
-              onClick={() => {
-                onChange(opt.value)
-                setIsOpen(false)
-              }}
-              className={`px-4 py-3 text-sm cursor-pointer hover:bg-white/5 font-bold transition-colors duration-150 ${value === opt.value ? 'bg-primary/20 text-primary-light' : 'text-foreground'}`}
-            >
-              {opt.label}
-            </div>
-          ))}
+          {options.map((opt) => {
+            const isSelected = value === opt.value
+            return (
+              <button 
+                type="button"
+                key={opt.value}
+                role="option"
+                aria-selected={isSelected}
+                tabIndex={0}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onChange(opt.value)
+                  setIsOpen(false)
+                }}
+                className={`w-full px-4 py-3 text-sm text-left cursor-pointer hover:bg-white/10 font-bold transition-colors duration-150 flex items-center justify-between ${
+                  isSelected ? 'bg-primary/20 text-primary-light' : 'text-zinc-200'
+                }`}
+              >
+                <span>{opt.label}</span>
+                {isSelected && <Check className="w-4 h-4 text-primary-light shrink-0" />}
+              </button>
+            )
+          })}
         </div>
       )}
     </div>

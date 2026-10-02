@@ -17,6 +17,10 @@ const SYSTEM_ROLES = [
   { label: 'Administrator', value: 'admin' },
 ];
 
+const BLOOD_GROUPS = [
+  'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'
+];
+
 type BranchConfig = {
   name: string;
   address: string;
@@ -75,6 +79,7 @@ function AdminDashboard() {
     due_date: '',
     pending_amount: 0,
     photo_url: '',
+    blood_group: '',
     is_reviewed: false
   })
   const [expandedSection, setExpandedSection] = useState<'personal' | 'club' | 'financials'>('personal')
@@ -406,6 +411,7 @@ function AdminDashboard() {
       due_date: member.due_date ? member.due_date.split('T')[0] : '',
       pending_amount: member.pending_amount || 0,
       photo_url: member.photo_url || '',
+      blood_group: member.blood_group || '',
       is_reviewed: member.is_reviewed ?? false
     })
     setShowEditModal(true)
@@ -426,19 +432,7 @@ function AdminDashboard() {
         setSavingMember(false)
         return
       }
-  
-      const { data: existing } = await supabase
-          .from('members')
-          .select('id')
-          .eq('phone', editForm.phone)
-          .neq('member_id', editingMemberId)
-          .maybeSingle()
-        
-        if (existing) {
-          setAppAlert({ message: 'This phone number is already registered to another member.' })
-          setSavingMember(false)
-          return
-        }
+      // Phone is validated for format (10 digits), but duplicate phone is allowed for siblings/families.
 
       const { error } = await supabase
         .from('members')
@@ -463,6 +457,7 @@ function AdminDashboard() {
           due_date: editForm.due_date || null,
           pending_amount: editForm.pending_amount || 0,
           photo_url: editForm.photo_url || null,
+          blood_group: editForm.blood_group || null,
           is_reviewed: editForm.is_reviewed
         })
         .eq('member_id', editingMemberId)
@@ -665,6 +660,11 @@ function AdminDashboard() {
                             <td className="px-6 py-4 font-bold">
                               <div className="flex items-center gap-2">
                                 <span>{m.name}</span>
+                                {m.blood_group && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-500/10 border border-red-500/20 text-red-400" title={`Blood Group: ${m.blood_group}`}>
+                                    {m.blood_group}
+                                  </span>
+                                )}
                                 {m.is_deleted && (
                                   <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-red-500/20 text-red-400">
                                     Archived
@@ -1104,15 +1104,28 @@ function AdminDashboard() {
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Profile Photo Link</label>
-                      <input 
-                        type="url"
-                        value={editForm.photo_url}
-                        onChange={(e) => setEditForm({...editForm, photo_url: e.target.value})}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                        placeholder="https://example.com/photo.jpg"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Blood Group</label>
+                        <CustomSelect 
+                          value={editForm.blood_group}
+                          onChange={(val) => setEditForm({...editForm, blood_group: val})}
+                          options={[
+                            { label: 'Not Specified', value: '' },
+                            ...BLOOD_GROUPS.map(bg => ({ label: bg, value: bg }))
+                          ]}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Profile Photo Link</label>
+                        <input 
+                          type="url"
+                          value={editForm.photo_url}
+                          onChange={(e) => setEditForm({...editForm, photo_url: e.target.value})}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                          placeholder="https://example.com/photo.jpg"
+                        />
+                      </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div className="sm:col-span-2 space-y-2">

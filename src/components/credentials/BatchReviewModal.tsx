@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { X, QrCode, Radio, Download, FolderArchive, FileSpreadsheet, Copy, Check, User } from 'lucide-react';
 import QRCode from 'qrcode';
 import { buildCredentialUrl, exportBatchCsv, CANONICAL_CREDENTIAL_BASE_URL } from '#/lib/credentialToken';
 import { generateQrBatchPdf, generateQrBatchZip } from '#/lib/qrLayout';
+import { decodeCrockford } from '#/lib/crockford';
 
 export interface BatchItem {
   id: string;
@@ -48,16 +49,26 @@ export function BatchReviewModal({
   const [downloadingZip, setDownloadingZip] = useState(false);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
+  // Guarantee strict ascending Crockford Base32 sequence for all items
+  const sortedItems: BatchItem[] = useMemo(() => {
+    return [...items].sort((a, b) => {
+      const valA = decodeCrockford(a.token);
+      const valB = decodeCrockford(b.token);
+      if (valA !== -1 && valB !== -1) return valA - valB;
+      return a.token.localeCompare(b.token);
+    });
+  }, [items]);
+
   useEffect(() => {
-    if (!isOpen || !batch || batch.type !== 'qrc' || items.length === 0) return;
+    if (!isOpen || !batch || batch.type !== 'qrc' || sortedItems.length === 0) return;
 
     let isMounted = true;
     const baseUrl = CANONICAL_CREDENTIAL_BASE_URL;
 
-    // Generate mini QR previews for all 32 items
+    // Generate mini QR previews for all 32 items in sorted order
     const generateThumbs = async () => {
       const thumbs: Record<string, string> = {};
-      for (const item of items) {
+      for (const item of sortedItems) {
         try {
           const url = buildCredentialUrl('qrc', item.token, baseUrl);
           thumbs[item.token] = await QRCode.toDataURL(url, { margin: 0, width: 120 });
@@ -72,19 +83,19 @@ export function BatchReviewModal({
     return () => {
       isMounted = false;
     };
-  }, [isOpen, batch, items]);
+  }, [isOpen, batch, sortedItems]);
 
   if (!isOpen || !batch) return null;
 
-  const freeCount = items.filter((i) => i.status === 'free').length;
-  const assignedCount = items.filter((i) => i.status === 'assigned').length;
-  const deletedCount = items.filter((i) => i.status === 'deleted').length;
-  const assignedPercent = Math.round((assignedCount / (items.length || 1)) * 100);
+  const freeCount = sortedItems.filter((i) => i.status === 'free').length;
+  const assignedCount = sortedItems.filter((i) => i.status === 'assigned').length;
+  const deletedCount = sortedItems.filter((i) => i.status === 'deleted').length;
+  const assignedPercent = Math.round((assignedCount / (sortedItems.length || 1)) * 100);
 
   const handleDownloadPdf = async () => {
     setDownloadingPdf(true);
     try {
-      const tokens = items.map((i) => i.token);
+      const tokens = sortedItems.map((i) => i.token);
       const blob = await generateQrBatchPdf(tokens, batch.batch_number, CANONICAL_CREDENTIAL_BASE_URL);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -105,7 +116,7 @@ export function BatchReviewModal({
   const handleDownloadZip = async () => {
     setDownloadingZip(true);
     try {
-      const tokens = items.map((i) => i.token);
+      const tokens = sortedItems.map((i) => i.token);
       const blob = await generateQrBatchZip(tokens, batch.batch_number, CANONICAL_CREDENTIAL_BASE_URL);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -124,7 +135,7 @@ export function BatchReviewModal({
   };
 
   const handleExportCsv = () => {
-    const tokens = items.map((i) => i.token);
+    const tokens = sortedItems.map((i) => i.token);
     const csvContent = exportBatchCsv(batch.type, tokens, batch.batch_number, CANONICAL_CREDENTIAL_BASE_URL);
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -243,7 +254,7 @@ export function BatchReviewModal({
         {/* 32 Items Grid (Simulating 4 columns x 8 rows) */}
         <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {items.map((item, idx) => {
+            {sortedItems.map((item, idx) => {
               const seq = `#${(batch.batch_number * 32 + idx + 1).toString().padStart(4, '0')}`;
               const isAssigned = item.status === 'assigned';
               const isDeleted = item.status === 'deleted';

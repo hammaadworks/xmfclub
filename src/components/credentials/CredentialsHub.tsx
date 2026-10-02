@@ -30,6 +30,7 @@ import {
   CANONICAL_CREDENTIAL_BASE_URL,
 } from '#/lib/credentialToken';
 import { generateQrBatchPdf, generateQrBatchZip } from '#/lib/qrLayout';
+import { decodeCrockford } from '#/lib/crockford';
 import { NfcProvisionerModal } from './NfcProvisionerModal';
 import { BatchReviewModal, type BatchData, type BatchItem } from './BatchReviewModal';
 import { CredentialDetailModal, type CredentialDetailItem } from './CredentialDetailModal';
@@ -503,8 +504,13 @@ export function CredentialsHub() {
   const selectedBatchItems = useMemo(() => {
     if (!reviewingBatch) return [];
     return credentials
-      .filter((c) => c.batch_id === reviewingBatch.id || c.batch_number === reviewingBatch.batch_number)
-      .sort((a, b) => a.token.localeCompare(b.token));
+      .filter((c) => (c.batch_id === reviewingBatch.id || c.batch_number === reviewingBatch.batch_number) && c.type === reviewingBatch.type)
+      .sort((a, b) => {
+        const valA = decodeCrockford(a.token);
+        const valB = decodeCrockford(b.token);
+        if (valA !== -1 && valB !== -1) return valA - valB;
+        return a.token.localeCompare(b.token);
+      });
   }, [credentials, reviewingBatch]);
 
   // Filtered inventory credentials
@@ -856,9 +862,14 @@ export function CredentialsHub() {
                     </thead>
                     <tbody className="divide-y divide-white/5 text-xs font-mono">
                       {batches.map((batch) => {
-                        const batchItems = credentials.filter(
-                          (c) => c.batch_id === batch.id || c.batch_number === batch.batch_number
-                        );
+                        const batchItems = credentials
+                          .filter((c) => (c.batch_id === batch.id || c.batch_number === batch.batch_number) && c.type === batch.type)
+                          .sort((a, b) => {
+                            const valA = decodeCrockford(a.token);
+                            const valB = decodeCrockford(b.token);
+                            if (valA !== -1 && valB !== -1) return valA - valB;
+                            return a.token.localeCompare(b.token);
+                          });
                         const assignedCount = batchItems.filter((i) => i.status === 'assigned').length;
                         const freeCount = batchItems.filter((i) => i.status === 'free').length;
                         const assignedPercent = Math.round((assignedCount / (batchItems.length || 32)) * 100);
@@ -989,9 +1000,14 @@ export function CredentialsHub() {
               /* Batches Card Grid View */
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {batches.map((batch) => {
-                  const batchItems = credentials.filter(
-                    (c) => c.batch_id === batch.id || c.batch_number === batch.batch_number
-                  );
+                  const batchItems = credentials
+                    .filter((c) => (c.batch_id === batch.id || c.batch_number === batch.batch_number) && c.type === batch.type)
+                    .sort((a, b) => {
+                      const valA = decodeCrockford(a.token);
+                      const valB = decodeCrockford(b.token);
+                      if (valA !== -1 && valB !== -1) return valA - valB;
+                      return a.token.localeCompare(b.token);
+                    });
                   const assignedCount = batchItems.filter((i) => i.status === 'assigned').length;
                   const freeCount = batchItems.filter((i) => i.status === 'free').length;
                   const assignedPercent = Math.round((assignedCount / (batchItems.length || 32)) * 100);

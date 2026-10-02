@@ -88,4 +88,22 @@ describe('qrLayout', () => {
     expect(pdfInZip).toBeDefined();
     expect(pdfInZip?.length).toBeGreaterThan(1000);
   });
+
+  it('guarantees tokens are sorted ascending even if provided in reverse order (e.g. Z first)', async () => {
+    const { tokens } = calculateBatchTokens(1); // Batch 1: '000010' to '00001Z'
+    const reversed = [...tokens].reverse(); // Starts with '00001Z'
+    expect(reversed[0]).toBe('00001Z');
+    expect(reversed[31]).toBe('000010');
+
+    const zipBlob = await generateQrBatchZip(reversed, 1, 'https://xmfclub.com');
+    const zip = await JSZip.loadAsync(zipBlob);
+    const folder = zip.folder('qrc-batch-00001');
+    const manifest = await folder!.file('manifest.json')?.async('string');
+    const manifestJson = JSON.parse(manifest!);
+
+    expect(manifestJson.startToken).toBe('000010');
+    expect(manifestJson.endToken).toBe('00001Z');
+    expect(manifestJson.tokens[0].token).toBe('000010');
+    expect(manifestJson.tokens[31].token).toBe('00001Z');
+  });
 });
