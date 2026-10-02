@@ -27,7 +27,9 @@ export function PinPad({ onComplete, error }: PinPadProps) {
         pinRef.current = '';
         setPin('');
       }, 500);
-      return () => clearTimeout(t);
+      return () => {
+        clearTimeout(t);
+      };
     }
   }, [error]);
 
@@ -65,7 +67,9 @@ export function PinPad({ onComplete, error }: PinPadProps) {
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
   }, [handlePress, handleBackspace]);
 
   const dots = Array.from({ length: 5 }).map((_, i) => (

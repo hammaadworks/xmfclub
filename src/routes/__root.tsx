@@ -6,7 +6,7 @@ import { ContactModal } from '../components/ContactModal'
 
 import { NotFound } from '../components/NotFound'
 
-const TanStackDevtools = import.meta.env.PROD
+export const TanStackDevtools = import.meta.env.PROD
   ? () => null // Render nothing in production
   : React.lazy(() =>
       import('@tanstack/react-devtools').then((res) => ({
@@ -14,7 +14,7 @@ const TanStackDevtools = import.meta.env.PROD
       }))
     )
 
-const TanStackRouterDevtoolsPanel = import.meta.env.PROD
+export const TanStackRouterDevtoolsPanel = import.meta.env.PROD
   ? () => null
   : React.lazy(() =>
       import('@tanstack/react-router-devtools').then((res) => ({

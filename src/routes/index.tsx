@@ -21,7 +21,7 @@ import {
 
 export const Route = createFileRoute('/')({ component: LandingPage })
 
-function FAQItem({ question, answer }: { question: string; answer: string }) {
+export function FAQItem({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false)
   return (
     <div className="border-b border-white/5 py-6">

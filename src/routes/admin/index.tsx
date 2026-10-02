@@ -258,7 +258,10 @@ function AdminDashboard() {
         fee_breakup: { total: eventForm.fee }
       }])
       
-      if (error) throw error
+      if (error) {
+        setAppAlert({ message: 'Error creating event: ' + error.message })
+        return
+      }
       
       setAppAlert({ message: 'Event created successfully!' })
       setShowCreateEventModal(false)
@@ -297,7 +300,10 @@ function AdminDashboard() {
         fee_breakup: { total: editEventForm.fee }
       }).eq('id', editingEventId)
       
-      if (error) throw error
+      if (error) {
+        setAppAlert({ message: 'Error updating event: ' + error.message })
+        return
+      }
       
       setAppAlert({ message: 'Event updated successfully!' })
       setShowEditEventModal(false)
@@ -331,7 +337,10 @@ function AdminDashboard() {
         .update({ is_reviewed: updatedStatus })
         .eq('member_id', member.member_id)
 
-      if (error) throw error
+      if (error) {
+        setAppAlert({ message: 'Failed to update review status: ' + (error.message || 'Unknown error') })
+        return
+      }
 
       setMembers(prev => prev.map(m => m.member_id === member.member_id ? { ...m, is_reviewed: updatedStatus } : m))
       setAppAlert({ message: updatedStatus ? `Member ${member.name} (${member.member_id}) marked as Verified!` : `Member ${member.name} (${member.member_id}) marked as Pending Review.` })
@@ -354,7 +363,10 @@ function AdminDashboard() {
             .update({ is_deleted: willArchive })
             .eq('member_id', member.member_id)
 
-          if (error) throw error
+          if (error) {
+            setAppAlert({ message: 'Failed to update status: ' + (error.message || 'Unknown error') })
+            return
+          }
 
           setMembers(prev => prev.map(m => m.member_id === member.member_id ? { ...m, is_deleted: willArchive } : m))
           setAppAlert({ message: willArchive ? `Member ${member.name} archived.` : `Member ${member.name} restored to active roster.` })

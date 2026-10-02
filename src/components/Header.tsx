@@ -220,7 +220,7 @@ export default function Header() {
   )
 }
 
-function SidebarLink({
+export function SidebarLink({
   to,
   icon,
   label,

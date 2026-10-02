@@ -198,7 +198,10 @@ function XMFormPage() {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching students:', error);
+        return;
+      }
       setStudents(data || []);
 
       // Fetch active credentials for all students
@@ -318,7 +321,10 @@ function XMFormPage() {
         .eq('member_id', candidateId)
         .limit(1);
 
-      if (qErr) throw qErr;
+      if (qErr) {
+        setCustomIdStatus({ checking: false });
+        return;
+      }
 
       if (data && data.length > 0) {
         setCustomIdStatus({ 
@@ -498,7 +504,8 @@ function XMFormPage() {
         .single();
 
       if (error) {
-        throw new Error(error.message);
+        setErrorMsg(error.message);
+        return;
       }
 
       const newlyCreated: StudentMember = data || { ...newStudentPayload };
@@ -541,7 +548,10 @@ function XMFormPage() {
         .update({ is_deleted: true })
         .eq('member_id', student.member_id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error soft-deleting student:', error);
+        return;
+      }
 
       setStudents(prev =>
         prev.map(s => s.member_id === student.member_id ? { ...s, is_deleted: true } : s)
@@ -569,7 +579,10 @@ function XMFormPage() {
         .update({ is_deleted: false })
         .eq('member_id', studentId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error restoring student:', error);
+        return;
+      }
 
       setStudents(prev =>
         prev.map(s => s.member_id === studentId ? { ...s, is_deleted: false } : s)
@@ -612,7 +625,10 @@ function XMFormPage() {
         .update({ is_reviewed: updatedStatus })
         .eq('member_id', student.member_id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error toggling review status:', error);
+        return;
+      }
 
       setStudents(prev =>
         prev.map(s => s.member_id === student.member_id ? { ...s, is_reviewed: updatedStatus } : s)
@@ -669,7 +685,11 @@ function XMFormPage() {
         .update(updates)
         .eq('member_id', editingStudent.member_id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error saving edits:', error);
+        setEditFormError(error.message || 'Failed to update student details.');
+        return;
+      }
 
       setStudents(prev =>
         prev.map(s => s.member_id === editingStudent.member_id ? { ...s, ...updates } : s)
