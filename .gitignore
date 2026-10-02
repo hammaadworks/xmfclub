@@ -4,6 +4,7 @@ dist
 dist-ssr
 *.local
 .env
+.env.*
 .nitro
 .tanstack
 .wrangler
@@ -15,4 +16,4 @@ mcp-todos.json
 .vite
 env
 .playwright-mcp
-
+shots

@@ -1,13 +1,21 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
+import { CredentialsHub } from '#/components/credentials/CredentialsHub'
 import { supabase } from '#/lib/supabase'
 import { 
-  ShieldAlert, Settings, Users, Calendar, Plus, Edit, Lock,
-  ShieldCheck, Loader2, Search, QrCode, LogOut, Trash2,
+  Settings, Users, Calendar, Plus, Edit, Lock,
+  ShieldCheck, Loader2, Search, QrCode, LogOut, Trash2, Undo2, UserPlus,
   MapPin, Link as LinkIcon, AlertTriangle, ChevronDown, ChevronUp, ExternalLink
 } from 'lucide-react'
 import { CustomSelect } from '#/components/CustomSelect'
 import { Scanner } from '@yudiel/react-qr-scanner'
+
+const SYSTEM_ROLES = [
+  { label: 'Student', value: 'student' },
+  { label: 'Instructor', value: 'instructor' },
+  { label: 'Volunteer', value: 'volunteer' },
+  { label: 'Administrator', value: 'admin' },
+];
 
 type BranchConfig = {
   name: string;
@@ -27,7 +35,7 @@ export const Route = createFileRoute('/admin/')({
 function AdminDashboard() {
   const navigate = useNavigate()
   const [admin, setAdmin] = useState<any>(null)
-  const [activeTab, setActiveTab] = useState<'members' | 'scanner' | 'events' | 'settings'>('members')
+  const [activeTab, setActiveTab] = useState<'members' | 'scanner' | 'events' | 'settings' | 'credentials'>('members')
   const [loading, setLoading] = useState(true)
   const [appAlert, setAppAlert] = useState<{message: string, isConfirm?: boolean, onConfirm?: () => void} | null>(null)
   
@@ -39,29 +47,9 @@ function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState('')
   const [feeFilter, setFeeFilter] = useState('All')
   const [remarkFilter, setRemarkFilter] = useState('All')
-  
-  // Create Member Modal
-  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [reviewFilter, setReviewFilter] = useState<'All' | 'Pending' | 'Reviewed'>('All')
+  const [statusFilter, setStatusFilter] = useState<'Active' | 'Archived' | 'All'>('Active')
   const [savingMember, setSavingMember] = useState(false)
-  const [memberForm, setMemberForm] = useState({
-    name: '',
-    phone: '',
-    email: '',
-    role: 'student',
-    belt: 'White',
-    address: '',
-    branch: 'XMF Main HQ',
-    date_of_joining: new Date().toISOString().split('T')[0],
-    date_of_leaving: '',
-    achievements: '',
-    instructor_remarks_color: 'green',
-    instructor_remarks: '',
-    actual_fee: 0,
-    fee_detail: '',
-    due_date: '',
-    pending_amount: 0,
-    photo_url: ''
-  })
 
   // Edit Member Modal
   const [showEditModal, setShowEditModal] = useState(false)
@@ -76,6 +64,7 @@ function AdminDashboard() {
     fee_status: 'Paid',
     instructor_remarks: '',
     address: '',
+    pin_code: '',
     branch: 'XMF Main HQ',
     date_of_joining: '',
     date_of_leaving: '',
@@ -85,7 +74,8 @@ function AdminDashboard() {
     fee_detail: '',
     due_date: '',
     pending_amount: 0,
-    photo_url: ''
+    photo_url: '',
+    is_reviewed: false
   })
   const [expandedSection, setExpandedSection] = useState<'personal' | 'club' | 'financials'>('personal')
 
@@ -101,7 +91,7 @@ function AdminDashboard() {
     time: '10:00',
     fee: 0
   })
-  const [eventRegistrations, setEventRegistrations] = useState<Record<string, any[]>>({})
+  const [eventRegistrations, setEventRegistrations] = useState<Record<string, any[] | undefined>>({})
   const [expandedEventId, setExpandedEventId] = useState<string | null>(null)
 
   // Edit Event State
@@ -156,7 +146,7 @@ function AdminDashboard() {
 
   const loadSettings = async () => {
     try {
-      const { data, error } = await supabase.from('app_settings').select('*').eq('id', 'global').single()
+      const { data } = await supabase.from('app_settings').select('*').eq('id', 'global').single()
       if (data) {
         if (data.branches) setBranches(data.branches)
         if (data.belts) {
@@ -328,111 +318,72 @@ function AdminDashboard() {
     })
   }
 
-  const handleCreateMember = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSavingMember(true)
-
+  const handleToggleReview = async (member: any) => {
+    const updatedStatus = !member.is_reviewed
     try {
-      if (!memberForm.phone) {
-        setAppAlert({ message: 'Phone number is mandatory.' })
-        setSavingMember(false)
-        return
-      }
-
-      if (memberForm.phone.length !== 10 || isNaN(Number(memberForm.phone))) {
-        setAppAlert({ message: 'Phone number must be exactly 10 digits.' })
-        setSavingMember(false)
-        return
-      }
-  
-      const { data: existing } = await supabase
-          .from('members')
-          .select('id')
-          .eq('phone', memberForm.phone)
-          .maybeSingle()
-        
-        if (existing) {
-          setAppAlert({ message: 'This phone number is already registered to another member.' })
-          setSavingMember(false)
-          return
-        }
-
-      // 1. Generate new ID
-      const { data: latestMembers } = await supabase
-        .from('members')
-        .select('member_id')
-        .order('member_id', { ascending: false })
-        .limit(1)
-
-      let newIdStr = 'XC260001'
-      if (latestMembers && latestMembers.length > 0 && latestMembers[0].member_id.startsWith('XC26')) {
-        const lastId = latestMembers[0].member_id
-        const numPart = parseInt(lastId.replace('XC26', ''), 10)
-        newIdStr = `XC26${String(numPart + 1).padStart(4, '0')}`
-      }
-
-      // 2. Insert
       const { error } = await supabase
         .from('members')
-        .insert([{
-          member_id: newIdStr,
-          role: memberForm.role,
-          name: memberForm.name,
-          phone: memberForm.phone || null,
-          email: memberForm.email || null,
-          belt: memberForm.belt,
-          pattern_hash: '048526', // Default 'X' pattern
-          member_status: 'Active',
-          fee_status: 'Paid',
-          address: memberForm.address || null,
-          branch: memberForm.branch || 'XMF Main HQ',
-          date_of_joining: memberForm.date_of_joining || null,
-          date_of_leaving: memberForm.date_of_leaving || null,
-          achievements: memberForm.achievements || null,
-          instructor_remarks_color: memberForm.instructor_remarks_color || 'green',
-          instructor_remarks: memberForm.instructor_remarks || null,
-          actual_fee: memberForm.actual_fee || 0,
-          fee_detail: memberForm.fee_detail || null,
-          due_date: memberForm.due_date || null,
-          pending_amount: memberForm.pending_amount || 0,
-          photo_url: memberForm.photo_url || null
-        }])
+        .update({ is_reviewed: updatedStatus })
+        .eq('member_id', member.member_id)
 
-      if (error) {
-        console.error(error)
-        setAppAlert({ message: 'Failed to create member: ' + error.message })
-      } else {
-        setShowCreateModal(false)
-        setMemberForm({ 
-          name: '', phone: '', email: '', role: 'student', belt: 'White', 
-          address: '', branch: 'XMF Main HQ', date_of_joining: new Date().toISOString().split('T')[0], 
-          date_of_leaving: '', achievements: '', instructor_remarks_color: 'green', instructor_remarks: '',
-          actual_fee: 0, fee_detail: '', due_date: '', pending_amount: 0, photo_url: ''
-        })
-        loadMembers()
-      }
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setSavingMember(false)
+      if (error) throw error
+
+      setMembers(prev => prev.map(m => m.member_id === member.member_id ? { ...m, is_reviewed: updatedStatus } : m))
+      setAppAlert({ message: updatedStatus ? `Member ${member.name} (${member.member_id}) marked as Verified!` : `Member ${member.name} (${member.member_id}) marked as Pending Review.` })
+    } catch (err: any) {
+      setAppAlert({ message: 'Failed to update review status: ' + (err.message || 'Unknown error') })
     }
+  }
+
+  const handleToggleArchiveMember = (member: any) => {
+    const willArchive = !member.is_deleted
+    setAppAlert({
+      message: willArchive 
+        ? `Archive member ${member.name} (${member.member_id})? Their Crockford ID remains locked and will not be recycled.`
+        : `Restore member ${member.name} (${member.member_id}) to the active roster?`,
+      isConfirm: true,
+      onConfirm: async () => {
+        try {
+          const { error } = await supabase
+            .from('members')
+            .update({ is_deleted: willArchive })
+            .eq('member_id', member.member_id)
+
+          if (error) throw error
+
+          setMembers(prev => prev.map(m => m.member_id === member.member_id ? { ...m, is_deleted: willArchive } : m))
+          setAppAlert({ message: willArchive ? `Member ${member.name} archived.` : `Member ${member.name} restored to active roster.` })
+        } catch (err: any) {
+          setAppAlert({ message: 'Failed to update status: ' + (err.message || 'Unknown error') })
+        }
+      }
+    })
   }
 
   const filteredMembers = members.filter(m => {
     const q = searchQuery.toLowerCase();
-    const matchesSearch = 
+    const matchesSearch = !q || Boolean(
       (m.name && m.name.toLowerCase().includes(q)) || 
       (m.member_id && m.member_id.toLowerCase().includes(q)) ||
-      (m.phone && m.phone.includes(q));
+      (m.phone && m.phone.includes(q))
+    );
       
     const matchesFee = feeFilter === 'All' || m.fee_status === feeFilter;
     const matchesRemark = remarkFilter === 'All' || m.instructor_remarks_color === remarkFilter.toLowerCase();
+    const matchesReview = 
+      reviewFilter === 'All' ||
+      (reviewFilter === 'Pending' && !m.is_reviewed) ||
+      (reviewFilter === 'Reviewed' && m.is_reviewed);
+    const matchesStatus = 
+      statusFilter === 'All' ||
+      (statusFilter === 'Active' && !m.is_deleted) ||
+      (statusFilter === 'Archived' && m.is_deleted);
     
-    return matchesSearch && matchesFee && matchesRemark;
+    return matchesSearch && matchesFee && matchesRemark && matchesReview && matchesStatus;
   })
 
   const handleEditClick = (member: any) => {
-    setEditingMemberId(member.id)
+    setEditingMemberId(member.member_id)
     
     setEditForm({
       name: member.name || '',
@@ -444,6 +395,7 @@ function AdminDashboard() {
       fee_status: member.fee_status || 'Paid',
       instructor_remarks: member.instructor_remarks || '',
       address: member.address || '',
+      pin_code: member.pin_code || '',
       branch: member.branch || 'XMF Main HQ',
       date_of_joining: member.date_of_joining ? member.date_of_joining.split('T')[0] : '',
       date_of_leaving: member.date_of_leaving ? member.date_of_leaving.split('T')[0] : '',
@@ -453,7 +405,8 @@ function AdminDashboard() {
       fee_detail: member.fee_detail || '',
       due_date: member.due_date ? member.due_date.split('T')[0] : '',
       pending_amount: member.pending_amount || 0,
-      photo_url: member.photo_url || ''
+      photo_url: member.photo_url || '',
+      is_reviewed: member.is_reviewed ?? false
     })
     setShowEditModal(true)
   }
@@ -478,7 +431,7 @@ function AdminDashboard() {
           .from('members')
           .select('id')
           .eq('phone', editForm.phone)
-          .neq('id', editingMemberId)
+          .neq('member_id', editingMemberId)
           .maybeSingle()
         
         if (existing) {
@@ -499,6 +452,7 @@ function AdminDashboard() {
           fee_status: editForm.fee_status,
           instructor_remarks: editForm.instructor_remarks || null,
           address: editForm.address || null,
+          pin_code: editForm.pin_code || null,
           branch: editForm.branch || null,
           date_of_joining: editForm.date_of_joining || null,
           date_of_leaving: editForm.date_of_leaving || null,
@@ -508,9 +462,10 @@ function AdminDashboard() {
           fee_detail: editForm.fee_detail || null,
           due_date: editForm.due_date || null,
           pending_amount: editForm.pending_amount || 0,
-          photo_url: editForm.photo_url || null
+          photo_url: editForm.photo_url || null,
+          is_reviewed: editForm.is_reviewed
         })
-        .eq('id', editingMemberId)
+        .eq('member_id', editingMemberId)
 
       if (error) {
         setAppAlert({ message: 'Failed to update member: ' + error.message })
@@ -525,23 +480,23 @@ function AdminDashboard() {
     }
   }
 
-  const handleResetPatternClick = () => {
+  const handleResetPinClick = () => {
     if (!editingMemberId) return
     setAppAlert({
-      message: "Are you sure you want to reset this user's pattern to the default 'X'?",
+      message: "Are you sure you want to reset this user's password to the default PIN '12345'?",
       isConfirm: true,
       onConfirm: async () => {
         setSavingMember(true)
         try {
           const { error } = await supabase
             .from('members')
-            .update({ pattern_hash: '048526' })
-            .eq('id', editingMemberId)
+            .update({ password: '12345' })
+            .eq('member_id', editingMemberId)
 
           if (error) {
-            setAppAlert({ message: 'Failed to reset pattern: ' + error.message })
+            setAppAlert({ message: 'Failed to reset PIN: ' + error.message })
           } else {
-            setAppAlert({ message: 'Pattern successfully reset to default "X".' })
+            setAppAlert({ message: 'Password successfully reset to default PIN "12345".' })
           }
         } catch (err) {
           console.error(err)
@@ -603,6 +558,13 @@ function AdminDashboard() {
           >
             <Calendar className="w-4 h-4" /> Events
           </button>
+
+          <button 
+            onClick={() => setActiveTab('credentials')}
+            className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all font-bold tracking-widest text-xs uppercase ${activeTab === 'credentials' ? 'bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-primary/20' : 'bg-white/5 border border-white/5 text-muted-foreground hover:bg-white/10'}`}
+          >
+            <QrCode className="w-5 h-5" /> Credentials
+          </button>
           <button 
             onClick={() => setActiveTab('settings')}
             className={`w-full flex items-center gap-3 p-4 rounded-2xl transition-all font-bold tracking-widest text-xs uppercase ${activeTab === 'settings' ? 'bg-gradient-to-r from-primary to-accent text-white shadow-lg shadow-primary/20' : 'bg-white/5 border border-white/5 text-muted-foreground hover:bg-white/10'}`}
@@ -622,7 +584,7 @@ function AdminDashboard() {
                   <Search className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
                   <input 
                     type="text" 
-                    placeholder="Search by Name, XC-ID, or Phone..."
+                    placeholder="Search by Name, Member ID (e.g. XMF2601), or Phone..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-medium"
@@ -644,12 +606,30 @@ function AdminDashboard() {
                       {label: 'Red', value: 'Red'}
                     ]}
                   />
+                  <CustomSelect 
+                    value={reviewFilter}
+                    onChange={(val) => setReviewFilter(val as any)}
+                    options={[
+                      {label: 'All Verification', value: 'All'},
+                      {label: 'Pending Review', value: 'Pending'},
+                      {label: 'Verified', value: 'Reviewed'}
+                    ]}
+                  />
+                  <CustomSelect 
+                    value={statusFilter}
+                    onChange={(val) => setStatusFilter(val as any)}
+                    options={[
+                      {label: 'Active Roster', value: 'Active'},
+                      {label: 'Archived', value: 'Archived'},
+                      {label: 'All Records', value: 'All'}
+                    ]}
+                  />
                 </div>
                 <button 
-                  onClick={() => setShowCreateModal(true)}
+                  onClick={() => navigate({ to: '/xmform' })}
                   className="px-6 py-3 bg-gradient-to-r from-primary to-accent text-white font-black tracking-widest text-xs rounded-xl uppercase hover:scale-105 transition-transform flex items-center justify-center gap-2 shadow-lg shadow-primary/20"
                 >
-                  <Plus className="w-4 h-4" /> New Member
+                  <UserPlus className="w-4 h-4" /> Register Student (XMForm)
                 </button>
               </div>
 
@@ -664,6 +644,7 @@ function AdminDashboard() {
                           <th className="px-6 py-4">Member ID</th>
                           <th className="px-6 py-4">Name</th>
                           <th className="px-6 py-4">Belt / Role</th>
+                          <th className="px-6 py-4">Verification</th>
                           <th className="px-6 py-4">Fees & Status</th>
                           <th className="px-6 py-4">Remark</th>
                           <th className="px-6 py-4 text-right">Actions</th>
@@ -671,7 +652,7 @@ function AdminDashboard() {
                       </thead>
                       <tbody className="divide-y divide-white/5">
                         {filteredMembers.map(m => (
-                          <tr key={m.id} className="hover:bg-white/5 transition-colors">
+                          <tr key={m.member_id} className={`hover:bg-white/5 transition-colors ${m.is_deleted ? 'opacity-60 bg-white/[0.02]' : ''}`}>
                             <td className="px-6 py-4 font-mono font-bold text-primary">
                               <button 
                                 onClick={() => navigate({ to: `/member/${m.member_id}` })}
@@ -681,12 +662,37 @@ function AdminDashboard() {
                                 <span className="p-1 bg-white/5 rounded"><ExternalLink className="w-3 h-3" /></span>
                               </button>
                             </td>
-                            <td className="px-6 py-4 font-bold">{m.name}</td>
+                            <td className="px-6 py-4 font-bold">
+                              <div className="flex items-center gap-2">
+                                <span>{m.name}</span>
+                                {m.is_deleted && (
+                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-red-500/20 text-red-400">
+                                    Archived
+                                  </span>
+                                )}
+                              </div>
+                            </td>
                             <td className="px-6 py-4">
                               <div className="flex flex-col gap-1">
                                 <span className="font-bold">{m.belt}</span>
-                                {m.role === 'admin' && <span className="text-[10px] text-red-400 uppercase tracking-widest">Admin</span>}
+                                {m.role === 'admin' && <span className="text-[10px] text-red-400 uppercase tracking-widest font-black">Admin</span>}
+                                {m.role === 'instructor' && <span className="text-[10px] text-primary-light uppercase tracking-widest font-black">Instructor</span>}
+                                {m.role === 'volunteer' && <span className="text-[10px] text-amber-400 uppercase tracking-widest font-black">Volunteer</span>}
                               </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <button
+                                onClick={() => handleToggleReview(m)}
+                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                  m.is_reviewed
+                                    ? 'bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20'
+                                    : 'bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
+                                }`}
+                                title={m.is_reviewed ? 'Click to mark Pending Review' : 'Click to Verify Member'}
+                              >
+                                <ShieldCheck className="w-3 h-3" />
+                                {m.is_reviewed ? 'Verified' : 'Pending'}
+                              </button>
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex flex-col items-start gap-1">
@@ -702,12 +708,26 @@ function AdminDashboard() {
                               <div className={`w-3 h-3 rounded-full ${m.instructor_remarks_color === 'red' ? 'bg-red-500' : m.instructor_remarks_color === 'yellow' ? 'bg-yellow-500' : 'bg-green-500'}`} title={m.instructor_remarks} />
                             </td>
                             <td className="px-6 py-4 text-right">
-                              <button 
-                                onClick={() => handleEditClick(m)}
-                                className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-muted-foreground hover:text-white inline-block"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </button>
+                              <div className="flex items-center justify-end gap-2">
+                                <button 
+                                  onClick={() => handleEditClick(m)}
+                                  className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-muted-foreground hover:text-white inline-block"
+                                  title="Edit Member"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+                                <button 
+                                  onClick={() => handleToggleArchiveMember(m)}
+                                  className={`p-2 rounded-lg transition-colors inline-block ${
+                                    m.is_deleted 
+                                      ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20' 
+                                      : 'bg-red-500/10 text-red-500 hover:bg-red-500/20'
+                                  }`}
+                                  title={m.is_deleted ? 'Restore Member' : 'Archive Member'}
+                                >
+                                  {m.is_deleted ? <Undo2 className="w-4 h-4" /> : <Trash2 className="w-4 h-4" />}
+                                </button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -730,16 +750,33 @@ function AdminDashboard() {
                    <div className="aspect-square overflow-hidden rounded-2xl border-4 border-primary/30 mb-6 bg-black relative">
                      <Scanner 
                        onScan={(result) => {
-                         if (result && result.length > 0) {
-                           const text = result[0].rawValue;
-                           const match = text.match(/XC\d{6}/i);
-                           if (match) {
-                             setIsScanning(false)
-                             navigate({ to: `/member/${match[0].toUpperCase()}` })
-                           } else {
-                             setIsScanning(false)
-                             setAppAlert({ message: "Invalid QR Code: No XMF Member ID found in the code. Scanned: " + text })
+                         if (result.length > 0) {
+                           setIsScanning(false);
+                           const raw = result[0].rawValue.trim();
+                           
+                           // 1. Direct QRC/TAG URL
+                           const urlMatch = raw.match(/\/(qrc|tag)\/([0-9A-HJ-KM-NP-TV-Z]{6})/i);
+                           if (urlMatch) {
+                             const type = urlMatch[1].toLowerCase();
+                             const token = urlMatch[2].toUpperCase();
+                             navigate({ to: `/${type}/${token}` });
+                             return;
                            }
+                           
+                           // 2. Raw 6-character Crockford Token
+                           if (/^[0-9A-HJ-KM-NP-TV-Z]{6}$/i.test(raw)) {
+                             navigate({ to: `/qrc/${raw.toUpperCase()}` });
+                             return;
+                           }
+                           
+                           // 3. Direct Member ID
+                           const memberMatch = raw.match(/XMF\d{2}[0-9A-HJ-KM-NP-TV-Z]{2,3}/i);
+                           if (memberMatch) {
+                             navigate({ to: `/member/${memberMatch[0].toUpperCase()}` });
+                             return;
+                           }
+                           
+                           setAppAlert({ message: `Unrecognized scan format: ${raw}` });
                          }
                        }} 
                        onError={(error) => {
@@ -850,25 +887,30 @@ function AdminDashboard() {
 
                            {expandedEventId === evt.id && (
                              <div className="mt-4 pt-4 border-t border-white/5 animate-in slide-in-from-top-2">
-                               {!eventRegistrations[evt.id] ? (
-                                 <Loader2 className="w-4 h-4 animate-spin text-primary mx-auto" />
-                               ) : eventRegistrations[evt.id].length === 0 ? (
-                                 <p className="text-center text-muted-foreground text-sm py-4">No registrations yet.</p>
-                               ) : (
-                                 <div className="space-y-2">
-                                   {eventRegistrations[evt.id].map((reg: any) => (
-                                     <div key={reg.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
-                                       <div>
-                                         <p className="font-bold text-sm uppercase">{reg.members?.name}</p>
-                                         <p className="text-xs text-muted-foreground font-mono">{reg.members?.phone}</p>
+                               {(() => {
+                                 const regs = eventRegistrations[evt.id];
+                                 if (!regs) {
+                                   return <Loader2 className="w-4 h-4 animate-spin text-primary mx-auto" />;
+                                 }
+                                 if (regs.length === 0) {
+                                   return <p className="text-center text-muted-foreground text-sm py-4">No registrations yet.</p>;
+                                 }
+                                 return (
+                                   <div className="space-y-2">
+                                     {regs.map((reg: any) => (
+                                       <div key={reg.id} className="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                                         <div>
+                                           <p className="font-bold text-sm uppercase">{reg.members?.name}</p>
+                                           <p className="text-xs text-muted-foreground font-mono">{reg.members?.phone}</p>
+                                         </div>
+                                         <div className="px-3 py-1 bg-white/5 rounded-lg text-[10px] font-black tracking-widest uppercase text-primary">
+                                           {reg.members?.belt}
+                                         </div>
                                        </div>
-                                       <div className="px-3 py-1 bg-white/5 rounded-lg text-[10px] font-black tracking-widest uppercase text-primary">
-                                         {reg.members?.belt}
-                                       </div>
-                                     </div>
-                                   ))}
-                                 </div>
-                               )}
+                                     ))}
+                                   </div>
+                                 );
+                               })()}
                              </div>
                            )}
                          </div>
@@ -881,6 +923,12 @@ function AdminDashboard() {
           )}
 
           {/* SETTINGS TAB */}
+
+          {activeTab === 'credentials' && (
+            <div className="animate-fade-in">
+              <CredentialsHub />
+            </div>
+          )}
           {activeTab === 'settings' && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
                <h3 className="text-2xl font-black uppercase tracking-tighter mb-6 flex items-center gap-2"><Settings className="w-6 h-6 text-primary" /> System Settings</h3>
@@ -986,170 +1034,33 @@ function AdminDashboard() {
         </div>
       </div>
 
-      {/* CREATE MEMBER MODAL */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6 overflow-y-auto">
-          <div className="glass-card w-full max-w-lg p-8 border-primary/20 bg-background/90 shadow-2xl relative my-auto">
-            <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">Create New Member</h3>
-            <p className="text-xs text-muted-foreground font-bold tracking-widest uppercase mb-6 border-b border-white/10 pb-4">
-              ID Auto-Generated • Default Pattern: 'X' (048526)
-            </p>
-            
-            <form onSubmit={handleCreateMember} className="space-y-5">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Full Name</label>
-                <input 
-                  required
-                  value={memberForm.name}
-                  onChange={(e) => setMemberForm({...memberForm, name: e.target.value})}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                  placeholder="John Doe"
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Phone <span className="text-red-500">*</span></label>
-                  <input 
-                    required
-                    value={memberForm.phone}
-                    onChange={(e) => setMemberForm({...memberForm, phone: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                    placeholder="10-digit number"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Email</label>
-                  <input 
-                    type="email"
-                    value={memberForm.email}
-                    onChange={(e) => setMemberForm({...memberForm, email: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                    placeholder="Optional"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Profile Photo Link</label>
-                <input 
-                  type="url"
-                  value={memberForm.photo_url}
-                  onChange={(e) => setMemberForm({...memberForm, photo_url: e.target.value})}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                  placeholder="https://example.com/photo.jpg"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">System Role</label>
-                  <CustomSelect 
-                    value={memberForm.role}
-                    onChange={(val) => setMemberForm({...memberForm, role: val})}
-                    options={[{label: 'Student', value: 'student'}, {label: 'Administrator', value: 'admin'}]}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Starting Belt</label>
-                  <CustomSelect 
-                    value={memberForm.belt}
-                    onChange={(val) => setMemberForm({...memberForm, belt: val})}
-                    options={belts.map(b => ({label: b.name, value: b.name}))}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Address</label>
-                  <input 
-                    value={memberForm.address}
-                    onChange={(e) => setMemberForm({...memberForm, address: e.target.value})}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                    placeholder="Physical Address"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Branch</label>
-                  <CustomSelect 
-                    value={memberForm.branch}
-                    onChange={(val) => setMemberForm({...memberForm, branch: val})}
-                    options={branches.map(b => ({label: b.name, value: b.name}))}
-                  />
-                </div>
-              </div>
-
-              <div className="pt-4 mt-4 border-t border-white/5">
-                <h4 className="text-xs font-black tracking-widest uppercase mb-4 text-primary">Financials</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Actual Fee (₹)</label>
-                    <input 
-                      type="number"
-                      value={memberForm.actual_fee}
-                      onChange={(e) => setMemberForm({...memberForm, actual_fee: parseInt(e.target.value) || 0})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Fee Detail (Reason)</label>
-                    <input 
-                      value={memberForm.fee_detail}
-                      onChange={(e) => setMemberForm({...memberForm, fee_detail: e.target.value})}
-                      placeholder="e.g. Monthly Fee"
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Due Date</label>
-                    <input 
-                      type="date"
-                      value={memberForm.due_date}
-                      onChange={(e) => setMemberForm({...memberForm, due_date: e.target.value})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Pending Amount (₹)</label>
-                    <input 
-                      type="number"
-                      value={memberForm.pending_amount}
-                      onChange={(e) => setMemberForm({...memberForm, pending_amount: parseInt(e.target.value) || 0})}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex gap-4 pt-6 border-t border-white/5">
-                <button 
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                  className="flex-1 py-4 bg-white/5 hover:bg-white/10 text-white font-black tracking-widest text-[10px] rounded-xl transition-all uppercase"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  disabled={savingMember}
-                  className="flex-1 py-4 bg-primary hover:bg-primary/90 text-white font-black tracking-widest text-[10px] rounded-xl transition-all uppercase shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
-                >
-                  {savingMember ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create Member'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-      
       {/* EDIT MEMBER MODAL */}
       {showEditModal && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6 overflow-y-auto">
           <div className="glass-card w-full max-w-lg p-8 border-primary/20 bg-background/90 shadow-2xl relative my-auto">
-            <h3 className="text-2xl font-black uppercase tracking-tighter mb-6">Edit Member</h3>
-                       <form onSubmit={handleUpdateMember} className="space-y-4">
+            <h3 className="text-2xl font-black uppercase tracking-tighter mb-4">Edit Member</h3>
+
+            {/* Verification Status Banner */}
+            <div className="flex items-center justify-between p-3.5 mb-5 bg-white/5 border border-white/10 rounded-xl">
+              <div>
+                <div className="text-xs font-black tracking-widest uppercase">Verification Review</div>
+                <div className="text-[10px] text-muted-foreground">Admin status gating for new intake</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditForm(prev => ({ ...prev, is_reviewed: !prev.is_reviewed }))}
+                className={`px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer ${
+                  editForm.is_reviewed 
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                }`}
+              >
+                <ShieldCheck className="w-3.5 h-3.5" />
+                {editForm.is_reviewed ? 'Verified' : 'Pending Review'}
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateMember} className="space-y-4">
               {/* Personal Details Accordion */}
               <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-all">
                 <div 
@@ -1203,14 +1114,25 @@ function AdminDashboard() {
                         placeholder="https://example.com/photo.jpg"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Address</label>
-                      <input 
-                        value={editForm.address}
-                        onChange={(e) => setEditForm({...editForm, address: e.target.value})}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                        placeholder="Physical Address"
-                      />
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="sm:col-span-2 space-y-2">
+                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Address</label>
+                        <input 
+                          value={editForm.address}
+                          onChange={(e) => setEditForm({...editForm, address: e.target.value})}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                          placeholder="Physical Address"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">PIN Code</label>
+                        <input 
+                          value={editForm.pin_code}
+                          onChange={(e) => setEditForm({...editForm, pin_code: e.target.value})}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                          placeholder="e.g. 560001"
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1233,7 +1155,7 @@ function AdminDashboard() {
                         <CustomSelect 
                           value={editForm.role}
                           onChange={(val) => setEditForm({...editForm, role: val})}
-                          options={[{label: 'Student', value: 'student'}, {label: 'Administrator', value: 'admin'}]}
+                          options={SYSTEM_ROLES}
                         />
                       </div>
                       <div className="space-y-2">
@@ -1395,10 +1317,10 @@ function AdminDashboard() {
               <div className="pt-4 pb-2">
                 <button
                   type="button"
-                  onClick={handleResetPatternClick}
+                  onClick={handleResetPinClick}
                   className="w-full py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-black tracking-widest text-[10px] rounded-xl transition-all uppercase border border-red-500/20 flex items-center justify-center gap-2"
                 >
-                  <Lock className="w-3 h-3" /> Reset Pattern to Default 'X'
+                  <Lock className="w-3 h-3" /> Reset Password to Default PIN '12345'
                 </button>
               </div>
 

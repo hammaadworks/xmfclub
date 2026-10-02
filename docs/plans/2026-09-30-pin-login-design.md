@@ -5,8 +5,9 @@ Replace the tedious 3x3 pattern lock with a fast, mobile-optimized 5-digit PIN c
 
 ## Architecture & Database Changes
 - **Target Table:** `public.members`
-- **Column Rename/Modification:** Drop `pattern_hash` and add `pin_code TEXT NOT NULL DEFAULT '12345'`.
-- **Seed Data:** All seeded users in `supabase/seed.sql` will have their initial PIN set to `'12345'`.
+- **Authentication Column:** `password TEXT NOT NULL DEFAULT '12345'` (renamed from `pattern_hash` / temporary `pin_code`).
+- **Address PIN Code Column:** `pin_code TEXT` (stores residential postal / PIN code).
+- **Seed Data:** All seeded users in `supabase/seed.sql` have their initial password set to `'12345'`, and valid sample postal codes in `pin_code`.
 
 ## Component Design
 1. **`PinPad.tsx` (New Component)**
@@ -19,7 +20,7 @@ Replace the tedious 3x3 pattern lock with a fast, mobile-optimized 5-digit PIN c
 2. **`Login.tsx` (Route)**
    - **Step 1:** Identifier input (unchanged).
    - **Step 2:** Replaces `<PatternLock />` with `<PinPad />`.
-   - **Verification:** Calls Supabase `eq('member_id', id).eq('pin_code', pin)`.
+   - **Verification:** Calls Supabase `eq('member_id', id).eq('password', pin)`.
 
 ## Error Handling
 - Visual shake animation or red text if the PIN is incorrect.

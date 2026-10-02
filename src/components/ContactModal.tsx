@@ -26,8 +26,8 @@ export function ContactModal() {
           <X className="w-5 h-5 text-muted-foreground" />
         </button>
         
-        <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary mb-6">
-          <ShieldAlert className="w-8 h-8" />
+        <div className="w-16 h-16 rounded-full bg-primary/20 flex items-center justify-center text-primary-light mb-6">
+          <ShieldAlert className="w-8 h-8" aria-hidden="true" />
         </div>
         
         <h2 className="text-2xl font-black uppercase italic tracking-tighter mb-4">
@@ -35,7 +35,7 @@ export function ContactModal() {
         </h2>
         
         <p className="text-muted-foreground font-medium mb-8">
-          Contact Master Farhan for more info / payments.
+          Contact Master Farhan for more info.
         </p>
 
         <div className="w-full flex flex-col gap-3">

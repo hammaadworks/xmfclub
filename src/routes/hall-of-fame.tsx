@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Trophy, Star, Award, Medal, Users, Quote } from 'lucide-react'
+import { Trophy, Medal, Quote } from 'lucide-react'
 
 export const Route = createFileRoute('/hall-of-fame')({
   component: AchievementsPage,

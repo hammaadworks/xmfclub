@@ -1,4 +1,4 @@
-import { createRootRoute, Outlet } from '@tanstack/react-router'
+import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router'
 import React, { Suspense } from 'react'
 
 import Header from '../components/Header'
@@ -28,23 +28,34 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
+  const location = useLocation()
+  const isHWDealRoute = location.pathname.includes('/HWDeal')
+
   return (
     <>
       <Header />
-      <Outlet />
-      <Suspense fallback={null}>
-        <TanStackDevtools
-          config={{
-            position: 'bottom-right',
-          }}
-          plugins={[
-            {
-              name: 'Tanstack Router',
-              render: <TanStackRouterDevtoolsPanel />,
-            },
-          ]}
-        />
-      </Suspense>
+      <main id="main-content" className="flex-1">
+        <Outlet />
+      </main>
+
+      {!isHWDealRoute && (
+        <div className="print:hidden">
+          <Suspense fallback={null}>
+            <TanStackDevtools
+              config={{
+                position: 'bottom-right',
+              }}
+              plugins={[
+                {
+                  name: 'Tanstack Router',
+                  render: <TanStackRouterDevtoolsPanel />,
+                },
+              ]}
+            />
+          </Suspense>
+        </div>
+      )}
+
       <ContactModal />
     </>
   )

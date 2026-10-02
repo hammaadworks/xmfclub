@@ -7,7 +7,6 @@ import {
   Zap, 
   Star, 
   ArrowRight,
-  Filter,
   Flame,
   LayoutGrid,
   PlayCircle

@@ -11,8 +11,9 @@
   --card-foreground: #F8FAFC;
   --popover: #1F2937;
   --popover-foreground: #F8FAFC;
-  --primary: #E60000;
-  --primary-foreground: #F8FAFC;
+  --primary: #DC2626;
+  --primary-light: #FF6B6B;
+  --primary-foreground: #FFFFFF;
   --secondary: #374151;
   --secondary-foreground: #F8FAFC;
   --muted: #374151;
@@ -38,6 +39,7 @@
   --color-popover: var(--popover);
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
+  --color-primary-light: var(--primary-light);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
@@ -85,3 +87,30 @@
 .glass-card {
   @apply bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl;
 }
+
+.contain-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 120px;
+}
+
+.glass-card-container {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 500px;
+}
+
+/* Accessibility: Text contrast optimization on dark background (>4.5:1 WCAG AA) */
+.text-primary {
+  color: var(--primary-light, #FF6B6B);
+}
+
+.btn-primary {
+  background-color: var(--primary, #DC2626);
+  color: #FFFFFF;
+}
+
+/* Rendering performance: targeted transitions */
+.transition-optimized {
+  transition: transform 0.2s ease-in-out, opacity 0.2s ease-in-out;
+  will-change: transform, opacity;
+}
+

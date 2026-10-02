@@ -394,7 +394,7 @@ function LandingPage() {
           />
           <FAQItem
             question="How does the member login work?"
-            answer="We've completely eliminated passwords. Active members log in seamlessly using their Member ID and a personalized swipe pattern (just like unlocking your phone), ensuring fast and secure access."
+            answer="We've streamlined member access. Active members log in seamlessly using their Member ID and a secure 5-digit PIN, or tap their physical QR / NFC badge at the dojo for instant check-in."
           />
           <FAQItem
             question="Will there be content specific to my rank?"

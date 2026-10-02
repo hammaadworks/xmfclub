@@ -42,16 +42,15 @@ ON CONFLICT (id) DO UPDATE SET
 
 -- 2. Members (Admin, Trainers, & Students across all belt levels)
 INSERT INTO public.members (
-    id, member_id, name, dob, age, phone, email, role, belt,
-    member_status, fee_status, pattern_hash, address, branch, blood_group,
+    member_id, name, dob, age, phone, email, role, belt,
+    member_status, fee_status, password, address, pin_code, branch, blood_group,
     date_of_joining, achievements, instructor_remarks, instructor_remarks_color,
     actual_fee, fee_detail, due_date, pending_amount, is_reviewed, is_deleted
 )
 VALUES
 -- 2.1 Admin Account
 (
-    'a0000000-0000-0000-0000-000000000001',
-    'ADMIN01',
+    'XMF2001',
     'Master Farhan (Admin)',
     '1988-04-12',
     38,
@@ -61,8 +60,9 @@ VALUES
     'Black',
     'Active',
     'Paid',
-    '048526',
+    '12345',
     '100 Master Enclave, Central City',
+    '560001',
     'XMF Main HQ',
     'O+',
     '2020-01-01',
@@ -76,21 +76,21 @@ VALUES
     true,
     false
 ),
--- 2.2 Senior Instructor / Trainer
+-- 2.2 Senior Instructor
 (
-    'a0000000-0000-0000-0000-000000000002',
-    'TRN26001',
+    'XMF2201',
     'Sensei Tariq Vance',
     '1994-08-20',
     32,
     '9876543212',
     'tariq@xmfclub.com',
-    'trainer',
+    'instructor',
     'Black',
     'Active',
     'Paid',
-    '048526',
+    '12345',
     '45 Northside Heights, Dojo Lane',
+    '560012',
     'Northside Dojo',
     'A+',
     '2022-03-15',
@@ -106,8 +106,7 @@ VALUES
 ),
 -- 2.3 Student 1: Alex Rivera (Yellow Belt)
 (
-    'b0000000-0000-0000-0000-000000000001',
-    'XMF260001',
+    'XMF2601',
     'Alex Rivera',
     '2005-06-15',
     21,
@@ -117,8 +116,9 @@ VALUES
     'Yellow',
     'Active',
     'Paid',
-    '048526',
+    '12345',
     '12 Palm Avenue, Apt 4B',
+    '560034',
     'XMF Main HQ',
     'B+',
     '2026-01-10',
@@ -134,8 +134,7 @@ VALUES
 ),
 -- 2.4 Student 2: Priya Sharma (Green Belt)
 (
-    'b0000000-0000-0000-0000-000000000002',
-    'XMF260002',
+    'XMF2602',
     'Priya Sharma',
     '2007-11-23',
     18,
@@ -145,8 +144,9 @@ VALUES
     'Green',
     'Active',
     'Paid',
-    '048526',
+    '12345',
     '88 Lotus Court, North Sector',
+    '560045',
     'Northside Dojo',
     'O-',
     '2025-05-12',
@@ -162,8 +162,7 @@ VALUES
 ),
 -- 2.5 Student 3: David Chen (Blue Belt)
 (
-    'b0000000-0000-0000-0000-000000000003',
-    'XMF260003',
+    'XMF2603',
     'David Chen',
     '2002-03-09',
     24,
@@ -173,8 +172,9 @@ VALUES
     'Blue',
     'Active',
     'Paid',
-    '048526',
+    '12345',
     '502 Skyline Towers, Downtown',
+    '560001',
     'Downtown Club',
     'AB+',
     '2024-09-01',
@@ -190,8 +190,7 @@ VALUES
 ),
 -- 2.6 Student 4: Sarah Jenkins (Purple Belt)
 (
-    'b0000000-0000-0000-0000-000000000004',
-    'XMF260004',
+    'XMF2604',
     'Sarah Jenkins',
     '1999-12-04',
     26,
@@ -201,8 +200,9 @@ VALUES
     'Purple',
     'Active',
     'Paid',
-    '048526',
+    '12345',
     '19 Heritage Way, West End',
+    '560027',
     'XMF Main HQ',
     'A-',
     '2024-02-18',
@@ -218,8 +218,7 @@ VALUES
 ),
 -- 2.7 Student 5: Marcus Vance (Brown Belt)
 (
-    'b0000000-0000-0000-0000-000000000005',
-    'XMF260005',
+    'XMF2605',
     'Marcus Vance',
     '1998-07-30',
     28,
@@ -229,8 +228,9 @@ VALUES
     'Brown',
     'Active',
     'Paid',
-    '048526',
+    '12345',
     '77 Pine Ridge, North Hills',
+    '560064',
     'Northside Dojo',
     'O+',
     '2023-06-01',
@@ -246,8 +246,7 @@ VALUES
 ),
 -- 2.8 Student 6: Zoya Khan (White Belt - New Volunteer Intake)
 (
-    'b0000000-0000-0000-0000-000000000006',
-    'XMF260006',
+    'XMF2606',
     'Zoya Khan',
     '2010-09-14',
     15,
@@ -257,8 +256,9 @@ VALUES
     'White',
     'Active',
     'Paid',
-    '048526',
+    '12345',
     '23 Rosewood Street, East Studio Area',
+    '560075',
     'XMF East Studio',
     'B-',
     '2026-09-15',
@@ -274,8 +274,7 @@ VALUES
 ),
 -- 2.9 Student 7: Rahul Verma (Orange Belt - Pending Fee Sample)
 (
-    'b0000000-0000-0000-0000-000000000007',
-    'XMF260007',
+    'XMF2607',
     'Rahul Verma',
     '2006-02-18',
     20,
@@ -285,8 +284,9 @@ VALUES
     'Orange',
     'Active',
     'Pending',
-    '048526',
+    '12345',
     '44 Market Street, Downtown',
+    '560002',
     'Downtown Club',
     'O+',
     '2025-10-01',
@@ -302,8 +302,7 @@ VALUES
 ),
 -- 2.10 Student 8: Kenji Sato (Red Belt)
 (
-    'b0000000-0000-0000-0000-000000000008',
-    'XMF260008',
+    'XMF2608',
     'Kenji Sato',
     '2001-05-11',
     25,
@@ -313,8 +312,9 @@ VALUES
     'Red',
     'Active',
     'Paid',
-    '048526',
+    '12345',
     '310 Imperial Walk, Main HQ Area',
+    '560001',
     'XMF Main HQ',
     'A+',
     '2023-01-20',
@@ -330,8 +330,7 @@ VALUES
 ),
 -- 2.11 Student 9: Emma Watson (White Belt - Intake Entry)
 (
-    'b0000000-0000-0000-0000-000000000009',
-    'XMF260009',
+    'XMF2609',
     'Emma Watson',
     '2012-04-05',
     14,
@@ -341,8 +340,9 @@ VALUES
     'White',
     'Active',
     'Paid',
-    '048526',
+    '12345',
     '15 Cedar Lane, North District',
+    '560086',
     'Northside Dojo',
     'AB-',
     '2026-09-20',
@@ -358,8 +358,7 @@ VALUES
 ),
 -- 2.12 Inactive/Discontinued Student (for filtering tests)
 (
-    'b0000000-0000-0000-0000-000000000010',
-    'XMF260010',
+    'XMF260A',
     'Imran Malik',
     '2004-08-19',
     22,
@@ -369,8 +368,9 @@ VALUES
     'Yellow',
     'Inactive',
     'Paid',
-    '048526',
+    '12345',
     '88 River Road, East Sector',
+    '560098',
     'XMF East Studio',
     'O+',
     '2025-02-01',
@@ -394,7 +394,9 @@ ON CONFLICT (member_id) DO UPDATE SET
     belt = EXCLUDED.belt,
     member_status = EXCLUDED.member_status,
     fee_status = EXCLUDED.fee_status,
+    password = EXCLUDED.password,
     address = EXCLUDED.address,
+    pin_code = EXCLUDED.pin_code,
     branch = EXCLUDED.branch,
     blood_group = EXCLUDED.blood_group,
     achievements = EXCLUDED.achievements,
@@ -407,45 +409,45 @@ ON CONFLICT (member_id) DO UPDATE SET
     is_deleted = EXCLUDED.is_deleted;
 
 -- 3. Attendance Logs (Simulating historic training sessions for belt progress)
--- 3.1 Attendance for Alex Rivera (XMF260001 - Yellow Belt, 12 sessions logged)
+-- 3.1 Attendance for Alex Rivera (XMF2601 - Yellow Belt, 12 sessions logged)
 INSERT INTO public.attendance (member_id, belt, timestamp)
 VALUES
-    ('b0000000-0000-0000-0000-000000000001', 'Yellow', timezone('utc'::text, now() - INTERVAL '24 days')),
-    ('b0000000-0000-0000-0000-000000000001', 'Yellow', timezone('utc'::text, now() - INTERVAL '22 days')),
-    ('b0000000-0000-0000-0000-000000000001', 'Yellow', timezone('utc'::text, now() - INTERVAL '19 days')),
-    ('b0000000-0000-0000-0000-000000000001', 'Yellow', timezone('utc'::text, now() - INTERVAL '17 days')),
-    ('b0000000-0000-0000-0000-000000000001', 'Yellow', timezone('utc'::text, now() - INTERVAL '15 days')),
-    ('b0000000-0000-0000-0000-000000000001', 'Yellow', timezone('utc'::text, now() - INTERVAL '12 days')),
-    ('b0000000-0000-0000-0000-000000000001', 'Yellow', timezone('utc'::text, now() - INTERVAL '10 days')),
-    ('b0000000-0000-0000-0000-000000000001', 'Yellow', timezone('utc'::text, now() - INTERVAL '8 days')),
-    ('b0000000-0000-0000-0000-000000000001', 'Yellow', timezone('utc'::text, now() - INTERVAL '5 days')),
-    ('b0000000-0000-0000-0000-000000000001', 'Yellow', timezone('utc'::text, now() - INTERVAL '3 days')),
-    ('b0000000-0000-0000-0000-000000000001', 'Yellow', timezone('utc'::text, now() - INTERVAL '1 day')),
-    ('b0000000-0000-0000-0000-000000000001', 'Yellow', timezone('utc'::text, now()));
+    ('XMF2601', 'Yellow', timezone('utc'::text, now() - INTERVAL '24 days')),
+    ('XMF2601', 'Yellow', timezone('utc'::text, now() - INTERVAL '22 days')),
+    ('XMF2601', 'Yellow', timezone('utc'::text, now() - INTERVAL '19 days')),
+    ('XMF2601', 'Yellow', timezone('utc'::text, now() - INTERVAL '17 days')),
+    ('XMF2601', 'Yellow', timezone('utc'::text, now() - INTERVAL '15 days')),
+    ('XMF2601', 'Yellow', timezone('utc'::text, now() - INTERVAL '12 days')),
+    ('XMF2601', 'Yellow', timezone('utc'::text, now() - INTERVAL '10 days')),
+    ('XMF2601', 'Yellow', timezone('utc'::text, now() - INTERVAL '8 days')),
+    ('XMF2601', 'Yellow', timezone('utc'::text, now() - INTERVAL '5 days')),
+    ('XMF2601', 'Yellow', timezone('utc'::text, now() - INTERVAL '3 days')),
+    ('XMF2601', 'Yellow', timezone('utc'::text, now() - INTERVAL '1 day')),
+    ('XMF2601', 'Yellow', timezone('utc'::text, now()));
 
--- 3.2 Attendance for Priya Sharma (XMF260002 - Green Belt, 18 sessions logged)
+-- 3.2 Attendance for Priya Sharma (XMF2602 - Green Belt, 18 sessions logged)
 INSERT INTO public.attendance (member_id, belt, timestamp)
 VALUES
-    ('b0000000-0000-0000-0000-000000000002', 'Green', timezone('utc'::text, now() - INTERVAL '30 days')),
-    ('b0000000-0000-0000-0000-000000000002', 'Green', timezone('utc'::text, now() - INTERVAL '27 days')),
-    ('b0000000-0000-0000-0000-000000000002', 'Green', timezone('utc'::text, now() - INTERVAL '24 days')),
-    ('b0000000-0000-0000-0000-000000000002', 'Green', timezone('utc'::text, now() - INTERVAL '21 days')),
-    ('b0000000-0000-0000-0000-000000000002', 'Green', timezone('utc'::text, now() - INTERVAL '18 days')),
-    ('b0000000-0000-0000-0000-000000000002', 'Green', timezone('utc'::text, now() - INTERVAL '14 days')),
-    ('b0000000-0000-0000-0000-000000000002', 'Green', timezone('utc'::text, now() - INTERVAL '11 days')),
-    ('b0000000-0000-0000-0000-000000000002', 'Green', timezone('utc'::text, now() - INTERVAL '7 days')),
-    ('b0000000-0000-0000-0000-000000000002', 'Green', timezone('utc'::text, now() - INTERVAL '4 days')),
-    ('b0000000-0000-0000-0000-000000000002', 'Green', timezone('utc'::text, now() - INTERVAL '1 day'));
+    ('XMF2602', 'Green', timezone('utc'::text, now() - INTERVAL '30 days')),
+    ('XMF2602', 'Green', timezone('utc'::text, now() - INTERVAL '27 days')),
+    ('XMF2602', 'Green', timezone('utc'::text, now() - INTERVAL '24 days')),
+    ('XMF2602', 'Green', timezone('utc'::text, now() - INTERVAL '21 days')),
+    ('XMF2602', 'Green', timezone('utc'::text, now() - INTERVAL '18 days')),
+    ('XMF2602', 'Green', timezone('utc'::text, now() - INTERVAL '14 days')),
+    ('XMF2602', 'Green', timezone('utc'::text, now() - INTERVAL '11 days')),
+    ('XMF2602', 'Green', timezone('utc'::text, now() - INTERVAL '7 days')),
+    ('XMF2602', 'Green', timezone('utc'::text, now() - INTERVAL '4 days')),
+    ('XMF2602', 'Green', timezone('utc'::text, now() - INTERVAL '1 day'));
 
--- 3.3 Attendance for David Chen (XMF260003 - Blue Belt, 15 sessions logged)
+-- 3.3 Attendance for David Chen (XMF2603 - Blue Belt, 15 sessions logged)
 INSERT INTO public.attendance (member_id, belt, timestamp)
 VALUES
-    ('b0000000-0000-0000-0000-000000000003', 'Blue', timezone('utc'::text, now() - INTERVAL '25 days')),
-    ('b0000000-0000-0000-0000-000000000003', 'Blue', timezone('utc'::text, now() - INTERVAL '20 days')),
-    ('b0000000-0000-0000-0000-000000000003', 'Blue', timezone('utc'::text, now() - INTERVAL '15 days')),
-    ('b0000000-0000-0000-0000-000000000003', 'Blue', timezone('utc'::text, now() - INTERVAL '10 days')),
-    ('b0000000-0000-0000-0000-000000000003', 'Blue', timezone('utc'::text, now() - INTERVAL '6 days')),
-    ('b0000000-0000-0000-0000-000000000003', 'Blue', timezone('utc'::text, now() - INTERVAL '2 days'));
+    ('XMF2603', 'Blue', timezone('utc'::text, now() - INTERVAL '25 days')),
+    ('XMF2603', 'Blue', timezone('utc'::text, now() - INTERVAL '20 days')),
+    ('XMF2603', 'Blue', timezone('utc'::text, now() - INTERVAL '15 days')),
+    ('XMF2603', 'Blue', timezone('utc'::text, now() - INTERVAL '10 days')),
+    ('XMF2603', 'Blue', timezone('utc'::text, now() - INTERVAL '6 days')),
+    ('XMF2603', 'Blue', timezone('utc'::text, now() - INTERVAL '2 days'));
 
 -- 4. Events (Upcoming & Past Competitions / Masterclasses)
 INSERT INTO public.events (
@@ -518,18 +520,18 @@ ON CONFLICT (id) DO UPDATE SET
 INSERT INTO public.event_registrations (event_id, member_id, status, registered_at)
 VALUES
     -- Alex Rivera registered for National Championship & Junior Workshop
-    ('e0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000001', 'Registered', timezone('utc'::text, now() - INTERVAL '3 days')),
-    ('e0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000001', 'Registered', timezone('utc'::text, now() - INTERVAL '2 days')),
+    ('e0000000-0000-0000-0000-000000000001', 'XMF2601', 'Registered', timezone('utc'::text, now() - INTERVAL '3 days')),
+    ('e0000000-0000-0000-0000-000000000003', 'XMF2601', 'Registered', timezone('utc'::text, now() - INTERVAL '2 days')),
 
     -- Priya Sharma registered for National Championship
-    ('e0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000002', 'Registered', timezone('utc'::text, now() - INTERVAL '4 days')),
+    ('e0000000-0000-0000-0000-000000000001', 'XMF2602', 'Registered', timezone('utc'::text, now() - INTERVAL '4 days')),
 
     -- David Chen registered for National Championship
-    ('e0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000003', 'Registered', timezone('utc'::text, now() - INTERVAL '1 day')),
+    ('e0000000-0000-0000-0000-000000000001', 'XMF2603', 'Registered', timezone('utc'::text, now() - INTERVAL '1 day')),
 
     -- Marcus Vance registered for Advanced Dan Masterclass
-    ('e0000000-0000-0000-0000-000000000002', 'b0000000-0000-0000-0000-000000000005', 'Registered', timezone('utc'::text, now() - INTERVAL '5 days')),
+    ('e0000000-0000-0000-0000-000000000002', 'XMF2605', 'Registered', timezone('utc'::text, now() - INTERVAL '5 days')),
 
     -- Sarah Jenkins registered for National Championship
-    ('e0000000-0000-0000-0000-000000000001', 'b0000000-0000-0000-0000-000000000004', 'Registered', timezone('utc'::text, now() - INTERVAL '2 days'))
+    ('e0000000-0000-0000-0000-000000000001', 'XMF2604', 'Registered', timezone('utc'::text, now() - INTERVAL '2 days'))
 ON CONFLICT (event_id, member_id) DO NOTHING;

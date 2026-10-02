@@ -2,10 +2,13 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { 
   User, Calendar, Trophy, LogOut,
-  MapPin, Phone, Mail, Activity, ShieldCheck, Trash2, Edit2, Save, X, Lock, Clock
+  MapPin, ShieldCheck, Trash2, Edit2, Save, X, Lock, Clock, QrCode, Radio, Plus
 } from 'lucide-react'
 import { supabase } from '#/lib/supabase'
-import { PatternLock } from '#/components/PatternLock'
+import { PinPad } from '#/components/PinPad'
+import { calculateTenure } from '#/lib/utils'
+import { CredentialAssignmentModal } from '#/components/credentials/CredentialAssignmentModal'
+
 
 export const Route = createFileRoute('/member/$memberId')({
   component: DashboardPage,
@@ -23,6 +26,8 @@ function DashboardPage() {
   const [beltConfig, setBeltConfig] = useState<any[]>([])
 
   // Events State
+  const [credentials, setCredentials] = useState<any[]>([])
+
   const [events, setEvents] = useState<any[]>([])
   const [registeredEventIds, setRegisteredEventIds] = useState<string[]>([])
 
@@ -32,24 +37,33 @@ function DashboardPage() {
     phone: '',
     email: '',
     address: '',
+    pin_code: '',
     blood_group: ''
   })
   
-  // Pattern Edit State
-  const [showPatternModal, setShowPatternModal] = useState(false)
-  const [patternError, setPatternError] = useState('')
+  // PIN Edit State
+  const [showPinModal, setShowPinModal] = useState(false)
+  const [pinError, setPinError] = useState('')
 
   const [isOwner, setIsOwner] = useState(false)
+  const [canManageCredentials, setCanManageCredentials] = useState(false)
+  const [isCredentialModalOpen, setCredentialModalOpen] = useState(false)
+
 
   useEffect(() => {
     const data = localStorage.getItem('xmf_member')
     
     if (data) {
       const parsed = JSON.parse(data)
-      // Check if it's an admin
-      if (parsed.role === 'admin') {
+      
+      if (parsed.role === 'admin' || parsed.role === 'volunteer') {
+        setCanManageCredentials(true)
+      }
+
+      // Check if it's an admin or instructor
+      if (parsed.role === 'admin' || parsed.role === 'instructor') {
         setIsAdmin(true)
-        setIsOwner(true) // Admins have owner-level viewing rights
+        setIsOwner(true) // Staff have administrative viewing and attendance logging rights
       } else if (parsed.member_id === memberId.toUpperCase()) {
         // If student is viewing their own profile
         setIsOwner(true)
@@ -75,6 +89,7 @@ function DashboardPage() {
             phone: memberData.phone || '',
             email: memberData.email || '',
             address: memberData.address || '',
+            pin_code: memberData.pin_code || '',
             blood_group: memberData.blood_group || ''
           })
           
@@ -92,7 +107,7 @@ function DashboardPage() {
           const { data: logs, error: lError } = await supabase
             .from('attendance')
             .select('*')
-            .eq('member_id', memberData.id)
+            .eq('member_id', memberData.member_id)
             .order('timestamp', { ascending: false })
           
           if (lError) {
@@ -107,6 +122,16 @@ function DashboardPage() {
             }
           }
 
+          // Fetch assigned credentials
+          const { data: creds } = await supabase
+            .from('credential_assignments')
+            .select('credential_id, credentials(token, type)')
+            .eq('member_id', memberData.member_id)
+            .is('unassigned_at', null)
+          if (creds) {
+            setCredentials(creds.map((c: any) => ({ ...c.credentials, id: c.credential_id })))
+          }
+
           // Fetch upcoming events
           const { data: eventsData } = await supabase
             .from('events')
@@ -118,7 +143,7 @@ function DashboardPage() {
           const { data: regsData } = await supabase
             .from('event_registrations')
             .select('event_id')
-            .eq('member_id', memberData.id)
+            .eq('member_id', memberData.member_id)
           if (regsData) setRegisteredEventIds(regsData.map(r => r.event_id))
         }
       } catch (err) {
@@ -148,14 +173,14 @@ function DashboardPage() {
 
     const { error } = await supabase
       .from('attendance')
-      .insert([{ member_id: member.id, belt: member.belt }])
+      .insert([{ member_id: member.member_id, belt: member.belt }])
     
     if (!error) {
       setAttendanceLogged(true)
       const { data: logs } = await supabase
         .from('attendance')
         .select('*')
-        .eq('member_id', member.id)
+        .eq('member_id', member.member_id)
         .order('timestamp', { ascending: false })
       if (logs) setAttendanceLogs(logs)
     } else {
@@ -184,7 +209,7 @@ function DashboardPage() {
     const { error } = await supabase
       .from('members')
       .update(editForm)
-      .eq('id', member.id)
+      .eq('member_id', member.member_id)
     
     if (!error) {
       setMember({ ...member, ...editForm })
@@ -198,7 +223,7 @@ function DashboardPage() {
     if (!member) return
     const { error } = await supabase.from('event_registrations').insert([{
       event_id: eventId,
-      member_id: member.id,
+      member_id: member.member_id,
       status: 'Registered'
     }])
     
@@ -242,6 +267,7 @@ function DashboardPage() {
   }, {} as Record<string, number>);
 
   return (
+    <>
     <div className="min-h-screen bg-background pt-24 pb-20 px-6 relative">
       <div className="absolute top-0 right-0 w-1/2 h-[500px] bg-primary/10 blur-[120px] rounded-full -z-10" />
       <div className="absolute top-0 left-0 w-1/2 h-[500px] bg-accent/10 blur-[120px] rounded-full -z-10" />
@@ -259,7 +285,19 @@ function DashboardPage() {
               )}
             </div>
             <h2 className="text-xl font-black uppercase tracking-tight">{member.name}</h2>
-            <p className="text-muted-foreground font-mono text-sm tracking-widest text-primary mb-4">{member.member_id}</p>
+            <p className="text-muted-foreground font-mono text-sm tracking-widest text-primary mb-2">{member.member_id}</p>
+            
+            {member.role && member.role !== 'student' && (
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-3 ${
+                member.role === 'admin' 
+                  ? 'bg-red-500/10 text-red-400 border border-red-500/20' 
+                  : member.role === 'instructor' 
+                  ? 'bg-primary/10 text-primary-light border border-primary/20' 
+                  : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+              }`}>
+                {member.role === 'admin' ? 'Administrator' : member.role === 'instructor' ? 'Instructor' : 'Volunteer'}
+              </span>
+            )}
             
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 mb-6">
               <ShieldCheck className="w-4 h-4 text-primary" />
@@ -270,10 +308,10 @@ function DashboardPage() {
               <div className="flex flex-col gap-3">
                 {isOwner && (
                   <button 
-                    onClick={() => setShowPatternModal(true)}
+                    onClick={() => setShowPinModal(true)}
                     className="w-full flex items-center justify-center gap-2 px-4 py-4 rounded-xl text-xs font-black uppercase tracking-[0.2em] text-white bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
                   >
-                    <Lock className="w-4 h-4" /> Change Pattern Lock
+                    <Lock className="w-4 h-4" /> Change PIN Code
                   </button>
                 )}
                 <button 
@@ -286,6 +324,46 @@ function DashboardPage() {
             )}
           </div>
         </div>
+
+        
+          {/* Credentials Sidebar Card */}
+          <div className="glass-card p-6 border-white/5 space-y-4">
+            <h3 className="font-bold uppercase tracking-wider text-sm flex items-center justify-between">
+              Physical Credentials
+              {canManageCredentials && (
+                <button 
+                  onClick={() => setCredentialModalOpen(true)}
+                  className="p-1 hover:bg-white/10 rounded"
+                >
+                  <Plus className="w-4 h-4 text-primary" />
+                </button>
+              )}
+            </h3>
+            
+            <div className="space-y-3">
+              {credentials.filter(c => c.type === 'qrc').map(c => (
+                <div key={c.id} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                  <div className="bg-primary/20 p-2 rounded-lg"><QrCode className="w-5 h-5 text-primary" /></div>
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground">QR Badge</p>
+                    <p className="font-mono text-sm tracking-widest">{c.token}</p>
+                  </div>
+                </div>
+              ))}
+              {credentials.filter(c => c.type === 'tag').map(c => (
+                <div key={c.id} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                  <div className="bg-blue-500/20 p-2 rounded-lg"><Radio className="w-5 h-5 text-blue-500" /></div>
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-muted-foreground">NFC Tag</p>
+                    <p className="font-mono text-sm tracking-widest">{c.token}</p>
+                  </div>
+                </div>
+              ))}
+              {credentials.length === 0 && (
+                <p className="text-sm text-muted-foreground italic">No credentials assigned.</p>
+              )}
+            </div>
+          </div>
 
         {/* Main Content Area */}
         <div className="lg:col-span-9 relative space-y-12">
@@ -314,7 +392,7 @@ function DashboardPage() {
           {/* SECTION: PROFILE */}
           <div className="space-y-6">
             <h3 className="text-2xl font-black uppercase tracking-tighter border-b border-white/10 pb-4">
-              {isOwner ? 'Student Details' : 'Public Profile'}
+              {isOwner ? (member.role === 'student' ? 'Student Details' : 'Member Profile') : 'Public Profile'}
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -340,6 +418,7 @@ function DashboardPage() {
                                 phone: member.phone || '',
                                 email: member.email || '',
                                 address: member.address || '',
+                                pin_code: member.pin_code || '',
                                 blood_group: member.blood_group || ''
                               })
                             }}
@@ -420,6 +499,23 @@ function DashboardPage() {
                           </div>
                         )}
                       </div>
+
+                      <div className="space-y-2">
+                        <label className="text-xs font-black tracking-widest uppercase text-muted-foreground">PIN Code</label>
+                        {isEditingInfo ? (
+                          <input 
+                            type="text" 
+                            className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:outline-none focus:border-primary transition-colors"
+                            value={editForm.pin_code}
+                            placeholder="e.g. 560001"
+                            onChange={e => setEditForm({...editForm, pin_code: e.target.value})}
+                          />
+                        ) : (
+                          <div className="w-full bg-black/20 border border-white/5 rounded-xl p-3 text-white/70">
+                            {member.pin_code || 'Not provided'}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -465,7 +561,12 @@ function DashboardPage() {
                       </div>
                       <div>
                         <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Join Date</p>
-                        <p className="text-sm font-mono">{new Date(member.date_of_joining).toLocaleDateString()}</p>
+                        <p className="text-sm font-mono flex items-center gap-2">
+                          <span>{member.date_of_joining ? new Date(member.date_of_joining).toLocaleDateString() : 'N/A'}</span>
+                          <span className="px-2 py-0.5 bg-primary/10 border border-primary/20 text-primary-light rounded text-[10px] font-mono font-bold">
+                            {calculateTenure(member.date_of_joining)}
+                          </span>
+                        </p>
                       </div>
                       {member.achievements && (
                         <div>
@@ -483,7 +584,12 @@ function DashboardPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     <div>
                       <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold mb-1">Member Since</p>
-                      <p className="text-sm font-bold">{new Date(member.date_of_joining).toLocaleDateString()}</p>
+                      <p className="text-sm font-bold flex items-center gap-2">
+                        <span>{member.date_of_joining ? new Date(member.date_of_joining).toLocaleDateString() : 'N/A'}</span>
+                        <span className="px-2 py-0.5 bg-primary/10 border border-primary/20 text-primary-light rounded text-[10px] font-mono font-bold">
+                          {calculateTenure(member.date_of_joining)}
+                        </span>
+                      </p>
                     </div>
                     {member.date_of_leaving && (
                       <div>
@@ -529,7 +635,7 @@ function DashboardPage() {
                   {Object.entries(beltCounts).map(([b, count]) => (
                     <div key={b} className="px-3 py-1.5 bg-white/5 border border-white/10 rounded-lg flex items-center gap-2">
                       <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{b} Belt:</span>
-                      <span className="text-sm font-bold text-primary">{count}</span>
+                      <span className="text-sm font-bold text-primary">{count as number}</span>
                     </div>
                   ))}
                 </div>
@@ -743,48 +849,43 @@ function DashboardPage() {
         </div>
       )}
 
-      {/* Pattern Modal */}
-      {showPatternModal && (
+      {/* PIN Modal */}
+      {showPinModal && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[100] backdrop-blur-sm">
           <div className="bg-background border border-white/10 p-8 rounded-2xl max-w-md w-full space-y-6 flex flex-col items-center">
-            <h3 className="text-xl font-black uppercase tracking-widest text-center">Set New Pattern</h3>
+            <h3 className="text-xl font-black uppercase tracking-widest text-center">Set New PIN</h3>
             <p className="text-sm text-muted-foreground text-center">
-              Draw a new pattern to secure your account. Must be at least 4 dots.
+              Enter a 5-digit numeric PIN to secure your account.
             </p>
             
-            {patternError && (
+            {pinError && (
               <div className="w-full p-3 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg text-sm text-center">
-                {patternError}
+                {pinError}
               </div>
             )}
             
-            <PatternLock 
-              onComplete={async (drawnPattern) => {
-                if (drawnPattern.length < 4) {
-                  setPatternError("Pattern must have at least 4 dots.");
-                  return;
-                }
-                
+            <PinPad 
+              onComplete={async (pin) => {
                 const { error } = await supabase
                   .from('members')
-                  .update({ pattern_hash: drawnPattern.join('') })
-                  .eq('id', member.id);
+                  .update({ password: pin })
+                  .eq('member_id', member.member_id);
                   
                 if (!error) {
-                  setPatternError('');
-                  setShowPatternModal(false);
-                  setAppAlert({ message: "Pattern updated successfully!" });
+                  setPinError('');
+                  setShowPinModal(false);
+                  setAppAlert({ message: "PIN updated successfully!" });
                 } else {
-                  setPatternError("Failed to update pattern: " + error.message);
+                  setPinError("Failed to update PIN: " + error.message);
                 }
               }} 
-              error={!!patternError} 
+              error={pinError} 
             />
             
             <button 
               onClick={() => {
-                setShowPatternModal(false);
-                setPatternError('');
+                setShowPinModal(false);
+                setPinError('');
               }}
               className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-xs font-black uppercase tracking-widest transition-colors mt-4"
             >
@@ -794,5 +895,16 @@ function DashboardPage() {
         </div>
       )}
     </div>
+
+      <CredentialAssignmentModal 
+        isOpen={isCredentialModalOpen}
+        onClose={() => setCredentialModalOpen(false)}
+        memberId={member.member_id}
+        onAssigned={() => {
+          // Refresh window or refetch credentials
+          window.location.reload();
+        }}
+      />
+    </>
   )
 }

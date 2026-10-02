@@ -1,6 +1,6 @@
 # Comprehensive Implementation Plan: Volunteer Data Entry Hub (`/xmform`)
 
-This document is the definitive specification and step-by-step implementation blueprint for the **Volunteer Data Entry Hub** at `/xmform`. It serves volunteers and instructors on any device (phone, tablet, PC) for rapid student intake, sequential `XMFYY0001` ID generation, client-compressed photo uploads, and complete roster management (search, multi-field filtering, pagination, edit, and soft-delete).
+This document is the definitive specification and step-by-step implementation blueprint for the **Volunteer Data Entry Hub** at `/xmform`. It serves volunteers and instructors on any device (phone, tablet, PC) for rapid student intake, sequential `XMFYYZZ` (Crockford Base32) ID generation, client-compressed photo uploads, and complete roster management (search, multi-field filtering, pagination, edit, and soft-delete).
 
 ---
 
@@ -33,7 +33,7 @@ export interface VolunteerStudentForm {
 
 export interface StudentRecord {
   id: string; // Supabase row UUID / primary key
-  member_id: string; // Permanent roll number (e.g. XMF260001)
+  member_id: string; // Permanent roll number (e.g. XMF2601)
   name: string;
   dob?: string;
   age?: number;
@@ -43,7 +43,7 @@ export interface StudentRecord {
   branch: string;
   address?: string;
   photo_url?: string;
-  role: 'student' | 'member' | 'admin' | 'trainer';
+  role: 'student' | 'instructor' | 'volunteer' | 'admin';
   member_status: 'Active' | 'Inactive' | 'Discontinued';
   pattern_hash: string;
   date_of_joining: string;
@@ -75,44 +75,27 @@ Smartphone cameras produce 5MB–15MB JPEGs, which degrade mobile performance, c
 
 ---
 
-## 4. Deterministic Roll Number Engine (`XMFYY0001`)
+## 4. Crockford Base32 Deterministic Roll Number Engine (`XMFYYZZ`)
 
 ### Format:
-`XMF` + `YY` (2-digit year) + `0001` (4-digit zero-padded sequence).
-For 2026: `XMF260001`, `XMF260002`, ..., `XMF269999`.
+`XMF` + `YY` (2-digit year of joining) + `ZZ` (2-digit Douglas Crockford Base32 sequence).
+- Alphabet: `0123456789ABCDEFGHJKMNPQRSTVWXYZ` (32 characters, excluding ambiguous `I, L, O, U`).
+- Normalization & decoding aliases: `I` and `L` $\rightarrow$ `1`, `O` $\rightarrow$ `0`. Reject `U` (accidental profanity protection).
+- Starting sequence: `01` (value 1).
+- `00` (value 0): Reserved for Admin Custom / VIP manual assignment.
+- Capacity: 1,024 slots per joining year (`01` through `ZZ`).
+- Rare Spillover: If 1,024 entries in a single year are exhausted, sequentially spillovers to 3-digit Crockford Base32 starting at `100` (8 characters total, e.g. `XMF26100`).
 
-### Algorithm:
-```typescript
-export async function generateNextStudentId(): Promise<string> {
-  const currentYear = new Date().getFullYear();
-  const yearSuffix = String(currentYear).slice(-2); // e.g. "26"
-  const prefix = `XMF${yearSuffix}`;
-
-  const { data, error } = await supabase
-    .from('members')
-    .select('member_id')
-    .like('member_id', `${prefix}%`)
-    .order('member_id', { ascending: false })
-    .limit(1);
-
-  if (error || !data || data.length === 0) {
-    return `${prefix}0001`;
-  }
-
-  const latestId = data[0].member_id;
-  const numPart = parseInt(latestId.slice(prefix.length), 10);
-  if (isNaN(numPart)) {
-    return `${prefix}0001`;
-  }
-
-  const nextSeq = String(numPart + 1).padStart(4, '0');
-  return `${prefix}${nextSeq}`;
-}
-```
+### Lowest Unused Gap Algorithm (`src/lib/idGenerator.ts`):
+Sequential allocation computes the **lowest unused gap** above `01`, ensuring:
+1. If an Admin manually assigns a high VIP suffix (e.g. `XMF26ZZ`), standard registrations continue sequentially from `XMF2601` without jumping or triggering false spillovers.
+2. Deleted IDs are permanently reserved in the database and never recycled.
 
 ### Golden Rules & Invariants:
-1. **Never Recycle IDs**: Soft-deleted students retain their roll numbers. The query ordering selects the absolute latest sequence regardless of `is_deleted` or `member_status`.
-2. **Deterministic & Immutable**: Once minted and assigned to a student record, the roll number is permanently locked.
+1. **Admin-Only VIP / Custom Assignment**: Only users authenticated as `role === 'admin'` can assign custom Crockford suffixes (`00` to `ZZ`). Real-time debounced collision checking prevents duplicates.
+2. **Admin-Only Review / Verification**: Only `role === 'admin'` can toggle member review verification (`is_reviewed`). Volunteers and instructors have read-only visibility.
+3. **Never Recycle IDs**: Soft-deleted students retain their roll numbers permanently.
+4. **Deterministic & Immutable**: Once minted and assigned to a member record, the roll number is permanently locked.
 
 ---
 
@@ -147,7 +130,7 @@ The page is organized into two primary tabs:
     - Real-time thumbnail preview with removal button.
 - **Batch Speed Entry Workflow**:
   - On submit:
-    1. Generates `XMF260001` ID.
+    1. Generates `XMF2601` (or VIP suffix if assigned by Admin) ID.
     2. Compresses photo and uploads to Supabase Storage.
     3. Inserts into `members` table with:
        - `role: 'student'`
@@ -156,7 +139,7 @@ The page is organized into two primary tabs:
        - `is_reviewed: false`
        - `is_deleted: false`
     4. Shows instant Celebration Card displaying:
-       - Large bold ID (`XMF260015`)
+       - Large bold ID (`XMF2601`)
        - Student Name, Belt, and Branch
        - Direct Action: **"Register Another Student"** (resets form and auto-focuses Name input for maximum volunteer throughput).
 

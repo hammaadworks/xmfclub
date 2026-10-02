@@ -4,19 +4,24 @@ import {
   UserPlus, Users, Search, Camera, 
   CheckCircle2, AlertCircle, Edit2, Trash2, Undo2, 
   ChevronLeft, ChevronRight, X, Loader2, ArrowRight, 
-  Phone, Calendar, User, Eye, RefreshCw
+  Phone, Calendar, User, Eye, RefreshCw, Sparkles, ShieldCheck
 } from 'lucide-react'
 import { supabase } from '#/lib/supabase'
 import { compressImage } from '#/lib/image'
 import { CustomSelect } from '#/components/CustomSelect'
+import { CredentialAssignmentModal } from '#/components/credentials/CredentialAssignmentModal';
+
+import { calculateTenure } from '#/lib/utils'
+import { normalizeCrockford } from '#/lib/crockford'
+import { computeNextMemberId } from '#/lib/idGenerator'
 
 export const Route = createFileRoute('/xmform')({
   component: XMFormPage,
 })
 
 interface StudentMember {
-  id: string;
   member_id: string;
+
   name: string;
   dob?: string | null;
   age?: number | null;
@@ -25,10 +30,11 @@ interface StudentMember {
   belt?: string | null;
   branch?: string | null;
   address?: string | null;
+  pin_code?: string | null;
   photo_url?: string | null;
   role?: string;
   member_status?: string;
-  pattern_hash?: string;
+  password?: string;
   date_of_joining?: string | null;
   is_reviewed?: boolean;
   is_deleted?: boolean;
@@ -58,12 +64,35 @@ function XMFormPage() {
   const [name, setName] = useState('');
   const [dob, setDob] = useState('');
   const [age, setAge] = useState<number | ''>('');
+  const [dateOfJoining, setDateOfJoining] = useState<string>(() => new Date().toISOString().split('T')[0]);
   const [belt, setBelt] = useState('White');
   const [branch, setBranch] = useState('XMF Main HQ');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
+  const [pinCode, setPinCode] = useState('');
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+
+  // Auth state for Admin-only capabilities
+  const currentUser = useMemo(() => {
+    try {
+      const raw = localStorage.getItem('xmf_member');
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }, []);
+  const isAdmin = currentUser?.role === 'admin';
+  const canManageCredentials = currentUser?.role === 'admin' || currentUser?.role === 'volunteer';
+
+  // Custom / VIP ID state (Admin-only feature)
+  const [isCustomId, setIsCustomId] = useState(false);
+  const [customSuffix, setCustomSuffix] = useState('');
+  const [customIdStatus, setCustomIdStatus] = useState<{
+    checking: boolean;
+    available?: boolean;
+    message?: string;
+  }>({ checking: false });
 
   // Status & Validation
   const [phoneWarning, setPhoneWarning] = useState<string | null>(null);
@@ -74,6 +103,10 @@ function XMFormPage() {
   // Directory State
   const [students, setStudents] = useState<StudentMember[]>([]);
   const [loadingDirectory, setLoadingDirectory] = useState(false);
+  const [directoryCredentials, setDirectoryCredentials] = useState<{ [memberId: string]: { id: string, type: string, token: string }[] }>({});
+  const [isCredentialModalOpen, setCredentialModalOpen] = useState(false);
+  const [credentialModalTarget, setCredentialModalTarget] = useState<string | null>(null);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBelt, setFilterBelt] = useState('All');
   const [filterBranch, setFilterBranch] = useState('All');
@@ -84,15 +117,19 @@ function XMFormPage() {
 
   // Edit Modal State
   const [editingStudent, setEditingStudent] = useState<StudentMember | null>(null);
+  const [editFormError, setEditFormError] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
     name: '',
     dob: '',
     age: '' as number | '',
+    date_of_joining: '',
     belt: 'White',
     branch: 'XMF Main HQ',
     phone: '',
     address: '',
+    pin_code: '',
     photo_url: '',
+    is_reviewed: false,
   });
   const [editPhotoFile, setEditPhotoFile] = useState<File | null>(null);
   const [editPhotoPreview, setEditPhotoPreview] = useState<string | null>(null);
@@ -108,7 +145,7 @@ function XMFormPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load Settings (belts, branches) on mount
+  // Load Settings (belts, branches) and initial student count on mount
   useEffect(() => {
     async function loadSettings() {
       try {
@@ -126,19 +163,41 @@ function XMFormPage() {
       }
     }
     loadSettings();
+    fetchStudents();
   }, []);
 
   // Fetch Directory Students
   const fetchStudents = async () => {
     setLoadingDirectory(true);
     try {
+
       const { data, error } = await supabase
         .from('members')
         .select('*')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setStudents(data);
+      setStudents(data || []);
+
+      // Fetch active credentials for all students
+      const { data: credsData } = await supabase
+        .from('credential_assignments')
+        .select('member_id, credential_id, credentials(token, type)')
+        .is('unassigned_at', null);
+
+      if (credsData) {
+        const credMap: Record<string, { id: string, type: string, token: string }[]> = {};
+        credsData.forEach((row: any) => {
+          if (!credMap[row.member_id]) credMap[row.member_id] = [];
+          credMap[row.member_id].push({
+            id: row.credential_id,
+            type: row.credentials.type,
+            token: row.credentials.token
+          });
+        });
+        setDirectoryCredentials(credMap);
+      }
+
     } catch (err) {
       console.error('Error fetching students:', err);
     } finally {
@@ -170,9 +229,18 @@ function XMFormPage() {
     }
   };
 
+  // Helper to Title Case names
+  const formatName = (str: string): string => {
+    return str
+      .trim()
+      .split(/\s+/)
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
   // Live Phone Duplicate Check
   const handlePhoneBlur = async () => {
-    const cleanPhone = phone.trim();
+    const cleanPhone = phone.trim().replace(/\D/g, '');
     if (cleanPhone.length >= 10) {
       try {
         const { data } = await supabase
@@ -180,10 +248,10 @@ function XMFormPage() {
           .select('member_id, name')
           .eq('phone', cleanPhone)
           .eq('is_deleted', false)
-          .maybeSingle();
+          .limit(1);
 
-        if (data) {
-          setPhoneWarning(`Student "${data.name}" (${data.member_id}) is already registered with this phone number.`);
+        if (data && data.length > 0) {
+          setPhoneWarning(`Student "${data[0].name}" (${data[0].member_id}) is already registered with this phone number.`);
         } else {
           setPhoneWarning(null);
         }
@@ -205,34 +273,98 @@ function XMFormPage() {
     reader.readAsDataURL(file);
   };
 
-  // Generate Deterministic ID XMFYY0001
-  const generateStudentId = async (): Promise<string> => {
-    const currentYear = new Date().getFullYear();
-    const yearSuffix = String(currentYear).slice(-2); // e.g. "26"
+  // Live Availability Checker for Custom / VIP ID
+  const checkCustomIdAvailability = async (suffixVal: string, dateVal: string) => {
+    if (!suffixVal || suffixVal.trim().length !== 2) {
+      setCustomIdStatus({ checking: false });
+      return;
+    }
+    const { valid, normalized, error } = normalizeCrockford(suffixVal);
+    if (!valid) {
+      setCustomIdStatus({ checking: false, available: false, message: error });
+      return;
+    }
+
+    setCustomIdStatus({ checking: true });
+    try {
+      const d = new Date(dateVal || Date.now());
+      const yearSuffix = !isNaN(d.getTime()) ? String(d.getFullYear()).slice(-2) : String(new Date().getFullYear()).slice(-2);
+      const candidateId = `XMF${yearSuffix}${normalized}`;
+
+      const { data, error: qErr } = await supabase
+        .from('members')
+        .select('member_id, name')
+        .eq('member_id', candidateId)
+        .limit(1);
+
+      if (qErr) throw qErr;
+
+      if (data && data.length > 0) {
+        setCustomIdStatus({ 
+          checking: false, 
+          available: false, 
+          message: `Taken (${data[0].name})` 
+        });
+      } else {
+        setCustomIdStatus({ 
+          checking: false, 
+          available: true, 
+          message: 'Available' 
+        });
+      }
+    } catch {
+      setCustomIdStatus({ checking: false });
+    }
+  };
+
+  const handleCustomSuffixChange = (val: string) => {
+    const clean = val.toUpperCase().replace(/[^0-9A-Z]/g, '');
+    setCustomSuffix(clean);
+    if (clean.length === 2) {
+      checkCustomIdAvailability(clean, dateOfJoining);
+    } else {
+      setCustomIdStatus({ checking: false });
+    }
+  };
+
+  // Generate Deterministic Crockford Base32 ID: XMF + YY + ZZ
+  // Sequential starts from 01 (1). Custom/VIP can be 00 or any unallocated 2-char Crockford code.
+  // Soft-deleted members are included so deleted IDs stay permanently reserved.
+  const generateStudentId = async (
+    joiningDateStr?: string, 
+    customSuffixVal?: string
+  ): Promise<string> => {
+    let yearSuffix = String(new Date().getFullYear()).slice(-2);
+    if (joiningDateStr) {
+      const d = new Date(joiningDateStr);
+      if (!isNaN(d.getTime())) {
+        yearSuffix = String(d.getFullYear()).slice(-2);
+      }
+    }
     const prefix = `XMF${yearSuffix}`;
 
     try {
       const { data, error } = await supabase
         .from('members')
         .select('member_id')
-        .like('member_id', `${prefix}%`)
-        .order('member_id', { ascending: false })
-        .limit(1);
+        .like('member_id', `${prefix}%`);
 
-      if (error || data.length === 0) {
-        return `${prefix}0001`;
+      if (error) {
+        console.warn('Error querying existing IDs, falling back to 01:', error);
       }
 
-      const latestId = data[0].member_id;
-      const numPart = parseInt(latestId.slice(prefix.length), 10);
-      if (isNaN(numPart)) {
-        return `${prefix}0001`;
-      }
+      const existingIds = (data || []).map(row => row.member_id).filter(Boolean);
 
-      const nextNum = numPart + 1;
-      return `${prefix}${String(nextNum).padStart(4, '0')}`;
-    } catch {
-      return `${prefix}0001`;
+      return computeNextMemberId({
+        joiningDate: joiningDateStr,
+        customSuffix: customSuffixVal,
+        existingIds,
+      });
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        throw err;
+      }
+      return `${prefix}01`;
     }
   };
 
@@ -240,12 +372,13 @@ function XMFormPage() {
   const uploadPhoto = async (file: File, studentId: string): Promise<string | null> => {
     try {
       const compressedBlob = await compressImage(file, 800, 0.82);
-      const fileName = `${studentId}_${Date.now()}.webp`;
+      const ext = compressedBlob.type === 'image/webp' ? 'webp' : 'jpg';
+      const fileName = `${studentId}_${Date.now()}.${ext}`;
 
       const { data, error } = await supabase.storage
         .from('member-photos')
         .upload(fileName, compressedBlob, {
-          contentType: 'image/webp',
+          contentType: compressedBlob.type || 'image/webp',
           upsert: true,
         });
 
@@ -269,20 +402,26 @@ function XMFormPage() {
     e.preventDefault();
     setErrorMsg(null);
 
-    if (!name.trim()) {
+    const formattedName = formatName(name);
+    if (!formattedName) {
       setErrorMsg('Student name is required.');
       return;
     }
 
-    if (!phone.trim() || phone.trim().length < 10) {
-      setErrorMsg('Please enter a valid 10-digit phone number.');
+    const cleanPhone = phone.trim().replace(/\D/g, '');
+    if (!/^[6-9]\d{9}$/.test(cleanPhone)) {
+      setErrorMsg('Please enter a valid 10-digit mobile number starting with 6-9.');
       return;
     }
 
     setSubmitting(true);
 
     try {
-      const newStudentId = await generateStudentId();
+      const requestedSuffix = (isAdmin && isCustomId && customSuffix.trim()) 
+        ? customSuffix.trim() 
+        : undefined;
+
+      const newStudentId = await generateStudentId(dateOfJoining, requestedSuffix);
       let photoUrl: string | null = null;
 
       if (photoFile) {
@@ -291,18 +430,19 @@ function XMFormPage() {
 
       const newStudentPayload = {
         member_id: newStudentId,
-        name: name.trim(),
+        name: formattedName,
         dob: dob || null,
         age: age !== '' ? Number(age) : null,
         belt: belt || 'White',
         branch: branch || 'XMF Main HQ',
-        phone: phone.trim(),
+        phone: cleanPhone,
         address: address.trim() || null,
+        pin_code: pinCode.trim() || null,
         photo_url: photoUrl,
         role: 'student',
         member_status: 'Active',
-        pattern_hash: '048526', // Standard default pattern
-        date_of_joining: new Date().toISOString().split('T')[0],
+        password: '12345', // Standard default password
+        date_of_joining: dateOfJoining || new Date().toISOString().split('T')[0],
         is_reviewed: false,
         is_deleted: false,
       };
@@ -317,15 +457,23 @@ function XMFormPage() {
         throw new Error(error.message);
       }
 
-      setCreatedStudent(data || { ...newStudentPayload, id: newStudentId });
+      const newlyCreated: StudentMember = data || { ...newStudentPayload, id: newStudentId };
+      setCreatedStudent(newlyCreated);
+      setStudents(prev => [newlyCreated, ...prev]);
+
       // Reset form fields
       setName('');
       setDob('');
       setAge('');
+      setDateOfJoining(new Date().toISOString().split('T')[0]);
+      setIsCustomId(false);
+      setCustomSuffix('');
+      setCustomIdStatus({ checking: false });
       setBelt(belts[0] || 'White');
       setBranch(branches[0] || 'XMF Main HQ');
       setPhone('');
       setAddress('');
+      setPinCode('');
       setPhotoFile(null);
       setPhotoPreview(null);
       setPhoneWarning(null);
@@ -390,24 +538,64 @@ function XMFormPage() {
   // Open Edit Modal
   const openEditModal = (student: StudentMember) => {
     setEditingStudent(student);
+    setEditFormError(null);
     setEditForm({
       name: student.name || '',
       dob: student.dob || '',
       age: student.age ?? '',
+      date_of_joining: student.date_of_joining ? student.date_of_joining.split('T')[0] : '',
       belt: student.belt || 'White',
       branch: student.branch || 'XMF Main HQ',
       phone: student.phone || '',
       address: student.address || '',
+      pin_code: student.pin_code || '',
       photo_url: student.photo_url || '',
+      is_reviewed: student.is_reviewed ?? false,
     });
     setEditPhotoFile(null);
     setEditPhotoPreview(student.photo_url || null);
+  };
+
+  // Toggle Review / Verified Status directly (Admin Only)
+  const handleToggleReview = async (student: StudentMember) => {
+    if (!isAdmin) {
+      return;
+    }
+    const updatedStatus = !student.is_reviewed;
+    try {
+      const { error } = await supabase
+        .from('members')
+        .update({ is_reviewed: updatedStatus })
+        .eq('member_id', student.member_id);
+
+      if (error) throw error;
+
+      setStudents(prev =>
+        prev.map(s => s.member_id === student.member_id ? { ...s, is_reviewed: updatedStatus } : s)
+      );
+    } catch (err) {
+      console.error('Error toggling review status:', err);
+    }
   };
 
   // Save Edit
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingStudent) return;
+    setEditFormError(null);
+
+    const formattedName = formatName(editForm.name);
+    if (!formattedName) {
+      setEditFormError('Student name is required.');
+      return;
+    }
+
+    const cleanPhone = editForm.phone.trim().replace(/\D/g, '');
+    if (cleanPhone && !/^[6-9]\d{9}$/.test(cleanPhone)) {
+      setEditFormError('Please enter a valid 10-digit mobile number starting with 6-9.');
+      return;
+    }
+
     setSavingEdit(true);
 
     try {
@@ -418,14 +606,17 @@ function XMFormPage() {
       }
 
       const updates = {
-        name: editForm.name.trim(),
+        name: formattedName,
         dob: editForm.dob || null,
         age: editForm.age !== '' ? Number(editForm.age) : null,
+        date_of_joining: editForm.date_of_joining || null,
         belt: editForm.belt,
         branch: editForm.branch,
-        phone: editForm.phone.trim(),
+        phone: cleanPhone || null,
         address: editForm.address.trim() || null,
+        pin_code: editForm.pin_code.trim() || null,
         photo_url: finalPhotoUrl || null,
+        is_reviewed: isAdmin ? editForm.is_reviewed : editingStudent.is_reviewed,
       };
 
       const { error } = await supabase
@@ -442,7 +633,8 @@ function XMFormPage() {
       setEditingStudent(null);
     } catch (err) {
       console.error('Error saving edits:', err);
-      alert('Failed to update student details.');
+      const message = err instanceof Error ? err.message : 'Failed to update student details.';
+      setEditFormError(message);
     } finally {
       setSavingEdit(false);
     }
@@ -470,9 +662,9 @@ function XMFormPage() {
         const q = searchQuery.toLowerCase();
         const matchesName = student.name.toLowerCase().includes(q);
         const matchesId = student.member_id.toLowerCase().includes(q);
-        const matchesPhone = student.phone?.includes(q);
-        const matchesBranch = student.branch?.toLowerCase().includes(q);
-        const matchesAddress = student.address?.toLowerCase().includes(q);
+        const matchesPhone = student.phone ? student.phone.includes(q) : false;
+        const matchesBranch = student.branch ? student.branch.toLowerCase().includes(q) : false;
+        const matchesAddress = student.address ? student.address.toLowerCase().includes(q) : false;
 
         return matchesName || matchesId || matchesPhone || matchesBranch || matchesAddress;
       }
@@ -489,6 +681,7 @@ function XMFormPage() {
   }, [filteredStudents, currentPage, pageSize]);
 
   return (
+    <>
     <div className="min-h-screen bg-background pt-28 pb-20 px-4 sm:px-6 md:px-8 text-foreground selection:bg-primary/20">
       <div className="max-w-6xl mx-auto space-y-8">
         
@@ -561,7 +754,7 @@ function XMFormPage() {
                 </h2>
                 <p className="text-base font-bold text-white mb-1">{createdStudent.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  Belt: <span className="text-primary-light font-bold">{createdStudent.belt}</span> • Branch: {createdStudent.branch}
+                  Belt: <span className="text-primary-light font-bold">{createdStudent.belt}</span> • Branch: {createdStudent.branch} • Member Since: <span className="text-white font-mono font-bold">{calculateTenure(createdStudent.date_of_joining)}</span> ({createdStudent.date_of_joining || 'Today'})
                 </p>
 
                 <div className="flex flex-wrap items-center justify-center gap-4 mt-6">
@@ -596,7 +789,7 @@ function XMFormPage() {
                   Student Intake Details
                 </h2>
                 <span className="text-[10px] uppercase tracking-widest font-black text-muted-foreground">
-                  Format: <span className="text-primary-light font-bold">XMF260001</span>
+                  Format: <span className="text-primary-light font-bold">XMF{String(new Date(dateOfJoining || Date.now()).getFullYear()).slice(-2)}01</span>
                 </span>
               </div>
 
@@ -639,6 +832,7 @@ function XMFormPage() {
                         id="student-dob"
                         name="student-dob"
                         type="date"
+                        max={new Date().toISOString().split('T')[0]}
                         value={dob}
                         onChange={(e) => handleDobChange(e.target.value)}
                         aria-label="Date of Birth"
@@ -665,6 +859,98 @@ function XMFormPage() {
                       />
                     </div>
                   </div>
+
+                  {/* Date of Joining */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label htmlFor="student-doj" className="text-xs font-black tracking-widest uppercase text-muted-foreground flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5" aria-hidden="true" /> Date of Joining <span className="text-primary-light">*</span>
+                      </label>
+                      <span className="text-[10px] text-muted-foreground">
+                        Tenure: <span className="text-primary-light font-mono font-bold">{calculateTenure(dateOfJoining)}</span>
+                      </span>
+                    </div>
+                    <input
+                      id="student-doj"
+                      name="student-doj"
+                      type="date"
+                      value={dateOfJoining}
+                      onChange={(e) => setDateOfJoining(e.target.value)}
+                      required
+                      aria-required="true"
+                      aria-label="Date of Joining"
+                      className="w-full h-12 bg-white/5 border border-white/10 rounded-xl px-4 text-sm font-medium focus:outline-none focus:border-primary transition-colors duration-150 text-white"
+                    />
+                    <p className="text-[10px] text-muted-foreground">
+                      Determines ID prefix: <strong className="text-primary-light font-mono">XMF{String(new Date(dateOfJoining || Date.now()).getFullYear()).slice(-2)}##</strong>
+                    </p>
+                  </div>
+
+                  {/* Custom / VIP ID Allocation (Admin Only) */}
+                  {isAdmin && (
+                    <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label htmlFor="custom-id-toggle" className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            id="custom-id-toggle"
+                            type="checkbox"
+                            checked={isCustomId}
+                            onChange={(e) => {
+                              setIsCustomId(e.target.checked);
+                              if (!e.target.checked) {
+                                setCustomSuffix('');
+                                setCustomIdStatus({ checking: false });
+                              }
+                            }}
+                            className="w-4 h-4 rounded bg-white/10 border-white/20 text-primary focus:ring-primary accent-primary"
+                          />
+                          <span className="text-xs font-black uppercase tracking-wider text-white flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                            Assign Custom / VIP ID
+                          </span>
+                        </label>
+                        <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-primary/20 text-primary-light border border-primary/30 flex items-center gap-1">
+                          <ShieldCheck className="w-3 h-3" /> Admin
+                        </span>
+                      </div>
+
+                      {isCustomId && (
+                        <div className="space-y-2 pt-2 border-t border-white/10">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-sm font-bold text-muted-foreground px-3 py-2 bg-white/5 rounded-xl border border-white/10">
+                              XMF{String(new Date(dateOfJoining || Date.now()).getFullYear()).slice(-2)}
+                            </span>
+                            <input
+                              type="text"
+                              maxLength={2}
+                              placeholder="e.g. ZZ"
+                              value={customSuffix}
+                              onChange={(e) => handleCustomSuffixChange(e.target.value)}
+                              className="w-20 h-10 font-mono text-center text-sm font-bold uppercase bg-white/10 border border-white/20 rounded-xl text-white focus:outline-none focus:border-primary placeholder:text-muted-foreground"
+                            />
+                            {customIdStatus.checking && (
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" /> Checking...
+                              </span>
+                            )}
+                            {!customIdStatus.checking && customIdStatus.available === true && (
+                              <span className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                                <CheckCircle2 className="w-3.5 h-3.5" /> Available
+                              </span>
+                            )}
+                            {!customIdStatus.checking && customIdStatus.available === false && (
+                              <span className="text-xs font-bold text-red-400 flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5" /> {customIdStatus.message || 'Taken'}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[10px] text-muted-foreground">
+                            2-character Crockford Base32 (0-9, A-Z excluding I, L, O, U). E.g. <strong className="text-white">00</strong>, <strong className="text-white">77</strong>, <strong className="text-white">99</strong>, <strong className="text-white">ZZ</strong>.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Phone */}
                   <div className="space-y-2">
@@ -708,6 +994,25 @@ function XMFormPage() {
                       onChange={(e) => setAddress(e.target.value)}
                       aria-label="Residential Address"
                       className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-sm font-medium focus:outline-none focus:border-primary transition-colors duration-150 text-white placeholder:text-muted-foreground resize-none"
+                    />
+                  </div>
+
+                  {/* PIN Code / Postal Code */}
+                  <div className="space-y-2">
+                    <label htmlFor="student-pincode" className="text-xs font-black tracking-widest uppercase text-muted-foreground">
+                      PIN Code (Postal Code)
+                    </label>
+                    <input
+                      id="student-pincode"
+                      name="student-pincode"
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={10}
+                      placeholder="e.g. 560001"
+                      value={pinCode}
+                      onChange={(e) => setPinCode(e.target.value.replace(/[^0-9A-Za-z -]/g, ''))}
+                      aria-label="PIN Code"
+                      className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-sm font-medium focus:outline-none focus:border-primary transition-colors duration-150 text-white placeholder:text-muted-foreground"
                     />
                   </div>
                 </div>
@@ -816,7 +1121,11 @@ function XMFormPage() {
               {/* Submit Action */}
               <div className="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="text-xs text-muted-foreground">
-                  Student will be assigned next consecutive <strong className="text-primary-light">XMF26####</strong> ID.
+                  {isAdmin && isCustomId && customSuffix.trim().length === 2 ? (
+                    <>Assigning VIP ID: <strong className="text-primary-light font-mono">XMF{String(new Date(dateOfJoining || Date.now()).getFullYear()).slice(-2)}{customSuffix.trim().toUpperCase()}</strong></>
+                  ) : (
+                    <>Student will be assigned next consecutive Crockford ID <strong className="text-primary-light font-mono">XMF{String(new Date(dateOfJoining || Date.now()).getFullYear()).slice(-2)}##</strong>.</>
+                  )}
                 </div>
                 <button
                   type="submit"
@@ -857,7 +1166,7 @@ function XMFormPage() {
                     name="directory-search"
                     type="text"
                     aria-label="Search students by name, roll number, phone, or branch"
-                    placeholder="Search by name, ID (XMF260001), phone, or branch..."
+                    placeholder="Search by name, ID (XMF2601), phone, or branch..."
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value);
@@ -1004,9 +1313,14 @@ function XMFormPage() {
                               )}
                               <div>
                                 <p className="font-bold text-white text-sm">{student.name}</p>
-                                <p className="text-[10px] text-muted-foreground">
-                                  Age: {student.age ?? 'N/A'} • Joined: {student.date_of_joining || 'Recent'}
-                                </p>
+                                <div className="text-[10px] text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                                  <span>Age: {student.age ?? 'N/A'}</span>
+                                  <span>•</span>
+                                  <span>Joined: {student.date_of_joining ? student.date_of_joining.split('T')[0] : 'Recent'}</span>
+                                  <span className="px-1.5 py-0.5 bg-primary/10 border border-primary/20 text-primary-light rounded text-[9px] font-mono font-bold">
+                                    {calculateTenure(student.date_of_joining)}
+                                  </span>
+                                </div>
                               </div>
                             </div>
                           </td>
@@ -1029,15 +1343,51 @@ function XMFormPage() {
                               <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-red-500/20 text-red-400">
                                 Deleted
                               </span>
-                            ) : student.is_reviewed ? (
-                              <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400">
-                                Verified
-                              </span>
+                            ) : isAdmin ? (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleReview(student)}
+                                title="Click to toggle verification status (Admin)"
+                                className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 cursor-pointer ${
+                                  student.is_reviewed
+                                    ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
+                                    : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
+                                }`}
+                              >
+                                {student.is_reviewed ? 'Verified' : 'Pending'}
+                              </button>
                             ) : (
-                              <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-400">
-                                Pending
+                              <span
+                                title="Only Admins can verify students"
+                                className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                                  student.is_reviewed
+                                    ? 'bg-emerald-500/20 text-emerald-400'
+                                    : 'bg-amber-500/20 text-amber-400'
+                                }`}
+                              >
+                                {student.is_reviewed ? 'Verified' : 'Pending'}
                               </span>
                             )}
+                          </td>
+                          <td className="py-4 px-6">
+                            <div className="flex flex-wrap gap-1">
+                              {(directoryCredentials[student.member_id] || []).map(c => (
+                                <span key={c.id} className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${c.type === 'qrc' ? 'bg-primary/20 text-primary-light' : 'bg-blue-500/20 text-blue-400'}`}>
+                                  {c.type === 'qrc' ? 'QRC' : 'TAG'}: {c.token}
+                                </span>
+                              ))}
+                              {canManageCredentials && (
+                                <button 
+                                  onClick={() => {
+                                    setCredentialModalTarget(student.member_id);
+                                    setCredentialModalOpen(true);
+                                  }}
+                                  className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-white/10 text-white hover:bg-white/20 transition-colors"
+                                >
+                                  + Assign
+                                </button>
+                              )}
+                            </div>
                           </td>
                           <td className="py-4 px-6 text-right">
                             <div className="flex items-center justify-end gap-2">
@@ -1114,13 +1464,29 @@ function XMFormPage() {
                           <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-red-500/20 text-red-400">
                             Deleted
                           </span>
-                        ) : student.is_reviewed ? (
-                          <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400">
-                            Verified
-                          </span>
+                        ) : isAdmin ? (
+                          <button
+                            type="button"
+                            onClick={() => handleToggleReview(student)}
+                            title="Click to toggle verification status (Admin)"
+                            className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider transition-all duration-150 active:scale-95 cursor-pointer ${
+                              student.is_reviewed
+                                ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
+                                : 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
+                            }`}
+                          >
+                            {student.is_reviewed ? 'Verified' : 'Pending'}
+                          </button>
                         ) : (
-                          <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-400">
-                            Pending
+                          <span
+                            title="Only Admins can verify students"
+                            className={`px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                              student.is_reviewed
+                                ? 'bg-emerald-500/20 text-emerald-400'
+                                : 'bg-amber-500/20 text-amber-400'
+                            }`}
+                          >
+                            {student.is_reviewed ? 'Verified' : 'Pending'}
                           </span>
                         )}
                       </div>
@@ -1141,6 +1507,14 @@ function XMFormPage() {
                         <div>
                           <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 block">Age</span>
                           <span className="text-white">{student.age ? `${student.age} yrs` : 'N/A'}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 block">Joined</span>
+                          <span className="font-mono text-white text-[11px]">{student.date_of_joining ? student.date_of_joining.split('T')[0] : 'Recent'}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 block">Member Since</span>
+                          <span className="text-primary-light font-mono font-bold text-[11px]">{calculateTenure(student.date_of_joining)}</span>
                         </div>
                       </div>
 
@@ -1260,6 +1634,13 @@ function XMFormPage() {
               </div>
 
               <form onSubmit={handleSaveEdit} className="space-y-4">
+                {editFormError && (
+                  <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-xs flex items-center gap-2.5" role="alert">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>{editFormError}</span>
+                  </div>
+                )}
+
                 <div className="space-y-2">
                   <label htmlFor="edit-name" className="text-xs font-black uppercase tracking-widest text-muted-foreground">Full Name</label>
                   <input
@@ -1282,6 +1663,7 @@ function XMFormPage() {
                       id="edit-dob"
                       name="edit-dob"
                       type="date"
+                      max={new Date().toISOString().split('T')[0]}
                       value={editForm.dob}
                       aria-label="Date of Birth"
                       onChange={(e) => {
@@ -1312,6 +1694,26 @@ function XMFormPage() {
                       className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white focus:outline-none focus:border-primary transition-colors duration-150"
                     />
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label htmlFor="edit-doj" className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" aria-hidden="true" /> Date of Joining
+                    </label>
+                    <span className="text-[10px] text-muted-foreground">
+                      Tenure: <span className="text-primary-light font-mono font-bold">{calculateTenure(editForm.date_of_joining)}</span>
+                    </span>
+                  </div>
+                  <input
+                    id="edit-doj"
+                    name="edit-doj"
+                    type="date"
+                    value={editForm.date_of_joining}
+                    aria-label="Date of Joining"
+                    onChange={(e) => setEditForm({ ...editForm, date_of_joining: e.target.value })}
+                    className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white focus:outline-none focus:border-primary transition-colors duration-150"
+                  />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
@@ -1362,6 +1764,54 @@ function XMFormPage() {
                     onChange={(e) => setEditForm({ ...editForm, address: e.target.value })}
                     className="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-primary resize-none transition-colors duration-150"
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <label htmlFor="edit-pincode" className="text-xs font-black uppercase tracking-widest text-muted-foreground">PIN Code</label>
+                  <input
+                    id="edit-pincode"
+                    name="edit-pincode"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="e.g. 560001"
+                    value={editForm.pin_code}
+                    aria-label="PIN Code"
+                    onChange={(e) => setEditForm({ ...editForm, pin_code: e.target.value.replace(/[^0-9A-Za-z -]/g, '') })}
+                    className="w-full h-11 bg-white/5 border border-white/10 rounded-xl px-4 text-xs text-white focus:outline-none focus:border-primary transition-colors duration-150"
+                  />
+                </div>
+
+                {/* Review / Verification Status */}
+                <div className="flex items-center justify-between p-3.5 rounded-xl bg-white/5 border border-white/10">
+                  <div>
+                    <span className="text-xs font-bold text-white block">Verification Status</span>
+                    <span className="text-[10px] text-muted-foreground">Mark student intake as verified by instructor</span>
+                  </div>
+                  {isAdmin ? (
+                    <button
+                      type="button"
+                      onClick={() => setEditForm(prev => ({ ...prev, is_reviewed: !prev.is_reviewed }))}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors duration-150 cursor-pointer ${
+                        editForm.is_reviewed
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                          : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      }`}
+                    >
+                      {editForm.is_reviewed ? 'Verified' : 'Pending Review'}
+                    </button>
+                  ) : (
+                    <span
+                      title="Only Admins can change verification status"
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider ${
+                        editForm.is_reviewed
+                          ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                          : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                      }`}
+                    >
+                      {editForm.is_reviewed ? 'Verified' : 'Pending Review'}
+                    </span>
+                  )}
                 </div>
 
                 {/* Photo Update */}
@@ -1453,5 +1903,14 @@ function XMFormPage() {
 
       </div>
     </div>
+      {credentialModalTarget && (
+        <CredentialAssignmentModal 
+          isOpen={isCredentialModalOpen}
+          onClose={() => { setCredentialModalOpen(false); setCredentialModalTarget(null); }}
+          memberId={credentialModalTarget}
+          onAssigned={() => {}}
+        />
+      )}
+    </>
   );
 }
