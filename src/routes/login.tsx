@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
-import { PatternLock } from '#/components/PatternLock';
+import { PinPad } from '#/components/PinPad';
 import { supabase } from '#/lib/supabase';
 
 export const Route = createFileRoute('/login')({
@@ -9,51 +9,39 @@ export const Route = createFileRoute('/login')({
 
 function Login() {
   const [identifier, setIdentifier] = useState('');
-  const [pattern, setPattern] = useState<number[]>([]);
-  const [step, setStep] = useState<'identifier' | 'pattern'>('identifier');
+  const [step, setStep] = useState<'identifier' | 'pin'>('identifier');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleIdentifierSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!identifier.trim()) return;
-    setStep('pattern');
+    setStep('pin');
     setError('');
   };
 
-  const handlePatternComplete = async (drawnPattern: number[]) => {
-    setPattern(drawnPattern);
-    setLoading(true);
+  const handlePinComplete = async (pin: string) => {
     setError('');
 
-    if (drawnPattern.length < 4) {
-      setError("Pattern must have at least 4 dots.");
-      setPattern([]);
-      setLoading(false);
-      return;
-    }
+    
 
-    const patternStr = drawnPattern.join('');
+    
 
     const { data, error: signInError } = await supabase
       .from('members')
       .select('*')
       .eq('member_id', identifier.trim().toUpperCase())
-      .eq('pattern_hash', patternStr)
+      .eq('password', pin)
       .maybeSingle();
 
     if (signInError) {
       console.error(signInError);
       setError("Login failed. Please try again.");
-      setLoading(false);
       return;
     }
 
     if (!data) {
-      setError("Invalid Member ID or Pattern");
-      setPattern([]);
-      setLoading(false);
+      setError("Invalid Member ID or PIN");
       return;
     }
 
@@ -62,10 +50,9 @@ function Login() {
     
     // Convert Supabase object to match what app expects
     const safeData = {
-      id: data.id,
       member_id: data.member_id,
       name: data.name,
-      role: data.role || 'member'
+      role: data.role || 'student'
     };
 
     localStorage.setItem('xmf_member', JSON.stringify(safeData));
@@ -74,7 +61,7 @@ function Login() {
     if (safeData.role === 'admin') {
       navigate({ to: '/admin' });
     } else {
-      navigate({ to: `/member/${safeData.member_id}` });
+      navigate({ to: '/member/$memberId', params: { memberId: safeData.member_id } });
     }
   };
 
@@ -86,7 +73,7 @@ function Login() {
           <p className="text-muted-foreground mt-2">
             {step === 'identifier' 
               ? 'Enter your Member ID' 
-              : 'Draw your secure pattern'}
+              : 'Enter your 5-digit PIN'}
           </p>
         </div>
 
@@ -101,7 +88,7 @@ function Login() {
             <div>
               <input
                 type="text"
-                placeholder="e.g. XC260001"
+                placeholder="e.g. XMF2601"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value.toUpperCase())}
                 className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 text-center text-lg ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
@@ -122,10 +109,7 @@ function Login() {
               {identifier}
             </div>
             
-            <PatternLock 
-              onComplete={handlePatternComplete} 
-              error={!!error} 
-            />
+            <PinPad onComplete={handlePinComplete} error={error} />
 
             <div className="flex justify-between w-full">
               <button 
@@ -141,7 +125,7 @@ function Login() {
                 }}
                 className="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors text-muted-foreground hover:text-foreground h-10 px-4 py-2 underline underline-offset-4"
               >
-                Forgot Pattern?
+                Forgot PIN?
               </button>
             </div>
           </div>

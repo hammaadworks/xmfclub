@@ -1,14 +1,11 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { 
   Dumbbell, 
   Swords, 
   Zap, 
-  ChevronRight, 
   Check, 
-  Plus, 
   Trash2,
-  Info,
   Clock,
   Calendar,
   ArrowRight,
@@ -16,7 +13,6 @@ import {
   Trophy,
   Loader2
 } from 'lucide-react'
-import { fetchApi } from '../../lib/api'
 
 export const Route = createFileRoute('/training/')({
   component: CurriculumPage,
@@ -51,12 +47,11 @@ const CATEGORIES = [
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 function CurriculumPage() {
-  const navigate = useNavigate();
   const [modules, setModules] = useState<Module[]>([]);
   const [inventory, setInventory] = useState<InventorySlot[]>([]);
   const [selectedCategory, setSelectedCategory] = useState(CATEGORIES[0].id);
   const [selectedModules, setSelectedModules] = useState<Module[]>([]);
-  const [selectedSlots, setSelectedSlots] = useState<Record<string, InventorySlot>>({});
+  const [selectedSlots, setSelectedSlots] = useState<Record<string, InventorySlot | undefined>>({});
   const [loading, setLoading] = useState(true);
   const [enrolling, setEnrolling] = useState(false);
 
@@ -92,9 +87,13 @@ function CurriculumPage() {
 
   const handleEnroll = async () => {
     if (selectedModules.length === 0) return;
-    
-    // Feature not fully implemented for MVP demo, show Contact Modal
-    window.dispatchEvent(new CustomEvent('showContactModal'));
+    setEnrolling(true);
+    try {
+      // Feature not fully implemented for MVP demo, show Contact Modal
+      window.dispatchEvent(new CustomEvent('showContactModal'));
+    } finally {
+      setEnrolling(false);
+    }
   };
 
   const toggleModule = (module: Module) => {
@@ -298,17 +297,20 @@ function CurriculumPage() {
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
-                      {selectedSlots[m.id] ? (
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase">
-                          <Calendar className="w-3 h-3" />
-                          {DAYS[selectedSlots[m.id].day_of_week]} • {selectedSlots[m.id].start_time.slice(0, 5)}
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2 text-[10px] font-bold text-destructive uppercase animate-pulse">
-                          <AlertCircle className="w-3 h-3" />
-                          Select Time Slot
-                        </div>
-                      )}
+                      {(() => {
+                        const slot = selectedSlots[m.id];
+                        return slot ? (
+                          <div className="flex items-center gap-2 text-[10px] font-bold text-primary uppercase">
+                            <Calendar className="w-3 h-3" />
+                            {DAYS[slot.day_of_week]} • {slot.start_time.slice(0, 5)}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 text-[10px] font-bold text-destructive uppercase animate-pulse">
+                            <AlertCircle className="w-3 h-3" />
+                            Select Time Slot
+                          </div>
+                        );
+                      })()}
                     </div>
                   ))}
                 </div>

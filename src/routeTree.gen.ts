@@ -9,8 +9,10 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as XmformRouteImport } from './routes/xmform'
 import { Route as StoreRouteImport } from './routes/store'
 import { Route as ResourcesRouteImport } from './routes/resources'
+import { Route as ProposalRouteImport } from './routes/proposal'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HallOfFameRouteImport } from './routes/hall-of-fame'
 import { Route as EventsRouteImport } from './routes/events'
@@ -18,8 +20,15 @@ import { Route as ConnectRouteImport } from './routes/connect'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TrainingIndexRouteImport } from './routes/training/index'
 import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as TagTokenRouteImport } from './routes/tag/$token'
+import { Route as QrcTokenRouteImport } from './routes/qrc/$token'
 import { Route as MemberMemberIdRouteImport } from './routes/member/$memberId'
 
+const XmformRoute = XmformRouteImport.update({
+  id: '/xmform',
+  path: '/xmform',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StoreRoute = StoreRouteImport.update({
   id: '/store',
   path: '/store',
@@ -28,6 +37,11 @@ const StoreRoute = StoreRouteImport.update({
 const ResourcesRoute = ResourcesRouteImport.update({
   id: '/resources',
   path: '/resources',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProposalRoute = ProposalRouteImport.update({
+  id: '/proposal',
+  path: '/proposal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -65,6 +79,16 @@ const AdminIndexRoute = AdminIndexRouteImport.update({
   path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TagTokenRoute = TagTokenRouteImport.update({
+  id: '/tag/$token',
+  path: '/tag/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QrcTokenRoute = QrcTokenRouteImport.update({
+  id: '/qrc/$token',
+  path: '/qrc/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MemberMemberIdRoute = MemberMemberIdRouteImport.update({
   id: '/member/$memberId',
   path: '/member/$memberId',
@@ -77,9 +101,13 @@ export interface FileRoutesByFullPath {
   '/events': typeof EventsRoute
   '/hall-of-fame': typeof HallOfFameRoute
   '/login': typeof LoginRoute
+  '/proposal': typeof ProposalRoute
   '/resources': typeof ResourcesRoute
   '/store': typeof StoreRoute
+  '/xmform': typeof XmformRoute
   '/member/$memberId': typeof MemberMemberIdRoute
+  '/qrc/$token': typeof QrcTokenRoute
+  '/tag/$token': typeof TagTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/training/': typeof TrainingIndexRoute
 }
@@ -89,9 +117,13 @@ export interface FileRoutesByTo {
   '/events': typeof EventsRoute
   '/hall-of-fame': typeof HallOfFameRoute
   '/login': typeof LoginRoute
+  '/proposal': typeof ProposalRoute
   '/resources': typeof ResourcesRoute
   '/store': typeof StoreRoute
+  '/xmform': typeof XmformRoute
   '/member/$memberId': typeof MemberMemberIdRoute
+  '/qrc/$token': typeof QrcTokenRoute
+  '/tag/$token': typeof TagTokenRoute
   '/admin': typeof AdminIndexRoute
   '/training': typeof TrainingIndexRoute
 }
@@ -102,9 +134,13 @@ export interface FileRoutesById {
   '/events': typeof EventsRoute
   '/hall-of-fame': typeof HallOfFameRoute
   '/login': typeof LoginRoute
+  '/proposal': typeof ProposalRoute
   '/resources': typeof ResourcesRoute
   '/store': typeof StoreRoute
+  '/xmform': typeof XmformRoute
   '/member/$memberId': typeof MemberMemberIdRoute
+  '/qrc/$token': typeof QrcTokenRoute
+  '/tag/$token': typeof TagTokenRoute
   '/admin/': typeof AdminIndexRoute
   '/training/': typeof TrainingIndexRoute
 }
@@ -116,9 +152,13 @@ export interface FileRouteTypes {
     | '/events'
     | '/hall-of-fame'
     | '/login'
+    | '/proposal'
     | '/resources'
     | '/store'
+    | '/xmform'
     | '/member/$memberId'
+    | '/qrc/$token'
+    | '/tag/$token'
     | '/admin/'
     | '/training/'
   fileRoutesByTo: FileRoutesByTo
@@ -128,9 +168,13 @@ export interface FileRouteTypes {
     | '/events'
     | '/hall-of-fame'
     | '/login'
+    | '/proposal'
     | '/resources'
     | '/store'
+    | '/xmform'
     | '/member/$memberId'
+    | '/qrc/$token'
+    | '/tag/$token'
     | '/admin'
     | '/training'
   id:
@@ -140,9 +184,13 @@ export interface FileRouteTypes {
     | '/events'
     | '/hall-of-fame'
     | '/login'
+    | '/proposal'
     | '/resources'
     | '/store'
+    | '/xmform'
     | '/member/$memberId'
+    | '/qrc/$token'
+    | '/tag/$token'
     | '/admin/'
     | '/training/'
   fileRoutesById: FileRoutesById
@@ -153,15 +201,26 @@ export interface RootRouteChildren {
   EventsRoute: typeof EventsRoute
   HallOfFameRoute: typeof HallOfFameRoute
   LoginRoute: typeof LoginRoute
+  ProposalRoute: typeof ProposalRoute
   ResourcesRoute: typeof ResourcesRoute
   StoreRoute: typeof StoreRoute
+  XmformRoute: typeof XmformRoute
   MemberMemberIdRoute: typeof MemberMemberIdRoute
+  QrcTokenRoute: typeof QrcTokenRoute
+  TagTokenRoute: typeof TagTokenRoute
   AdminIndexRoute: typeof AdminIndexRoute
   TrainingIndexRoute: typeof TrainingIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/xmform': {
+      id: '/xmform'
+      path: '/xmform'
+      fullPath: '/xmform'
+      preLoaderRoute: typeof XmformRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/store': {
       id: '/store'
       path: '/store'
@@ -174,6 +233,13 @@ declare module '@tanstack/react-router' {
       path: '/resources'
       fullPath: '/resources'
       preLoaderRoute: typeof ResourcesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/proposal': {
+      id: '/proposal'
+      path: '/proposal'
+      fullPath: '/proposal'
+      preLoaderRoute: typeof ProposalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -225,6 +291,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/tag/$token': {
+      id: '/tag/$token'
+      path: '/tag/$token'
+      fullPath: '/tag/$token'
+      preLoaderRoute: typeof TagTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/qrc/$token': {
+      id: '/qrc/$token'
+      path: '/qrc/$token'
+      fullPath: '/qrc/$token'
+      preLoaderRoute: typeof QrcTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/member/$memberId': {
       id: '/member/$memberId'
       path: '/member/$memberId'
@@ -241,9 +321,13 @@ const rootRouteChildren: RootRouteChildren = {
   EventsRoute: EventsRoute,
   HallOfFameRoute: HallOfFameRoute,
   LoginRoute: LoginRoute,
+  ProposalRoute: ProposalRoute,
   ResourcesRoute: ResourcesRoute,
   StoreRoute: StoreRoute,
+  XmformRoute: XmformRoute,
   MemberMemberIdRoute: MemberMemberIdRoute,
+  QrcTokenRoute: QrcTokenRoute,
+  TagTokenRoute: TagTokenRoute,
   AdminIndexRoute: AdminIndexRoute,
   TrainingIndexRoute: TrainingIndexRoute,
 }
