@@ -91,7 +91,7 @@ function XMFormPage() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
-  // Auth state for Admin & Staff capabilities
+  // Auth state for Admin & Volunteer capabilities
   const currentUser = useMemo(() => {
     try {
       const raw = localStorage.getItem('xmf_member');
@@ -101,8 +101,9 @@ function XMFormPage() {
     }
   }, []);
   const isAdmin = currentUser?.role === 'admin';
-  const isStaff = currentUser?.role === 'admin' || currentUser?.role === 'volunteer' || currentUser?.role === 'instructor';
-  const canManageCredentials = currentUser?.role === 'admin' || currentUser?.role === 'volunteer';
+  const isVolunteer = currentUser?.role === 'volunteer';
+  const canAccessStudents = isAdmin || isVolunteer;
+  const canManageCredentials = isAdmin || isVolunteer;
 
   // Custom / VIP ID state (Admin-only feature)
   const [isCustomId, setIsCustomId] = useState(false);
@@ -184,13 +185,14 @@ function XMFormPage() {
       }
     }
     loadSettings();
-    if (isStaff) {
+    if (canAccessStudents) {
       fetchStudents();
     }
-  }, [isStaff]);
+  }, [canAccessStudents]);
 
-  // Fetch Directory Students (Staff only)
+  // Fetch Directory Students (Admins & Volunteers only)
   const fetchStudents = async () => {
+    if (!canAccessStudents) return;
     setLoadingDirectory(true);
     try {
       const { data, error } = await supabase
@@ -230,10 +232,14 @@ function XMFormPage() {
   };
 
   useEffect(() => {
-    if (activeTab === 'directory' && isStaff) {
-      fetchStudents();
+    if (activeTab === 'directory') {
+      if (canAccessStudents) {
+        fetchStudents();
+      } else {
+        setActiveTab('intake');
+      }
     }
-  }, [activeTab, isStaff]);
+  }, [activeTab, canAccessStudents]);
 
   // Compute Age from DOB
   const handleDobChange = (dobVal: string) => {
@@ -540,8 +546,9 @@ function XMFormPage() {
     }
   };
 
-  // Soft Delete Handler
+  // Soft Delete Handler (Admins & Volunteers only)
   const handleSoftDelete = async (student: StudentMember) => {
+    if (!canAccessStudents) return;
     try {
       const { error } = await supabase
         .from('members')
@@ -571,8 +578,9 @@ function XMFormPage() {
     }
   };
 
-  // Undo Soft Delete
+  // Undo Soft Delete (Admins & Volunteers only)
   const handleUndoDelete = async (studentId: string) => {
+    if (!canAccessStudents) return;
     try {
       const { error } = await supabase
         .from('members')
@@ -593,8 +601,9 @@ function XMFormPage() {
     }
   };
 
-  // Open Edit Modal
+  // Open Edit Modal (Admins & Volunteers only)
   const openEditModal = (student: StudentMember) => {
+    if (!canAccessStudents) return;
     setEditingStudent(student);
     setEditFormError(null);
     setEditForm({
@@ -638,10 +647,10 @@ function XMFormPage() {
     }
   };
 
-  // Save Edit
+  // Save Edit (Admins & Volunteers only)
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingStudent) return;
+    if (!canAccessStudents || !editingStudent) return;
     setEditFormError(null);
 
     const formattedName = formatName(editForm.name);
@@ -759,8 +768,8 @@ function XMFormPage() {
               </p>
             </div>
 
-            {/* Staff / Admin Controls */}
-            {isStaff && (
+            {/* Admin & Volunteer Roster Controls */}
+            {canAccessStudents ? (
               <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] uppercase font-mono text-muted-foreground">
                   <ShieldCheck className="w-3.5 h-3.5 text-primary-light" />
@@ -801,7 +810,12 @@ function XMFormPage() {
                   </button>
                 </div>
               </div>
-            )}
+            ) : currentUser ? (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10 text-[10px] uppercase font-mono text-muted-foreground shrink-0 self-start sm:self-end">
+                <ShieldCheck className="w-3.5 h-3.5 text-primary-light" />
+                <span>Logged in as <strong className="text-white capitalize">{currentUser.role || 'Member'}</strong></span>
+              </div>
+            ) : null}
           </div>
 
           {/* ========================================================================= */}
@@ -1508,9 +1522,9 @@ function XMFormPage() {
           )}
 
           {/* ========================================================================= */}
-          {/* TAB 2: STAFF DIRECTORY & ROSTER (RESTRICTED TO STAFF)                    */}
+          {/* TAB 2: ROSTER & DIRECTORY (RESTRICTED TO ADMINS & VOLUNTEERS)             */}
           {/* ========================================================================= */}
-          {activeTab === 'directory' && isStaff && (
+          {activeTab === 'directory' && canAccessStudents && (
             <div id="panel-directory" role="tabpanel" aria-labelledby="tab-directory" className="space-y-6">
               
               {/* Search and Filters Bar */}
@@ -1971,9 +1985,9 @@ function XMFormPage() {
           )}
 
           {/* ========================================================================= */}
-          {/* EDIT MODAL (STAFF)                                                       */}
+          {/* EDIT MODAL (ADMINS & VOLUNTEERS)                                          */}
           {/* ========================================================================= */}
-          {editingStudent && (
+          {editingStudent && canAccessStudents && (
             <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="edit-student-title">
               <div className="glass-card max-w-xl w-full rounded-3xl border border-white/20 p-6 sm:p-8 space-y-6 relative my-8">
                 <div className="flex items-center justify-between border-b border-white/10 pb-4">
@@ -2247,7 +2261,7 @@ function XMFormPage() {
           )}
 
           {/* SOFT-DELETE UNDO TOAST BANNER */}
-          {undoToast.show && (
+          {undoToast.show && canAccessStudents && (
             <div className="fixed bottom-6 right-6 z-50 bg-black/90 text-white border border-white/20 p-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-in slide-in-from-bottom duration-300" role="status" aria-live="polite">
               <AlertCircle className="w-5 h-5 text-amber-400 flex-shrink-0" />
               <div className="text-xs">

@@ -2,6 +2,7 @@ import { Link } from '@tanstack/react-router'
 import {
   BookOpen,
   Calendar,
+  LogOut,
   MessageSquare,
   ShieldCheck,
   ShoppingBag,
@@ -124,25 +125,43 @@ export default function Header() {
 
         <div className="flex items-center gap-4">
           {member ? (
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               {member.role === 'admin' ? (
                 <Link
                   to="/admin"
-                  className="px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black tracking-widest text-[10px] rounded-full uppercase transition-colors duration-150 flex items-center gap-2"
+                  className="px-4 py-2 bg-primary/10 hover:bg-primary/20 border border-primary/30 text-primary-light font-black tracking-widest text-[10px] rounded-full uppercase transition-all flex items-center gap-1.5 shadow-sm"
+                  title="Admin Command Center"
                 >
-                  <ShieldCheck className="w-3 h-3" />
-                  {member.name.split(' ')[0]}
+                  <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+                  <span>Admin</span>
                 </Link>
-              ) : (
-                <Link
-                  to="/member/$memberId"
-                  params={{ memberId: member.member_id }}
-                  className="px-6 py-2.5 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black tracking-widest text-[10px] rounded-full uppercase transition-colors duration-150 flex items-center gap-2"
-                >
-                  <User className="w-3 h-3" />
-                  {member.name.split(' ')[0]}
-                </Link>
-              )}
+              ) : null}
+
+              <Link
+                to="/member/$memberId"
+                params={{ memberId: member.member_id }}
+                className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-black tracking-widest text-[10px] rounded-full uppercase transition-all flex items-center gap-1.5"
+                title={`Logged in as ${member.name} (${member.member_id})`}
+              >
+                <User className="w-3.5 h-3.5 text-primary-light" />
+                <span>{member.name.split(' ')[0]}</span>
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => {
+                  localStorage.removeItem('xmf_member')
+                  window.dispatchEvent(new Event('auth_change'))
+                  setMember(null)
+                  setIsOpen(false)
+                  window.location.href = '/login'
+                }}
+                className="p-2 sm:px-3 sm:py-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-400 hover:text-red-300 font-black tracking-widest text-[10px] rounded-full uppercase transition-all flex items-center gap-1.5 active:scale-95"
+                title="Sign Out of Session"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Logout</span>
+              </button>
             </div>
           ) : (
             <div className="flex items-center gap-4">
@@ -159,13 +178,104 @@ export default function Header() {
 
       {/* Mobile Menu */}
       <div
-        className={`fixed inset-0 bg-background transition-opacity duration-300 lg:hidden overflow-y-auto z-40 pt-32 pb-10 ${
+        className={`fixed inset-0 bg-background/95 backdrop-blur-xl transition-opacity duration-300 lg:hidden overflow-y-auto z-40 pt-28 pb-10 ${
           isOpen
             ? 'opacity-100 pointer-events-auto'
             : 'opacity-0 pointer-events-none'
         }`}
       >
-        <nav className="flex flex-col items-center justify-start min-h-full gap-8 px-6">
+        <div className="flex flex-col items-center justify-start min-h-full gap-6 px-6 max-w-sm mx-auto">
+          {/* Mobile Auth Profile Card */}
+          {member ? (
+            <div className="w-full p-4 rounded-2xl bg-white/[0.04] border border-white/10 space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary-light font-black text-sm">
+                  {member.name?.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-black uppercase text-white truncate">
+                    {member.name}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono text-primary-light font-bold">
+                      {member.member_id}
+                    </span>
+                    <span className="text-white/20">•</span>
+                    <span className="text-[10px] font-mono text-muted-foreground uppercase">
+                      {member.role || 'Student'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-1 border-t border-white/10">
+                <Link
+                  to="/member/$memberId"
+                  params={{ memberId: member.member_id }}
+                  onClick={() => setIsOpen(false)}
+                  className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/15 text-white text-xs font-bold uppercase tracking-wider text-center flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <User className="w-3.5 h-3.5" />
+                  My Pass
+                </Link>
+                {member.role === 'admin' ? (
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsOpen(false)}
+                    className="py-2.5 px-3 rounded-xl bg-primary/20 hover:bg-primary/30 text-primary-light text-xs font-bold uppercase tracking-wider text-center flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    Admin
+                  </Link>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      localStorage.removeItem('xmf_member')
+                      window.dispatchEvent(new Event('auth_change'))
+                      setMember(null)
+                      setIsOpen(false)
+                      window.location.href = '/login'
+                    }}
+                    className="py-2.5 px-3 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-400 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    Sign Out
+                  </button>
+                )}
+              </div>
+
+              {member.role === 'admin' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    localStorage.removeItem('xmf_member')
+                    window.dispatchEvent(new Event('auth_change'))
+                    setMember(null)
+                    setIsOpen(false)
+                    window.location.href = '/login'
+                  }}
+                  className="w-full py-2.5 px-3 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-400 text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  Sign Out of Dojo
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="w-full">
+              <Link
+                to="/login"
+                onClick={() => setIsOpen(false)}
+                className="w-full py-3.5 px-4 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-primary/20 transition-all"
+              >
+                <User className="w-4 h-4" />
+                Member Portal Login
+              </Link>
+            </div>
+          )}
+
+          <nav className="flex flex-col items-center justify-start w-full gap-5 pt-2 border-t border-white/10">
           <SidebarLink
             to="/"
             icon={<Trophy size={20} />}
@@ -215,6 +325,7 @@ export default function Header() {
             onClick={() => setIsOpen(false)}
           />
         </nav>
+        </div>
       </div>
     </header>
   )

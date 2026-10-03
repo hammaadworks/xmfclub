@@ -1,11 +1,15 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { CredentialsHub } from '#/components/credentials/CredentialsHub'
+import { MemberCredentialControls } from '#/components/credentials/MemberCredentialControls'
+import { QuickCredentialModal } from '#/components/credentials/QuickCredentialModal'
+import { MemberRosterCard, type MemberRosterItem } from '#/components/admin/MemberRosterCard'
 import { supabase } from '#/lib/supabase'
 import { 
   Settings, Users, Calendar, Plus, Edit, Lock,
   ShieldCheck, Loader2, Search, QrCode, LogOut, Trash2, Undo2, UserPlus,
-  MapPin, Link as LinkIcon, AlertTriangle, ChevronDown, ChevronUp, ExternalLink
+  MapPin, Link as LinkIcon, AlertTriangle, ChevronDown, ChevronUp, ExternalLink,
+  Radio
 } from 'lucide-react'
 import { CustomSelect } from '#/components/CustomSelect'
 import { Scanner } from '@yudiel/react-qr-scanner'
@@ -47,13 +51,17 @@ function AdminDashboard() {
   const [isScanning, setIsScanning] = useState(false)
   
   // Members State
-  const [members, setMembers] = useState<any[]>([])
+  const [members, setMembers] = useState<MemberRosterItem[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [feeFilter, setFeeFilter] = useState('All')
   const [remarkFilter, setRemarkFilter] = useState('All')
   const [reviewFilter, setReviewFilter] = useState<'All' | 'Pending' | 'Reviewed'>('All')
   const [statusFilter, setStatusFilter] = useState<'Active' | 'Archived' | 'All'>('Active')
   const [savingMember, setSavingMember] = useState(false)
+
+  // Quick Credential Modal State
+  const [quickCredMember, setQuickCredMember] = useState<MemberRosterItem | null>(null)
+  const [showQuickCredModal, setShowQuickCredModal] = useState(false)
 
   // Edit Member Modal
   const [showEditModal, setShowEditModal] = useState(false)
@@ -82,7 +90,7 @@ function AdminDashboard() {
     blood_group: '',
     is_reviewed: false
   })
-  const [expandedSection, setExpandedSection] = useState<'personal' | 'club' | 'financials'>('personal')
+  const [expandedSection, setExpandedSection] = useState<'personal' | 'club' | 'financials' | 'credentials' | null>('personal')
 
   // Events State
   const [events, setEvents] = useState<any[]>([])
@@ -208,13 +216,81 @@ function AdminDashboard() {
 
   const loadMembers = async () => {
     setLoading(true)
-    const { data } = await supabase
-      .from('members')
-      .select('*')
-      .order('created_at', { ascending: false })
-    
-    if (data) setMembers(data)
-    setLoading(false)
+    try {
+      const { data, error } = await supabase
+        .from('members')
+        .select(`
+          *,
+          credential_assignments!credential_assignments_member_id_fkey (
+            id,
+            credential_id,
+            assigned_at,
+            unassigned_at,
+            credentials (
+              id,
+              token,
+              type,
+              status,
+              physical_uid
+            )
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error batch loading credentials with members:', error);
+        // Fallback to simple members select if join syntax fails
+        const { data: fallback } = await supabase
+          .from('members')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (fallback) {
+          setMembers(fallback.map((m: any) => ({ ...m, assignedQrcs: [], assignedTags: [] })));
+        }
+      } else if (data) {
+        const enriched: MemberRosterItem[] = data.map((m: any) => {
+          const activeAssignments = (m.credential_assignments || []).filter(
+            (a: any) => !a.unassigned_at && a.credentials
+          );
+          const qrcs: any[] = [];
+          const tags: any[] = [];
+
+          for (const a of activeAssignments) {
+            const credItem = {
+              id: a.credentials.id,
+              assignmentId: a.id,
+              token: a.credentials.token,
+              type: a.credentials.type,
+              status: a.credentials.status,
+              physical_uid: a.credentials.physical_uid,
+              assigned_at: a.assigned_at,
+            };
+            if (a.credentials.type === 'qrc') qrcs.push(credItem);
+            else if (a.credentials.type === 'tag') tags.push(credItem);
+          }
+
+          return {
+            ...m,
+            assignedQrcs: qrcs,
+            assignedTags: tags,
+          };
+        });
+
+        setMembers(enriched);
+
+        // Keep quick credential modal member state in sync if open
+        if (quickCredMember) {
+          const updatedTarget = enriched.find((m) => m.member_id === quickCredMember.member_id);
+          if (updatedTarget) {
+            setQuickCredMember(updatedTarget);
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load members:', err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   const loadEvents = async () => {
@@ -643,112 +719,209 @@ function AdminDashboard() {
               {loading ? (
                 <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
               ) : (
-                <div className="glass-card overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                      <thead className="bg-white/5 border-b border-white/10 text-xs uppercase tracking-widest font-black text-muted-foreground">
-                        <tr>
-                          <th className="px-6 py-4">Member ID</th>
-                          <th className="px-6 py-4">Name</th>
-                          <th className="px-6 py-4">Belt / Role</th>
-                          <th className="px-6 py-4">Verification</th>
-                          <th className="px-6 py-4">Fees & Status</th>
-                          <th className="px-6 py-4">Remark</th>
-                          <th className="px-6 py-4 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/5">
-                        {filteredMembers.map(m => (
-                          <tr key={m.member_id} className={`hover:bg-white/5 transition-colors ${m.is_deleted ? 'opacity-60 bg-white/[0.02]' : ''}`}>
-                            <td className="px-6 py-4 font-mono font-bold text-primary">
-                              <button 
-                                onClick={() => navigate({ to: `/member/${m.member_id}` })}
-                                className="hover:underline cursor-pointer flex items-center gap-2"
-                              >
-                                {m.member_id}
-                                <span className="p-1 bg-white/5 rounded"><ExternalLink className="w-3 h-3" /></span>
-                              </button>
-                            </td>
-                            <td className="px-6 py-4 font-bold">
-                              <div className="flex items-center gap-2">
-                                <span>{m.name}</span>
-                                {m.blood_group && (
-                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-500/10 border border-red-500/20 text-red-400" title={`Blood Group: ${m.blood_group}`}>
-                                    {m.blood_group}
-                                  </span>
-                                )}
-                                {m.is_deleted && (
-                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-red-500/20 text-red-400">
-                                    Archived
-                                  </span>
-                                )}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex flex-col gap-1">
-                                <span className="font-bold">{m.belt}</span>
-                                {m.role === 'admin' && <span className="text-[10px] text-red-400 uppercase tracking-widest font-black">Admin</span>}
-                                {m.role === 'instructor' && <span className="text-[10px] text-primary-light uppercase tracking-widest font-black">Instructor</span>}
-                                {m.role === 'volunteer' && <span className="text-[10px] text-amber-400 uppercase tracking-widest font-black">Volunteer</span>}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <button
-                                onClick={() => handleToggleReview(m)}
-                                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                                  m.is_reviewed
-                                    ? 'bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20'
-                                    : 'bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
-                                }`}
-                                title={m.is_reviewed ? 'Click to mark Pending Review' : 'Click to Verify Member'}
-                              >
-                                <ShieldCheck className="w-3 h-3" />
-                                {m.is_reviewed ? 'Verified' : 'Pending'}
-                              </button>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex flex-col items-start gap-1">
-                                <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest ${m.member_status === 'Active' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
-                                  {m.member_status}
-                                </span>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${m.fee_status === 'Paid' ? 'text-green-500' : 'text-red-500 bg-red-500/10'}`}>
-                                  {m.fee_status === 'Paid' ? 'Paid' : `₹${m.pending_amount || 0} Due`}
-                                </span>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className={`w-3 h-3 rounded-full ${m.instructor_remarks_color === 'red' ? 'bg-red-500' : m.instructor_remarks_color === 'yellow' ? 'bg-yellow-500' : 'bg-green-500'}`} title={m.instructor_remarks} />
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <button 
-                                  onClick={() => handleEditClick(m)}
-                                  className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-muted-foreground hover:text-white inline-block"
-                                  title="Edit Member"
-                                >
-                                  <Edit className="w-4 h-4" />
-                                </button>
-                                <button 
-                                  onClick={() => handleToggleArchiveMember(m)}
-                                  className={`p-2 rounded-lg transition-colors inline-block ${
-                                    m.is_deleted 
-                                      ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20' 
-                                      : 'bg-red-500/10 text-red-500 hover:bg-red-500/20'
-                                  }`}
-                                  title={m.is_deleted ? 'Restore Member' : 'Archive Member'}
-                                >
-                                  {m.is_deleted ? <Undo2 className="w-4 h-4" /> : <Trash2 className="w-4 h-4" />}
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                <div className="space-y-4">
+                  {/* Mobile Responsive Roster Cards */}
+                  <div className="grid grid-cols-1 gap-3.5 md:hidden">
+                    {filteredMembers.map((m) => (
+                      <MemberRosterCard
+                        key={m.member_id}
+                        member={m}
+                        onEdit={handleEditClick}
+                        onToggleArchive={handleToggleArchiveMember}
+                        onToggleReview={handleToggleReview}
+                        onOpenCredentials={(mem) => {
+                          setQuickCredMember(mem);
+                          setShowQuickCredModal(true);
+                        }}
+                      />
+                    ))}
+                    {filteredMembers.length === 0 && (
+                      <div className="glass-card p-12 text-center text-muted-foreground font-medium">
+                        No members found.
+                      </div>
+                    )}
                   </div>
-                  {filteredMembers.length === 0 && (
-                    <div className="p-12 text-center text-muted-foreground font-medium">No members found.</div>
-                  )}
+
+                  {/* Desktop Table View */}
+                  <div className="glass-card overflow-hidden hidden md:block">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-sm">
+                        <thead className="bg-white/5 border-b border-white/10 text-xs uppercase tracking-widest font-black text-muted-foreground">
+                          <tr>
+                            <th className="px-6 py-4">Member ID</th>
+                            <th className="px-6 py-4">Name</th>
+                            <th className="px-6 py-4">Belt / Role</th>
+                            <th className="px-6 py-4">Badges</th>
+                            <th className="px-6 py-4">Verification</th>
+                            <th className="px-6 py-4">Fees & Status</th>
+                            <th className="px-6 py-4">Remark</th>
+                            <th className="px-6 py-4 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                          {filteredMembers.map(m => (
+                            <tr key={m.member_id} className={`hover:bg-white/5 transition-colors ${m.is_deleted ? 'opacity-60 bg-white/[0.02]' : ''}`}>
+                              <td className="px-6 py-4 font-mono font-bold text-primary">
+                                <button 
+                                  onClick={() => navigate({ to: `/member/${m.member_id}` })}
+                                  className="hover:underline cursor-pointer flex items-center gap-2"
+                                >
+                                  {m.member_id}
+                                  <span className="p-1 bg-white/5 rounded"><ExternalLink className="w-3 h-3" /></span>
+                                </button>
+                              </td>
+                              <td className="px-6 py-4 font-bold">
+                                <div className="flex items-center gap-2">
+                                  <span>{m.name}</span>
+                                  {m.blood_group && (
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-500/10 border border-red-500/20 text-red-400" title={`Blood Group: ${m.blood_group}`}>
+                                      {m.blood_group}
+                                    </span>
+                                  )}
+                                  {m.is_deleted && (
+                                    <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-widest bg-red-500/20 text-red-400">
+                                      Archived
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex flex-col gap-1">
+                                  <span className="font-bold">{m.belt}</span>
+                                  {m.role === 'admin' && <span className="text-[10px] text-red-400 uppercase tracking-widest font-black">Admin</span>}
+                                  {m.role === 'instructor' && <span className="text-[10px] text-primary-light uppercase tracking-widest font-black">Instructor</span>}
+                                  {m.role === 'volunteer' && <span className="text-[10px] text-amber-400 uppercase tracking-widest font-black">Volunteer</span>}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex items-center gap-1.5 flex-wrap max-w-xs">
+                                  {/* QR Badges */}
+                                  {m.assignedQrcs.map((badge) => (
+                                    <button
+                                      key={badge.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setQuickCredMember(m);
+                                        setShowQuickCredModal(true);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-primary/15 text-primary-light border border-primary/25 hover:bg-primary/25 transition-colors font-mono text-[10px] font-black tracking-wider cursor-pointer"
+                                      title={`QR Badge [${badge.token}] - Click to manage`}
+                                    >
+                                      <QrCode className="w-3 h-3 text-primary" />
+                                      <span>{badge.token}</span>
+                                    </button>
+                                  ))}
+
+                                  {/* NFC Tags */}
+                                  {m.assignedTags.map((tag) => (
+                                    <button
+                                      key={tag.id}
+                                      type="button"
+                                      onClick={() => {
+                                        setQuickCredMember(m);
+                                        setShowQuickCredModal(true);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-500/15 text-blue-300 border border-blue-500/25 hover:bg-blue-500/25 transition-colors font-mono text-[10px] font-black tracking-wider cursor-pointer group"
+                                      title={`NFC Tag [${tag.token}] • Hardware UID: ${tag.physical_uid || 'None recorded'}`}
+                                    >
+                                      <Radio className="w-3 h-3 text-blue-400" />
+                                      <span>{tag.token}</span>
+                                      {tag.physical_uid && (
+                                        <span className="text-white/40 text-[9px] group-hover:text-white/70">
+                                          • {tag.physical_uid.slice(0, 5)}..
+                                        </span>
+                                      )}
+                                    </button>
+                                  ))}
+
+                                  {/* Link triggers when slots empty */}
+                                  {m.assignedQrcs.length === 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setQuickCredMember(m);
+                                        setShowQuickCredModal(true);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/5 hover:bg-white/10 border border-dashed border-white/20 text-muted-foreground hover:text-white text-[10px] font-bold uppercase transition-colors"
+                                      title="Link QR Badge"
+                                    >
+                                      <Plus className="w-2.5 h-2.5" /> QR
+                                    </button>
+                                  )}
+
+                                  {m.assignedTags.length === 0 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setQuickCredMember(m);
+                                        setShowQuickCredModal(true);
+                                      }}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/5 hover:bg-white/10 border border-dashed border-white/20 text-muted-foreground hover:text-white text-[10px] font-bold uppercase transition-colors"
+                                      title="Link NFC Tag"
+                                    >
+                                      <Plus className="w-2.5 h-2.5" /> NFC
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <button
+                                  onClick={() => handleToggleReview(m)}
+                                  className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                                    m.is_reviewed
+                                      ? 'bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20'
+                                      : 'bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20'
+                                  }`}
+                                  title={m.is_reviewed ? 'Click to mark Pending Review' : 'Click to Verify Member'}
+                                >
+                                  <ShieldCheck className="w-3 h-3" />
+                                  {m.is_reviewed ? 'Verified' : 'Pending'}
+                                </button>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="flex flex-col items-start gap-1">
+                                  <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest ${m.member_status === 'Active' ? 'bg-green-500/20 text-green-500' : 'bg-red-500/20 text-red-500'}`}>
+                                    {m.member_status}
+                                  </span>
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest ${m.fee_status === 'Paid' ? 'text-green-500' : 'text-red-500 bg-red-500/10'}`}>
+                                    {m.fee_status === 'Paid' ? 'Paid' : `₹${m.pending_amount || 0} Due`}
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className={`w-3 h-3 rounded-full ${m.instructor_remarks_color === 'red' ? 'bg-red-500' : m.instructor_remarks_color === 'yellow' ? 'bg-yellow-500' : 'bg-green-500'}`} title={m.instructor_remarks} />
+                              </td>
+                              <td className="px-6 py-4 text-right">
+                                <div className="flex items-center justify-end gap-2">
+                                  <button 
+                                    onClick={() => handleEditClick(m)}
+                                    className="p-2 bg-white/5 rounded-lg hover:bg-white/10 transition-colors text-muted-foreground hover:text-white inline-block"
+                                    title="Edit Member"
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => handleToggleArchiveMember(m)}
+                                    className={`p-2 rounded-lg transition-colors inline-block ${
+                                      m.is_deleted 
+                                        ? 'bg-amber-500/10 text-amber-400 hover:bg-amber-500/20' 
+                                        : 'bg-red-500/10 text-red-500 hover:bg-red-500/20'
+                                    }`}
+                                    title={m.is_deleted ? 'Restore Member' : 'Archive Member'}
+                                  >
+                                    {m.is_deleted ? <Undo2 className="w-4 h-4" /> : <Trash2 className="w-4 h-4" />}
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    {filteredMembers.length === 0 && (
+                      <div className="p-12 text-center text-muted-foreground font-medium">No members found.</div>
+                    )}
+                  </div>
                 </div>
               )}
             </div>
@@ -1047,328 +1220,362 @@ function AdminDashboard() {
       </div>
 
       {/* EDIT MEMBER MODAL */}
-      {showEditModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6 overflow-y-auto">
-          <div className="glass-card w-full max-w-lg p-8 border-primary/20 bg-background/90 shadow-2xl relative my-auto">
-            <h3 className="text-2xl font-black uppercase tracking-tighter mb-4">Edit Member</h3>
+      {showEditModal && (() => {
+        const currentEditingMember = members.find(m => m.member_id === editingMemberId);
+        return (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto animate-in fade-in duration-200">
+            <div className="glass-card w-full max-w-xl max-h-[92vh] overflow-y-auto p-6 sm:p-8 border-primary/20 bg-background/95 shadow-2xl relative my-auto custom-scrollbar">
+              <h3 className="text-2xl font-black uppercase tracking-tighter mb-4">Edit Member</h3>
 
-            {/* Verification Status Banner */}
-            <div className="flex items-center justify-between p-3.5 mb-5 bg-white/5 border border-white/10 rounded-xl">
-              <div>
-                <div className="text-xs font-black tracking-widest uppercase">Verification Review</div>
-                <div className="text-[10px] text-muted-foreground">Admin status gating for new intake</div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setEditForm(prev => ({ ...prev, is_reviewed: !prev.is_reviewed }))}
-                className={`px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer ${
-                  editForm.is_reviewed 
-                    ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
-                    : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                }`}
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                {editForm.is_reviewed ? 'Verified' : 'Pending Review'}
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdateMember} className="space-y-4">
-              {/* Personal Details Accordion */}
-              <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-all">
-                <div 
-                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/5"
-                  onClick={() => setExpandedSection(expandedSection === 'personal' ? null as any : 'personal')}
-                >
-                  <h4 className="font-bold text-sm tracking-widest uppercase">Personal Details</h4>
-                  {expandedSection === 'personal' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {/* Verification Status Banner */}
+              <div className="flex items-center justify-between p-3.5 mb-5 bg-white/5 border border-white/10 rounded-xl">
+                <div>
+                  <div className="text-xs font-black tracking-widest uppercase">Verification Review</div>
+                  <div className="text-[10px] text-muted-foreground">Admin status gating for new intake</div>
                 </div>
-                {expandedSection === 'personal' && (
-                  <div className="p-4 pt-0 space-y-4 animate-in slide-in-from-top-2">
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Full Name</label>
-                      <input 
-                        required
-                        value={editForm.name}
-                        onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                        placeholder="John Doe"
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <button
+                  type="button"
+                  onClick={() => setEditForm(prev => ({ ...prev, is_reviewed: !prev.is_reviewed }))}
+                  className={`px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider transition-colors flex items-center gap-1.5 cursor-pointer ${
+                    editForm.is_reviewed 
+                      ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                      : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                  }`}
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  {editForm.is_reviewed ? 'Verified' : 'Pending Review'}
+                </button>
+              </div>
+
+              <form onSubmit={handleUpdateMember} className="space-y-4">
+                {/* Personal Details Accordion */}
+                <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-all">
+                  <div 
+                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/5"
+                    onClick={() => setExpandedSection(expandedSection === 'personal' ? null as any : 'personal')}
+                  >
+                    <h4 className="font-bold text-sm tracking-widest uppercase">Personal Details</h4>
+                    {expandedSection === 'personal' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </div>
+                  {expandedSection === 'personal' && (
+                    <div className="p-4 pt-0 space-y-4 animate-in slide-in-from-top-2">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Phone <span className="text-red-500">*</span></label>
+                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Full Name</label>
                         <input 
                           required
-                          value={editForm.phone}
-                          onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
+                          value={editForm.name}
+                          onChange={(e) => setEditForm({...editForm, name: e.target.value})}
                           className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                          placeholder="10-digit number"
+                          placeholder="John Doe"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Email</label>
-                        <input 
-                          type="email"
-                          value={editForm.email}
-                          onChange={(e) => setEditForm({...editForm, email: e.target.value})}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                          placeholder="Optional"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Blood Group</label>
-                        <CustomSelect 
-                          value={editForm.blood_group}
-                          onChange={(val) => setEditForm({...editForm, blood_group: val})}
-                          options={[
-                            { label: 'Not Specified', value: '' },
-                            ...BLOOD_GROUPS.map(bg => ({ label: bg, value: bg }))
-                          ]}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Profile Photo Link</label>
-                        <input 
-                          type="url"
-                          value={editForm.photo_url}
-                          onChange={(e) => setEditForm({...editForm, photo_url: e.target.value})}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                          placeholder="https://example.com/photo.jpg"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <div className="sm:col-span-2 space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Address</label>
-                        <input 
-                          value={editForm.address}
-                          onChange={(e) => setEditForm({...editForm, address: e.target.value})}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                          placeholder="Physical Address"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">PIN Code</label>
-                        <input 
-                          value={editForm.pin_code}
-                          onChange={(e) => setEditForm({...editForm, pin_code: e.target.value})}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                          placeholder="e.g. 560001"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Club Info Accordion */}
-              <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-all">
-                <div 
-                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/5"
-                  onClick={() => setExpandedSection(expandedSection === 'club' ? null as any : 'club')}
-                >
-                  <h4 className="font-bold text-sm tracking-widest uppercase">Club Information</h4>
-                  {expandedSection === 'club' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </div>
-                {expandedSection === 'club' && (
-                  <div className="p-4 pt-0 space-y-4 animate-in slide-in-from-top-2">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">System Role</label>
-                        <CustomSelect 
-                          value={editForm.role}
-                          onChange={(val) => setEditForm({...editForm, role: val})}
-                          options={SYSTEM_ROLES}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Belt</label>
-                        <CustomSelect 
-                          value={editForm.belt}
-                          onChange={(val) => setEditForm({...editForm, belt: val})}
-                          options={belts.map(b => ({label: b.name, value: b.name}))}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Member Status</label>
-                        <CustomSelect 
-                          value={editForm.member_status}
-                          onChange={(val) => setEditForm({...editForm, member_status: val})}
-                          options={[{label: 'Active', value: 'Active'}, {label: 'Inactive', value: 'Inactive'}]}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Branch</label>
-                        <CustomSelect 
-                          value={editForm.branch}
-                          onChange={(val) => setEditForm({...editForm, branch: val})}
-                          options={branches.map(b => ({label: b.name, value: b.name}))}
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Date of Joining</label>
-                        <input 
-                          type="date"
-                          value={editForm.date_of_joining}
-                          onChange={(e) => setEditForm({...editForm, date_of_joining: e.target.value})}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Date of Leaving</label>
-                        <input 
-                          type="date"
-                          value={editForm.date_of_leaving}
-                          onChange={(e) => setEditForm({...editForm, date_of_leaving: e.target.value})}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Achievements</label>
-                      <textarea 
-                        value={editForm.achievements}
-                        onChange={(e) => setEditForm({...editForm, achievements: e.target.value})}
-                        className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold resize-none h-16"
-                        placeholder="Gold medal in 2024 Nationals..."
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Financials & Remarks Accordion */}
-              <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-all">
-                <div 
-                  className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/5"
-                  onClick={() => setExpandedSection(expandedSection === 'financials' ? null as any : 'financials')}
-                >
-                  <h4 className="font-bold text-sm tracking-widest uppercase">Financials & Report</h4>
-                  {expandedSection === 'financials' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </div>
-                {expandedSection === 'financials' && (
-                  <div className="p-4 pt-0 space-y-4 animate-in slide-in-from-top-2">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Actual Fee (₹)</label>
-                        <input 
-                          type="number"
-                          value={editForm.actual_fee}
-                          onChange={(e) => setEditForm({...editForm, actual_fee: parseInt(e.target.value) || 0})}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Fee Detail (Reason)</label>
-                        <input 
-                          value={editForm.fee_detail}
-                          onChange={(e) => setEditForm({...editForm, fee_detail: e.target.value})}
-                          placeholder="e.g. Monthly Fee"
-                          className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Due Date</label>
-                        <input 
-                          type="date"
-                          value={editForm.due_date}
-                          onChange={(e) => setEditForm({...editForm, due_date: e.target.value})}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Fee Status</label>
-                        <CustomSelect 
-                          value={editForm.fee_status}
-                          onChange={(val) => setEditForm({...editForm, fee_status: val})}
-                          options={[{label: 'Paid', value: 'Paid'}, {label: 'Pending', value: 'Pending'}]}
-                        />
-                      </div>
-                    </div>
-                    
-                    {editForm.fee_status === 'Pending' && (
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Pending Amount (₹)</label>
-                        <input 
-                          type="number"
-                          value={editForm.pending_amount}
-                          onChange={(e) => setEditForm({...editForm, pending_amount: parseInt(e.target.value) || 0})}
-                          className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
-                        />
-                      </div>
-                    )}
-                    
-                    <div className="space-y-3 pt-2">
-                      <div className="flex items-center justify-between">
-                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Instructor Report</label>
-                        <div className="flex gap-2">
-                          <button 
-                            type="button" 
-                            onClick={() => setEditForm({...editForm, instructor_remarks_color: 'red'})}
-                            className={`w-4 h-4 rounded-full border-2 ${editForm.instructor_remarks_color === 'red' ? 'bg-red-500 border-white' : 'bg-red-500/50 border-transparent'}`}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Phone <span className="text-red-500">*</span></label>
+                          <input 
+                            required
+                            value={editForm.phone}
+                            onChange={(e) => setEditForm({...editForm, phone: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                            placeholder="10-digit number"
                           />
-                          <button 
-                            type="button" 
-                            onClick={() => setEditForm({...editForm, instructor_remarks_color: 'yellow'})}
-                            className={`w-4 h-4 rounded-full border-2 ${editForm.instructor_remarks_color === 'yellow' ? 'bg-yellow-500 border-white' : 'bg-yellow-500/50 border-transparent'}`}
-                          />
-                          <button 
-                            type="button" 
-                            onClick={() => setEditForm({...editForm, instructor_remarks_color: 'green'})}
-                            className={`w-4 h-4 rounded-full border-2 ${editForm.instructor_remarks_color === 'green' ? 'bg-green-500 border-white' : 'bg-green-500/50 border-transparent'}`}
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Email</label>
+                          <input 
+                            type="email"
+                            value={editForm.email}
+                            onChange={(e) => setEditForm({...editForm, email: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                            placeholder="Optional"
                           />
                         </div>
                       </div>
-                      <textarea 
-                        value={editForm.instructor_remarks}
-                        onChange={(e) => setEditForm({...editForm, instructor_remarks: e.target.value})}
-                        className={`w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none transition-all font-bold resize-none h-24 ${editForm.instructor_remarks_color === 'red' ? 'focus:border-red-500/50 text-red-100' : editForm.instructor_remarks_color === 'yellow' ? 'focus:border-yellow-500/50 text-yellow-100' : 'focus:border-green-500/50 text-green-100'}`}
-                        placeholder="Grade assessment and remarks..."
-                      />
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Blood Group</label>
+                          <CustomSelect 
+                            value={editForm.blood_group}
+                            onChange={(val) => setEditForm({...editForm, blood_group: val})}
+                            options={[
+                              { label: 'Not Specified', value: '' },
+                              ...BLOOD_GROUPS.map(bg => ({ label: bg, value: bg }))
+                            ]}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Profile Photo Link</label>
+                          <input 
+                            type="url"
+                            value={editForm.photo_url}
+                            onChange={(e) => setEditForm({...editForm, photo_url: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                            placeholder="https://example.com/photo.jpg"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="sm:col-span-2 space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Address</label>
+                          <input 
+                            value={editForm.address}
+                            onChange={(e) => setEditForm({...editForm, address: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                            placeholder="Physical Address"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">PIN Code</label>
+                          <input 
+                            value={editForm.pin_code}
+                            onChange={(e) => setEditForm({...editForm, pin_code: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                            placeholder="e.g. 560001"
+                          />
+                        </div>
+                      </div>
                     </div>
+                  )}
+                </div>
+
+                {/* Club Info Accordion */}
+                <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-all">
+                  <div 
+                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/5"
+                    onClick={() => setExpandedSection(expandedSection === 'club' ? null as any : 'club')}
+                  >
+                    <h4 className="font-bold text-sm tracking-widest uppercase">Club Information</h4>
+                    {expandedSection === 'club' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </div>
+                  {expandedSection === 'club' && (
+                    <div className="p-4 pt-0 space-y-4 animate-in slide-in-from-top-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">System Role</label>
+                          <CustomSelect 
+                            value={editForm.role}
+                            onChange={(val) => setEditForm({...editForm, role: val})}
+                            options={SYSTEM_ROLES}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Belt</label>
+                          <CustomSelect 
+                            value={editForm.belt}
+                            onChange={(val) => setEditForm({...editForm, belt: val})}
+                            options={belts.map(b => ({label: b.name, value: b.name}))}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Member Status</label>
+                          <CustomSelect 
+                            value={editForm.member_status}
+                            onChange={(val) => setEditForm({...editForm, member_status: val})}
+                            options={[{label: 'Active', value: 'Active'}, {label: 'Inactive', value: 'Inactive'}]}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Branch</label>
+                          <CustomSelect 
+                            value={editForm.branch}
+                            onChange={(val) => setEditForm({...editForm, branch: val})}
+                            options={branches.map(b => ({label: b.name, value: b.name}))}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Date of Joining</label>
+                          <input 
+                            type="date"
+                            value={editForm.date_of_joining}
+                            onChange={(e) => setEditForm({...editForm, date_of_joining: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Date of Leaving</label>
+                          <input 
+                            type="date"
+                            value={editForm.date_of_leaving}
+                            onChange={(e) => setEditForm({...editForm, date_of_leaving: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Achievements</label>
+                        <textarea 
+                          value={editForm.achievements}
+                          onChange={(e) => setEditForm({...editForm, achievements: e.target.value})}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold resize-none h-16"
+                          placeholder="Gold medal in 2024 Nationals..."
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Financials & Remarks Accordion */}
+                <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-all">
+                  <div 
+                    className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/5"
+                    onClick={() => setExpandedSection(expandedSection === 'financials' ? null as any : 'financials')}
+                  >
+                    <h4 className="font-bold text-sm tracking-widest uppercase">Financials & Report</h4>
+                    {expandedSection === 'financials' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  </div>
+                  {expandedSection === 'financials' && (
+                    <div className="p-4 pt-0 space-y-4 animate-in slide-in-from-top-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Actual Fee (₹)</label>
+                          <input 
+                            type="number"
+                            value={editForm.actual_fee}
+                            onChange={(e) => setEditForm({...editForm, actual_fee: parseInt(e.target.value) || 0})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Fee Detail (Reason)</label>
+                          <input 
+                            value={editForm.fee_detail}
+                            onChange={(e) => setEditForm({...editForm, fee_detail: e.target.value})}
+                            placeholder="e.g. Monthly Fee"
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Due Date</label>
+                          <input 
+                            type="date"
+                            value={editForm.due_date}
+                            onChange={(e) => setEditForm({...editForm, due_date: e.target.value})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold appearance-none"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Fee Status</label>
+                          <CustomSelect 
+                            value={editForm.fee_status}
+                            onChange={(val) => setEditForm({...editForm, fee_status: val})}
+                            options={[{label: 'Paid', value: 'Paid'}, {label: 'Pending', value: 'Pending'}]}
+                          />
+                        </div>
+                      </div>
+                      
+                      {editForm.fee_status === 'Pending' && (
+                        <div className="space-y-2">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Pending Amount (₹)</label>
+                          <input 
+                            type="number"
+                            value={editForm.pending_amount}
+                            onChange={(e) => setEditForm({...editForm, pending_amount: parseInt(e.target.value) || 0})}
+                            className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-primary/50 transition-all font-bold"
+                          />
+                        </div>
+                      )}
+                      
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-[10px] font-black tracking-widest uppercase text-muted-foreground">Instructor Report</label>
+                          <div className="flex gap-2">
+                            <button 
+                              type="button" 
+                              onClick={() => setEditForm({...editForm, instructor_remarks_color: 'red'})}
+                              className={`w-4 h-4 rounded-full border-2 ${editForm.instructor_remarks_color === 'red' ? 'bg-red-500 border-white' : 'bg-red-500/50 border-transparent'}`}
+                            />
+                            <button 
+                              type="button" 
+                              onClick={() => setEditForm({...editForm, instructor_remarks_color: 'yellow'})}
+                              className={`w-4 h-4 rounded-full border-2 ${editForm.instructor_remarks_color === 'yellow' ? 'bg-yellow-500 border-white' : 'bg-yellow-500/50 border-transparent'}`}
+                            />
+                            <button 
+                              type="button" 
+                              onClick={() => setEditForm({...editForm, instructor_remarks_color: 'green'})}
+                              className={`w-4 h-4 rounded-full border-2 ${editForm.instructor_remarks_color === 'green' ? 'bg-green-500 border-white' : 'bg-green-500/50 border-transparent'}`}
+                            />
+                          </div>
+                        </div>
+                        <textarea 
+                          value={editForm.instructor_remarks}
+                          onChange={(e) => setEditForm({...editForm, instructor_remarks: e.target.value})}
+                          className={`w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none transition-all font-bold resize-none h-24 ${editForm.instructor_remarks_color === 'red' ? 'focus:border-red-500/50 text-red-100' : editForm.instructor_remarks_color === 'yellow' ? 'focus:border-yellow-500/50 text-yellow-100' : 'focus:border-green-500/50 text-green-100'}`}
+                          placeholder="Grade assessment and remarks..."
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Credentials & Badges Accordion */}
+                {currentEditingMember && (
+                  <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden transition-all">
+                    <div 
+                      className="p-4 flex items-center justify-between cursor-pointer hover:bg-white/5"
+                      onClick={() => setExpandedSection(expandedSection === 'credentials' ? null : 'credentials')}
+                    >
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-bold text-sm tracking-widest uppercase">Credentials & Badges</h4>
+                        <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-primary/20 text-primary-light border border-primary/30">
+                          {currentEditingMember.assignedQrcs.length + currentEditingMember.assignedTags.length} Active
+                        </span>
+                      </div>
+                      {expandedSection === 'credentials' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </div>
+                    {expandedSection === 'credentials' && (
+                      <div className="p-4 pt-0 space-y-4 animate-in slide-in-from-top-2">
+                        <MemberCredentialControls
+                          memberId={currentEditingMember.member_id}
+                          memberName={currentEditingMember.name}
+                          assignedQrcs={currentEditingMember.assignedQrcs}
+                          assignedTags={currentEditingMember.assignedTags}
+                          onChanged={() => {
+                            loadMembers();
+                          }}
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
 
-              <div className="pt-4 pb-2">
-                <button
-                  type="button"
-                  onClick={handleResetPinClick}
-                  className="w-full py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-black tracking-widest text-[10px] rounded-xl transition-all uppercase border border-red-500/20 flex items-center justify-center gap-2"
-                >
-                  <Lock className="w-3 h-3" /> Reset Password to Default PIN '12345'
-                </button>
-              </div>
+                <div className="pt-4 pb-2">
+                  <button
+                    type="button"
+                    onClick={handleResetPinClick}
+                    className="w-full py-3 bg-red-500/10 hover:bg-red-500/20 text-red-500 font-black tracking-widest text-[10px] rounded-xl transition-all uppercase border border-red-500/20 flex items-center justify-center gap-2"
+                  >
+                    <Lock className="w-3 h-3" /> Reset Password to Default PIN '12345'
+                  </button>
+                </div>
 
-              <div className="flex gap-4 pt-4 border-t border-white/5 mt-2">
-                <button 
-                  type="button"
-                  onClick={() => setShowEditModal(false)}
-                  className="flex-1 py-4 bg-white/5 hover:bg-white/10 text-white font-black tracking-widest text-[10px] rounded-xl transition-all uppercase"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  disabled={savingMember}
-                  className="flex-1 py-4 bg-primary hover:bg-primary/90 text-white font-black tracking-widest text-[10px] rounded-xl transition-all uppercase shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
-                >
-                  {savingMember ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Changes'}
-                </button>
-              </div>
-            </form>
+                <div className="flex gap-4 pt-4 border-t border-white/5 mt-2">
+                  <button 
+                    type="button" 
+                    onClick={() => setShowEditModal(false)}
+                    className="flex-1 py-4 bg-white/5 hover:bg-white/10 text-white font-black tracking-widest text-[10px] rounded-xl transition-all uppercase"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit" 
+                    disabled={savingMember}
+                    className="flex-1 py-4 bg-primary hover:bg-primary/90 text-white font-black tracking-widest text-[10px] rounded-xl transition-all uppercase shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
+                  >
+                    {savingMember ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* CREATE EVENT MODAL */}
       {showCreateEventModal && (
@@ -1575,6 +1782,19 @@ function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* QUICK CREDENTIAL MODAL */}
+      <QuickCredentialModal
+        member={quickCredMember}
+        isOpen={showQuickCredModal}
+        onClose={() => {
+          setShowQuickCredModal(false);
+          setQuickCredMember(null);
+        }}
+        onChanged={() => {
+          loadMembers();
+        }}
+      />
     </div>
   )
 }

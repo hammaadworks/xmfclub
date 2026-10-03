@@ -4,7 +4,8 @@ import {
   User, Calendar, Trophy, LogOut,
   MapPin, ShieldCheck, Trash2, Edit2, Save, Lock, Clock, QrCode, Radio, Plus,
   Check, Copy, Share2, Activity, Award, AlertCircle,
-  Droplet, ArrowLeft, KeyRound, CheckCircle2, Phone, Mail, Home
+  Droplet, ArrowLeft, KeyRound, CheckCircle2, Phone, Mail, Home,
+  Youtube, Instagram, MessageCircle, MessageSquare, ArrowUpRight
 } from 'lucide-react'
 import QRCode from 'qrcode'
 import { supabase } from '#/lib/supabase'
@@ -44,6 +45,7 @@ function DashboardPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null)
   const [attendanceLogged, setAttendanceLogged] = useState(false)
   const [beltConfig, setBeltConfig] = useState<any[]>([])
+  const [branches, setBranches] = useState<any[]>([])
 
   // Credentials & Events
   const [credentials, setCredentials] = useState<any[]>([])
@@ -52,7 +54,7 @@ function DashboardPage() {
   const [isCredentialModalOpen, setCredentialModalOpen] = useState(false)
 
   // Active Tab for dashboard
-  const [activeTab, setActiveTab] = useState<'attendance' | 'profile' | 'roadmap' | 'events'>('attendance')
+  const [activeTab, setActiveTab] = useState<'attendance' | 'profile' | 'roadmap' | 'events' | 'pass'>('attendance')
 
   // QR Code Data URL for Pass
   const [qrCodeUrl, setQrCodeUrl] = useState<string>('')
@@ -175,6 +177,9 @@ function DashboardPage() {
             } else {
               setBeltConfig(appSettings.belts)
             }
+          }
+          if (appSettings?.branches) {
+            setBranches(appSettings.branches)
           }
 
           // Fetch attendance
@@ -403,6 +408,331 @@ function DashboardPage() {
     return acc
   }, {} as Record<string, number>)
 
+  // Render Official Digital Pass Card (Shared between views & mobile pass tab)
+  const renderDigitalPassCard = () => (
+    <div className="relative rounded-3xl border border-white/20 bg-gradient-to-br from-zinc-900/90 via-black to-zinc-950 p-6 shadow-2xl overflow-hidden group">
+      <div className="absolute top-0 right-0 w-60 h-60 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Card Header */}
+      <div className="flex items-center justify-between border-b border-white/10 pb-4 relative z-10">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center font-black text-white text-sm shadow-md">
+            X
+          </div>
+          <div>
+            <div className="text-[9px] font-black tracking-widest uppercase text-muted-foreground">Digital Dojo Pass</div>
+            <div className="text-xs font-black uppercase tracking-wider text-white">XMF Martial Arts Club</div>
+          </div>
+        </div>
+        <span className="px-2.5 py-1 rounded-full text-[9px] font-mono font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          Active
+        </span>
+      </div>
+
+      {/* Card Body */}
+      <div className="py-6 relative z-10 flex flex-col items-center text-center space-y-4">
+        {/* Photo with Belt Ring */}
+        <div className="relative w-32 h-32 rounded-2xl overflow-hidden border-2 border-primary/50 shadow-2xl bg-black/60 flex items-center justify-center">
+          {member.photo_url ? (
+            <img 
+              src={member.photo_url} 
+              alt={member.name} 
+              className="w-full h-full object-cover" 
+            />
+          ) : (
+            <div className="w-full h-full bg-primary/20 text-primary-light font-black text-4xl flex items-center justify-center">
+              {member.name?.charAt(0).toUpperCase()}
+            </div>
+          )}
+          {/* Floating Belt dot on photo */}
+          <span className={`absolute bottom-2 right-2 w-4 h-4 rounded-full border-2 border-black ${activeBeltStyle.dot}`} />
+        </div>
+
+        {/* Name & ID */}
+        <div className="space-y-1">
+          <h2 className="text-2xl font-black uppercase tracking-tight text-white">
+            {member.name}
+          </h2>
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-lg font-mono font-black text-primary-light tracking-widest">
+              {member.member_id}
+            </span>
+            <button
+              type="button"
+              onClick={() => handleCopyId(member.member_id)}
+              className="p-1 rounded-lg bg-white/5 hover:bg-white/15 text-muted-foreground hover:text-white transition-colors"
+              title="Copy Member ID"
+            >
+              {copiedId ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Badges: Belt & Blood Group & Branch */}
+        <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+          {/* Belt Pill */}
+          <div className={`px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border flex items-center gap-2 ${activeBeltStyle.bg} ${activeBeltStyle.text} ${activeBeltStyle.border}`}>
+            <span className={`w-2 h-2 rounded-full ${activeBeltStyle.dot}`} />
+            <span>{member.belt} Belt</span>
+          </div>
+
+          {/* Blood Group */}
+          {member.blood_group && (
+            <div className="px-3 py-1 rounded-xl text-xs font-mono font-black uppercase tracking-wider bg-red-500/20 text-red-300 border border-red-500/30 flex items-center gap-1.5">
+              <Droplet className="w-3 h-3 text-red-400 fill-red-400" />
+              <span>{member.blood_group}</span>
+            </div>
+          )}
+
+          {/* Age */}
+          {member.age && (
+            <div className="px-3 py-1 rounded-xl text-xs font-mono font-bold bg-white/5 border border-white/10 text-zinc-300">
+              {member.age} yrs
+            </div>
+          )}
+        </div>
+
+        {/* Dojo Branch Tag */}
+        <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
+          <MapPin className="w-3.5 h-3.5 text-primary-light" />
+          <span>{member.branch || 'The IWAN Community'}</span>
+        </p>
+
+        {/* Scannable Dojo Pass QR Code */}
+        {qrCodeUrl && (
+          <div className="w-full pt-4 border-t border-white/10 flex flex-col items-center space-y-2">
+            <div className="p-3 bg-white rounded-2xl shadow-xl">
+              <img 
+                src={qrCodeUrl} 
+                alt={`QR Code Pass for ${member.member_id}`} 
+                className="w-36 h-36 object-contain"
+              />
+            </div>
+            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
+              Scan for Instant Dojo Check-In
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* Pass Card Actions */}
+      <div className="pt-4 border-t border-white/10 grid grid-cols-2 gap-2 relative z-10">
+        <a
+          href={getWhatsAppShareUrl()}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="py-2.5 px-3 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 active:scale-95"
+        >
+          <Share2 className="w-3.5 h-3.5" />
+          WhatsApp
+        </a>
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5"
+        >
+          <Award className="w-3.5 h-3.5" />
+          Print Pass
+        </button>
+      </div>
+    </div>
+  )
+
+  // Strict Privacy Guest View (Locked Tabs & In-Page PIN Pad + Social Media Distribution)
+  const renderStrictPrivacyGuestView = () => {
+    const currentBranchInfo = branches.find((b: any) => b.name === member.branch)
+    const branchMapsUrl = currentBranchInfo?.mapsUrl || `https://maps.google.com/?q=${encodeURIComponent(member.branch ? `${member.branch} Bangalore` : 'XMF Martial Arts Club Bangalore')}`
+
+    return (
+      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 items-start animate-in fade-in duration-300">
+        {/* Official Pass Preview */}
+        <div className="space-y-4">
+          {renderDigitalPassCard()}
+        </div>
+
+        {/* Strict Privacy Protected Lock Box */}
+        <div className="glass-card p-6 sm:p-8 rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.04] to-zinc-950/80 space-y-6 shadow-2xl">
+          <div className="w-14 h-14 rounded-2xl bg-primary/20 border border-primary/30 flex items-center justify-center text-primary-light">
+            <Lock className="w-7 h-7" />
+          </div>
+
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[10px] font-mono font-bold uppercase tracking-wider">
+              <ShieldCheck className="w-3 h-3" />
+              Strict Privacy Protected
+            </div>
+            <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-white">
+              Private Athlete Portal
+            </h3>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              Attendance check-in history, 30-session belt grading roadmap, contact records, billing dues, and tournament registrations are private to <strong className="text-white">{member.name}</strong> and club instructors.
+            </p>
+          </div>
+
+          {/* In-Card Quick PIN Unlock */}
+          <div className="p-5 rounded-2xl bg-black/50 border border-white/10 space-y-4 text-center">
+            <div className="space-y-1">
+              <span className="text-xs font-mono font-bold uppercase tracking-wider text-primary-light flex items-center justify-center gap-1.5">
+                <KeyRound className="w-3.5 h-3.5" />
+                Quick Portal Unlock
+              </span>
+              <p className="text-[11px] text-muted-foreground">
+                Enter {member.name}'s 5-digit PIN code to access full records:
+              </p>
+            </div>
+
+            {unlockError && (
+              <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-xs font-bold animate-in fade-in">
+                {unlockError}
+              </div>
+            )}
+
+            <div className="flex justify-center pt-1">
+              <PinPad onComplete={handleQuickUnlock} error={unlockError} />
+            </div>
+          </div>
+
+          {/* Contact / Inquire Action */}
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('showContactModal'))}
+              className="w-full py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-2 group"
+            >
+              <MessageSquare className="w-3.5 h-3.5 text-primary-light group-hover:scale-110 transition-transform" />
+              <span>Interested in Martial Arts? Contact Master Farhan</span>
+            </button>
+          </div>
+
+          {/* Helpful Guest Links */}
+          <div className="pt-2 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <Link
+              to="/login"
+              className="text-muted-foreground hover:text-white transition-colors underline underline-offset-4"
+            >
+              Sign in with another ID
+            </Link>
+            <Link
+              to="/xmform"
+              className="text-primary-light hover:text-primary transition-colors font-bold uppercase tracking-wider"
+            >
+              Join XMF Club Intake &rarr;
+            </Link>
+          </div>
+        </div>
+
+        {/* SOCIAL MEDIA & CLUB DISTRIBUTION HUB */}
+        <div className="md:col-span-2 glass-card p-6 sm:p-8 rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.03] via-black to-primary/5 space-y-6 shadow-2xl">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-primary-light">Official Club Channels</span>
+              </div>
+              <h4 className="text-lg sm:text-xl font-black uppercase tracking-tight text-white">
+                Connect With XMF Martial Arts
+              </h4>
+              <p className="text-xs text-muted-foreground">
+                Follow our training tutorials, competition videos, dojo reels, and locate our mats.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => window.dispatchEvent(new CustomEvent('showContactModal'))}
+              className="px-5 py-3 rounded-2xl bg-gradient-to-r from-primary to-accent hover:opacity-95 text-white font-black text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 shrink-0 active:scale-95"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              <span>Contact Dojo Master</span>
+            </button>
+          </div>
+
+          {/* Channels Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            {/* YouTube */}
+            <a
+              href="https://www.youtube.com/@farhanxmf01"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-4 rounded-2xl bg-white/[0.02] hover:bg-[#FF0000]/10 border border-white/10 hover:border-[#FF0000]/40 transition-all flex items-center gap-3.5 group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-[#FF0000]/15 text-[#FF0000] flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
+                <Youtube className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-black uppercase text-white group-hover:text-[#FF0000] transition-colors flex items-center gap-1">
+                  <span>YouTube</span>
+                  <ArrowUpRight className="w-3 h-3 opacity-60" />
+                </div>
+                <p className="text-[11px] font-mono text-muted-foreground truncate">@farhanxmf01</p>
+              </div>
+            </a>
+
+            {/* Instagram */}
+            <a
+              href="https://instagram.com/farhanxmf01"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-4 rounded-2xl bg-white/[0.02] hover:bg-[#E1306C]/10 border border-white/10 hover:border-[#E1306C]/40 transition-all flex items-center gap-3.5 group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-[#E1306C]/15 text-[#E1306C] flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
+                <Instagram className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-black uppercase text-white group-hover:text-[#E1306C] transition-colors flex items-center gap-1">
+                  <span>Instagram</span>
+                  <ArrowUpRight className="w-3 h-3 opacity-60" />
+                </div>
+                <p className="text-[11px] font-mono text-muted-foreground truncate">@farhanxmf01</p>
+              </div>
+            </a>
+
+            {/* Google Maps / Branch */}
+            <a
+              href={branchMapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-4 rounded-2xl bg-white/[0.02] hover:bg-blue-500/10 border border-white/10 hover:border-blue-500/40 transition-all flex items-center gap-3.5 group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
+                <MapPin className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-black uppercase text-white group-hover:text-blue-400 transition-colors flex items-center gap-1">
+                  <span>Dojo Maps</span>
+                  <ArrowUpRight className="w-3 h-3 opacity-60" />
+                </div>
+                <p className="text-[11px] font-mono text-muted-foreground truncate">
+                  {member.branch || 'Google Maps Location'}
+                </p>
+              </div>
+            </a>
+
+            {/* WhatsApp Direct */}
+            <a
+              href="https://wa.me/918884503703?text=Hi%20Master%20Farhan,%20I%20saw%20an%20athlete%20pass%20on%20XMF%20Club%20and%20want%20to%20know%20more."
+              target="_blank"
+              rel="noopener noreferrer"
+              className="p-4 rounded-2xl bg-white/[0.02] hover:bg-emerald-500/10 border border-white/10 hover:border-emerald-500/40 transition-all flex items-center gap-3.5 group"
+            >
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform shrink-0">
+                <MessageCircle className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-black uppercase text-white group-hover:text-emerald-400 transition-colors flex items-center gap-1">
+                  <span>WhatsApp</span>
+                  <ArrowUpRight className="w-3 h-3 opacity-60" />
+                </div>
+                <p className="text-[11px] font-mono text-muted-foreground truncate">+91 88845 03703</p>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <>
       <div className="min-h-screen bg-background pt-24 sm:pt-28 pb-20 px-4 sm:px-6 lg:px-8 text-foreground selection:bg-primary/20 relative overflow-hidden">
@@ -422,7 +752,7 @@ function DashboardPage() {
 
         <div className="max-w-7xl mx-auto space-y-8">
           
-          {/* Top Breadcrumb & Status Ribbon */}
+          {/* Top Breadcrumb & Status Ribbon with Universal Logout */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-5">
             <div className="flex items-center gap-3">
               <Link 
@@ -447,7 +777,7 @@ function DashboardPage() {
               </div>
             </div>
 
-            {/* Quick Status / Session Info */}
+            {/* Quick Status / Session Info & Action Buttons */}
             <div className="flex items-center gap-2 flex-wrap">
               {/* Verification Badge */}
               {member.is_reviewed ? (
@@ -462,349 +792,303 @@ function DashboardPage() {
                 </span>
               )}
 
-              {/* Staff / Logged In Indicator */}
-              {isOwner && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-primary-light text-xs font-mono font-bold uppercase tracking-wider">
-                  <KeyRound className="w-3.5 h-3.5" />
-                  {isStaff ? (isAdmin ? 'Admin Auth' : 'Staff Auth') : 'Authenticated'}
-                </span>
+              {/* Staff / Logged In Indicator & Universal Logout */}
+              {isOwner ? (
+                <>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-primary-light text-xs font-mono font-bold uppercase tracking-wider">
+                    <KeyRound className="w-3.5 h-3.5" />
+                    {isStaff ? (isAdmin ? 'Admin Auth' : 'Staff Auth') : 'Authenticated'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-400 hover:text-red-300 text-xs font-bold uppercase tracking-wider transition-all active:scale-95 shadow-sm"
+                    title="Sign Out of Session"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Sign Out</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-muted-foreground text-xs font-mono font-bold uppercase tracking-wider">
+                    <Lock className="w-3.5 h-3.5" />
+                    Guest View
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowUnlockModal(true)}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary/90 text-white text-xs font-bold uppercase tracking-wider transition-all active:scale-95 shadow-md shadow-primary/20"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" />
+                    <span>Unlock With PIN</span>
+                  </button>
+                </>
               )}
             </div>
           </div>
 
-          {/* MAIN BALANCED 12-COLUMN GRID */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
-            {/* ========================================================================= */}
-            {/* LEFT COLUMN (4 COLS): OFFICIAL DIGITAL PASS & SECURITY                     */}
-            {/* ========================================================================= */}
-            <div className="lg:col-span-5 xl:col-span-4 space-y-6">
-              
-              {/* OFFICIAL ATHLETE CREDENTIAL PASS CARD */}
-              <div className="relative rounded-3xl border border-white/20 bg-gradient-to-br from-zinc-900/90 via-black to-zinc-950 p-6 shadow-2xl overflow-hidden group">
-                <div className="absolute top-0 right-0 w-60 h-60 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-
-                {/* Card Header */}
-                <div className="flex items-center justify-between border-b border-white/10 pb-4 relative z-10">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-primary flex items-center justify-center font-black text-white text-sm shadow-md">
-                      X
-                    </div>
-                    <div>
-                      <div className="text-[9px] font-black tracking-widest uppercase text-muted-foreground">Digital Dojo Pass</div>
-                      <div className="text-xs font-black uppercase tracking-wider text-white">XMF Martial Arts Club</div>
-                    </div>
-                  </div>
-                  <span className="px-2.5 py-1 rounded-full text-[9px] font-mono font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Active
-                  </span>
-                </div>
-
-                {/* Card Body */}
-                <div className="py-6 relative z-10 flex flex-col items-center text-center space-y-4">
-                  {/* Photo with Belt Ring */}
-                  <div className="relative w-32 h-32 rounded-2xl overflow-hidden border-2 border-primary/50 shadow-2xl bg-black/60 flex items-center justify-center">
+          {!isOwner ? (
+            /* ========================================================================= */
+            /* GUEST VIEW (STRICT PRIVACY LOCK)                                          */
+            /* ========================================================================= */
+            renderStrictPrivacyGuestView()
+          ) : (
+            /* ========================================================================= */
+            /* AUTHENTICATED USER PROFILE VIEW (PC & WEB MOBILE)                        */
+            /* ========================================================================= */
+            <div className="space-y-6">
+              {/* MOBILE COMPACT HERO (WEB MOBILE ONLY) */}
+              <div className="lg:hidden glass-card p-4 rounded-3xl border border-white/10 bg-white/[0.02] flex items-center justify-between gap-3 shadow-lg">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative w-14 h-14 rounded-2xl overflow-hidden border-2 border-primary/50 shadow-md bg-black shrink-0 flex items-center justify-center">
                     {member.photo_url ? (
-                      <img 
-                        src={member.photo_url} 
-                        alt={member.name} 
-                        className="w-full h-full object-cover" 
-                      />
+                      <img src={member.photo_url} alt={member.name} className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full bg-primary/20 text-primary-light font-black text-4xl flex items-center justify-center">
-                        {member.name?.charAt(0).toUpperCase()}
-                      </div>
+                      <span className="text-lg font-black text-primary-light">{member.name?.charAt(0).toUpperCase()}</span>
                     )}
-                    {/* Floating Belt dot on photo */}
-                    <span className={`absolute bottom-2 right-2 w-4 h-4 rounded-full border-2 border-black ${activeBeltStyle.dot}`} />
+                    <span className={`absolute bottom-1 right-1 w-2.5 h-2.5 rounded-full border border-black ${activeBeltStyle.dot}`} />
                   </div>
-
-                  {/* Name & ID */}
-                  <div className="space-y-1">
-                    <h2 className="text-2xl font-black uppercase tracking-tight text-white">
-                      {member.name}
-                    </h2>
-                    <div className="flex items-center justify-center gap-2">
-                      <span className="text-lg font-mono font-black text-primary-light tracking-widest">
-                        {member.member_id}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => handleCopyId(member.member_id)}
-                        className="p-1 rounded-lg bg-white/5 hover:bg-white/15 text-muted-foreground hover:text-white transition-colors"
-                        title="Copy Member ID"
-                      >
-                        {copiedId ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Badges: Belt & Blood Group & Branch */}
-                  <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
-                    {/* Belt Pill */}
-                    <div className={`px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider border flex items-center gap-2 ${activeBeltStyle.bg} ${activeBeltStyle.text} ${activeBeltStyle.border}`}>
-                      <span className={`w-2 h-2 rounded-full ${activeBeltStyle.dot}`} />
-                      <span>{member.belt} Belt</span>
-                    </div>
-
-                    {/* Blood Group */}
-                    {member.blood_group && (
-                      <div className="px-3 py-1 rounded-xl text-xs font-mono font-black uppercase tracking-wider bg-red-500/20 text-red-300 border border-red-500/30 flex items-center gap-1.5">
-                        <Droplet className="w-3 h-3 text-red-400 fill-red-400" />
-                        <span>{member.blood_group}</span>
-                      </div>
-                    )}
-
-                    {/* Age */}
-                    {member.age && (
-                      <div className="px-3 py-1 rounded-xl text-xs font-mono font-bold bg-white/5 border border-white/10 text-zinc-300">
-                        {member.age} yrs
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Dojo Branch Tag */}
-                  <p className="text-xs text-muted-foreground font-medium flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-primary-light" />
-                    <span>{member.branch || 'The IWAN Community'}</span>
-                  </p>
-
-                  {/* Scannable Dojo Pass QR Code */}
-                  {qrCodeUrl && (
-                    <div className="w-full pt-4 border-t border-white/10 flex flex-col items-center space-y-2">
-                      <div className="p-3 bg-white rounded-2xl shadow-xl">
-                        <img 
-                          src={qrCodeUrl} 
-                          alt={`QR Code Pass for ${member.member_id}`} 
-                          className="w-36 h-36 object-contain"
-                        />
-                      </div>
-                      <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">
-                        Scan for Instant Dojo Check-In
+                  <div className="min-w-0">
+                    <h2 className="text-base font-black uppercase text-white truncate">{member.name}</h2>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="text-[10px] font-mono font-bold text-primary-light">{member.member_id}</span>
+                      <span className="text-white/20">•</span>
+                      <span className={`text-[10px] font-bold uppercase px-1.5 py-0.2 rounded border ${activeBeltStyle.bg} ${activeBeltStyle.text} ${activeBeltStyle.border}`}>
+                        {member.belt} Belt
                       </span>
                     </div>
-                  )}
+                  </div>
                 </div>
 
-                {/* Pass Card Actions */}
-                <div className="pt-4 border-t border-white/10 grid grid-cols-2 gap-2 relative z-10">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <a
                     href={getWhatsAppShareUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="py-2.5 px-3 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                    className="p-2.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 text-white transition-colors"
+                    title="Share Pass via WhatsApp"
                   >
-                    <Share2 className="w-3.5 h-3.5" />
-                    WhatsApp
+                    <Share2 className="w-4 h-4" />
                   </a>
                   <button
                     type="button"
-                    onClick={() => window.print()}
-                    className="py-2.5 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider transition-colors flex items-center justify-center gap-1.5"
+                    onClick={handleLogout}
+                    className="p-2.5 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-400 transition-colors"
+                    title="Sign Out"
                   >
-                    <Award className="w-3.5 h-3.5" />
-                    Print Pass
+                    <LogOut className="w-4 h-4" />
                   </button>
                 </div>
               </div>
 
-              {/* SECURITY & PORTAL UNLOCK CARD */}
-              <div className="glass-card p-5 rounded-3xl border border-white/10 space-y-4">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                    <Lock className="w-3.5 h-3.5 text-primary-light" />
-                    Portal Security
-                  </h3>
-                  {isOwner && (
-                    <span className="text-[10px] font-mono font-bold text-emerald-400">Unlocked</span>
-                  )}
-                </div>
+              {/* MAIN BALANCED 12-COLUMN GRID */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                {/* ========================================================================= */}
+                {/* LEFT COLUMN (4 COLS): PASS & SECURITY (DESKTOP ONLY)                      */}
+                {/* ========================================================================= */}
+                <div className="hidden lg:block lg:col-span-5 xl:col-span-4 space-y-6">
+                  {renderDigitalPassCard()}
 
-                {isOwner ? (
-                  <div className="space-y-3">
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      You are signed into <strong className="text-white">{member.name}</strong>'s member portal with full access to attendance logs and profile editing.
-                    </p>
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => setShowPinModal(true)}
-                        className="py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
-                      >
-                        <KeyRound className="w-3.5 h-3.5" />
-                        Change PIN
-                      </button>
-                      <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="py-2.5 px-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
-                      >
-                        <LogOut className="w-3.5 h-3.5" />
-                        Sign Out
-                      </button>
+                  {/* SECURITY & PORTAL UNLOCK CARD */}
+                  <div className="glass-card p-5 rounded-3xl border border-white/10 space-y-4">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                      <h3 className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                        <Lock className="w-3.5 h-3.5 text-primary-light" />
+                        Portal Security
+                      </h3>
+                      <span className="text-[10px] font-mono font-bold text-emerald-400">Authenticated</span>
+                    </div>
+
+                    <div className="space-y-3">
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        You are signed into <strong className="text-white">{member.name}</strong>'s member portal with full access to attendance logs and profile editing.
+                      </p>
+                      <div className="grid grid-cols-2 gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setShowPinModal(true)}
+                          className="py-2.5 px-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
+                        >
+                          <KeyRound className="w-3.5 h-3.5" />
+                          Change PIN
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleLogout}
+                          className="py-2.5 px-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1.5"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          Sign Out
+                        </button>
+                      </div>
                     </div>
                   </div>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      Are you <strong className="text-white">{member.name}</strong>? Unlock your full attendance record, belt roadmap, and personal info using your 5-digit PIN.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setShowUnlockModal(true)}
-                      className="w-full py-3 px-4 rounded-xl bg-primary hover:bg-primary-dark text-white text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2"
-                    >
-                      <Lock className="w-4 h-4" />
-                      Unlock With PIN Code
-                    </button>
-                  </div>
-                )}
-              </div>
 
-              {/* PHYSICAL CREDENTIALS (NFC & RFID TOKENS) */}
-              <div className="glass-card p-5 rounded-3xl border border-white/10 space-y-4">
-                <div className="flex items-center justify-between border-b border-white/10 pb-3">
-                  <h3 className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                    <Radio className="w-3.5 h-3.5 text-primary-light" />
-                    Physical Credentials
-                  </h3>
-                  {canManageCredentials && (
-                    <button 
-                      onClick={() => setCredentialModalOpen(true)}
-                      className="px-2 py-1 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary-light text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors"
-                      title="Assign New Token"
-                    >
-                      <Plus className="w-3 h-3" /> Assign
-                    </button>
-                  )}
-                </div>
-
-                <div className="space-y-2.5">
-                  {credentials.length === 0 ? (
-                    <div className="py-4 text-center space-y-1">
-                      <p className="text-xs text-muted-foreground italic">No RFID/NFC wristbands assigned yet.</p>
+                  {/* PHYSICAL CREDENTIALS (NFC & RFID TOKENS) */}
+                  <div className="glass-card p-5 rounded-3xl border border-white/10 space-y-4">
+                    <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                      <h3 className="text-xs font-black uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                        <Radio className="w-3.5 h-3.5 text-primary-light" />
+                        Physical Credentials
+                      </h3>
                       {canManageCredentials && (
-                        <p className="text-[11px] text-primary-light">Tap "+ Assign" to pair a smart tag.</p>
+                        <button 
+                          onClick={() => setCredentialModalOpen(true)}
+                          className="px-2 py-1 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary-light text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 transition-colors"
+                          title="Assign New Token"
+                        >
+                          <Plus className="w-3 h-3" /> Assign
+                        </button>
                       )}
                     </div>
-                  ) : (
-                    credentials.map((c) => (
-                      <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/10">
-                        <div className="flex items-center gap-2.5">
-                          <div className={`p-2 rounded-lg ${c.type === 'qrc' ? 'bg-primary/20 text-primary-light' : 'bg-blue-500/20 text-blue-400'}`}>
-                            {c.type === 'qrc' ? <QrCode className="w-4 h-4" /> : <Radio className="w-4 h-4" />}
-                          </div>
-                          <div>
-                            <span className="text-[10px] font-bold uppercase text-muted-foreground block">
-                              {c.type === 'qrc' ? 'QR Badge' : 'NFC Tag'}
-                            </span>
-                            <span className="text-xs font-mono font-bold text-white tracking-wider">
-                              {c.token}
-                            </span>
-                          </div>
+
+                    <div className="space-y-2.5">
+                      {credentials.length === 0 ? (
+                        <div className="py-4 text-center space-y-1">
+                          <p className="text-xs text-muted-foreground italic">No RFID/NFC wristbands assigned yet.</p>
+                          {canManageCredentials && (
+                            <p className="text-[11px] text-primary-light">Tap "+ Assign" to pair a smart tag.</p>
+                          )}
                         </div>
-                        <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          Active
-                        </span>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-            </div>
-
-            {/* ========================================================================= */}
-            {/* RIGHT COLUMN (7-8 COLS): TABS, ATTENDANCE, PROFILE, ROADMAP & EVENTS       */}
-            {/* ========================================================================= */}
-            <div className="lg:col-span-7 xl:col-span-8 space-y-6">
-              
-              {/* STAFF ADMIN QUICK ACTIONS BANNER */}
-              {isAdmin && (
-                <div className="glass-card p-5 rounded-3xl border border-primary/30 bg-primary/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="w-4 h-4 text-primary" />
-                      <h3 className="text-sm font-black uppercase tracking-wider text-white">
-                        Staff Attendance Authorization
-                      </h3>
+                      ) : (
+                        credentials.map((c) => (
+                          <div key={c.id} className="flex items-center justify-between p-3 rounded-xl bg-white/[0.03] border border-white/10">
+                            <div className="flex items-center gap-2.5">
+                              <div className={`p-2 rounded-lg ${c.type === 'qrc' ? 'bg-primary/20 text-primary-light' : 'bg-blue-500/20 text-blue-400'}`}>
+                                {c.type === 'qrc' ? <QrCode className="w-4 h-4" /> : <Radio className="w-4 h-4" />}
+                              </div>
+                              <div>
+                                <span className="text-[10px] font-bold uppercase text-muted-foreground block">
+                                  {c.type === 'qrc' ? 'QR Badge' : 'NFC Tag'}
+                                </span>
+                                <span className="text-xs font-mono font-bold text-white tracking-wider">
+                                  {c.token}
+                                </span>
+                              </div>
+                            </div>
+                            <span className="px-2 py-0.5 rounded text-[9px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                              Active
+                            </span>
+                          </div>
+                        ))
+                      )}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Mark {member.name}'s dojo session for today ({new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}).
-                    </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleMarkAttendance}
-                    disabled={attendanceLogged}
-                    className="py-3 px-5 rounded-2xl bg-gradient-to-r from-primary to-accent hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-xs uppercase tracking-wider transition-all shrink-0 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95"
-                  >
-                    <Calendar className="w-4 h-4" />
-                    {attendanceLogged ? 'Attended Today' : 'Log Today\'s Attendance'}
-                  </button>
                 </div>
-              )}
 
-              {/* DASHBOARD NAVIGATION TABS */}
-              <div className="flex p-1 bg-white/5 border border-white/10 rounded-2xl overflow-x-auto" role="tablist">
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === 'attendance'}
-                  onClick={() => setActiveTab('attendance')}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 ${
-                    activeTab === 'attendance'
-                      ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                      : 'text-muted-foreground hover:text-white'
-                  }`}
-                >
-                  <Activity className="w-3.5 h-3.5" />
-                  Attendance & Sessions ({attendanceLogs.length})
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === 'profile'}
-                  onClick={() => setActiveTab('profile')}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 ${
-                    activeTab === 'profile'
-                      ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                      : 'text-muted-foreground hover:text-white'
-                  }`}
-                >
-                  <User className="w-3.5 h-3.5" />
-                  Dojo Profile & Records
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === 'roadmap'}
-                  onClick={() => setActiveTab('roadmap')}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 ${
-                    activeTab === 'roadmap'
-                      ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                      : 'text-muted-foreground hover:text-white'
-                  }`}
-                >
-                  <Trophy className="w-3.5 h-3.5" />
-                  Path to Black Belt
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === 'events'}
-                  onClick={() => setActiveTab('events')}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 ${
-                    activeTab === 'events'
-                      ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                      : 'text-muted-foreground hover:text-white'
-                  }`}
-                >
-                  <Calendar className="w-3.5 h-3.5" />
-                  Events ({events.length})
-                </button>
-              </div>
+                {/* ========================================================================= */}
+                {/* RIGHT COLUMN (7-8 COLS, FULL WIDTH ON MOBILE): TABS & PANELS             */}
+                {/* ========================================================================= */}
+                <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+                  
+                  {/* STAFF ADMIN QUICK ACTIONS BANNER */}
+                  {isAdmin && (
+                    <div className="glass-card p-5 rounded-3xl border border-primary/30 bg-primary/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <ShieldCheck className="w-4 h-4 text-primary" />
+                          <h3 className="text-sm font-black uppercase tracking-wider text-white">
+                            Staff Attendance Authorization
+                          </h3>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Mark {member.name}'s dojo session for today ({new Date().toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}).
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleMarkAttendance}
+                        disabled={attendanceLogged}
+                        className="py-3 px-5 rounded-2xl bg-gradient-to-r from-primary to-accent hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-white font-black text-xs uppercase tracking-wider transition-all shrink-0 flex items-center justify-center gap-2 shadow-lg shadow-primary/20 active:scale-95"
+                      >
+                        <Calendar className="w-4 h-4" />
+                        {attendanceLogged ? 'Attended Today' : 'Log Today\'s Attendance'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* DASHBOARD NAVIGATION TABS (STICKY APP-STYLE BAR) */}
+                  <div className="flex p-1 bg-white/5 border border-white/10 rounded-2xl overflow-x-auto scrollbar-none sticky top-20 z-20 backdrop-blur-md" role="tablist">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === 'attendance'}
+                      onClick={() => setActiveTab('attendance')}
+                      className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 ${
+                        activeTab === 'attendance'
+                          ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                          : 'text-muted-foreground hover:text-white'
+                      }`}
+                    >
+                      <Activity className="w-3.5 h-3.5" />
+                      Attendance ({attendanceLogs.length})
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === 'profile'}
+                      onClick={() => setActiveTab('profile')}
+                      className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 ${
+                        activeTab === 'profile'
+                          ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                          : 'text-muted-foreground hover:text-white'
+                      }`}
+                    >
+                      <User className="w-3.5 h-3.5" />
+                      Profile & Records
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === 'roadmap'}
+                      onClick={() => setActiveTab('roadmap')}
+                      className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 ${
+                        activeTab === 'roadmap'
+                          ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                          : 'text-muted-foreground hover:text-white'
+                      }`}
+                    >
+                      <Trophy className="w-3.5 h-3.5" />
+                      Roadmap
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === 'events'}
+                      onClick={() => setActiveTab('events')}
+                      className={`flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 ${
+                        activeTab === 'events'
+                          ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                          : 'text-muted-foreground hover:text-white'
+                      }`}
+                    >
+                      <Calendar className="w-3.5 h-3.5" />
+                      Events ({events.length})
+                    </button>
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeTab === 'pass'}
+                      onClick={() => setActiveTab('pass')}
+                      className={`lg:hidden flex items-center gap-2 px-3.5 sm:px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider whitespace-nowrap transition-all duration-150 ${
+                        activeTab === 'pass'
+                          ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                          : 'text-muted-foreground hover:text-white'
+                      }`}
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      Pass & QR
+                    </button>
+                  </div>
+
+                  {/* TAB 0 (MOBILE ONLY): DIGITAL PASS VIEW */}
+                  {activeTab === 'pass' && (
+                    <div className="lg:hidden space-y-6 animate-in fade-in duration-200">
+                      {renderDigitalPassCard()}
+                    </div>
+                  )}
 
               {/* ========================================================================= */}
               {/* TAB 1: ATTENDANCE & TRAINING HUB                                          */}
@@ -1492,6 +1776,8 @@ function DashboardPage() {
             </div>
 
           </div>
+        </div>
+      )}
 
         </div>
       </div>
